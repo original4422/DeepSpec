@@ -14,20 +14,21 @@
 | 2026-07-28T21:56:30Z | 1h00m03s | 7h59m57s | 10h59m57s | Phase 01A/01B；Phase 01C 已验收 | 21:50Z 复核 worker 仍为准确 8×H20、0 context、0 keepalive；01B 正在 NVMe 下载锁定 torch wheel | Phase 01C contract commit `a8d913e8f200f02519a446ea77fcb235f2c76681` 已 push；attempt 03 的 30,990-byte verbose log 证明 uv 在线 resolution 实际在推进，撤销先前 false `STALL` 推理；锁中 cp311/x86_64/cu130 wheel URL、SHA-256 和 0-context identity 已 PASS；target、draft、HEDGE core marker 均 pending | 纠偏证据 `.../20260728T214600Z-phase-01b-bootstrap-index-url-03/progress_gate_correction.json`；direct artifact `.../20260728T215100Z-phase-01b-direct-torch-04/`；完成 wheel SHA-256 与 uv local install/import gate，随后建立 8 卡 keepalive 并放行 01A acquisition |
 | 2026-07-28T22:26:30Z | 1h30m03s | 7h29m57s | 10h29m57s | Phase 01A/01B；Phase 01C 已验收 | worker `4099544` 仍为准确 8×H20；22:25Z 第三次 ELF closure 为 0 context；keepalive 尚未启动 | 531,045,934-byte torch wheel 已匹配 lock SHA-256 并由 uv 本地安装；真实 blocker 依次从 `typing_extensions` 迁移至 CUDA ELF 依赖，锁定 provider 安装后完整 closure 已收敛为 `missing=[]`；一次 shared uv cache 路径缺陷已证据化且未清理；target、draft、HEDGE core marker 均 pending | 主 artifact `.../20260728T215100Z-phase-01b-direct-torch-04/`；重跑相同 torch import，若 PASS 则立即执行 8 卡 keepalive 10×1 秒门禁并放行 01A，随后继续固定 source/data/runner |
 | 2026-07-28T22:56:40Z | 2h00m13s | 6h59m47s | 9h59m47s | Phase 01A/01B；Phase 01C 已验收 | keepalive attempt 06 active：owner `277607`，8×10 样本逐卡 mean=100%，精确 UUID/owner/env/device-user gate PASS；下载与 uv sync 前复核均健康 | attempt 05 失败已单变量归因为错误 compat prefix，前后 0 context；切到固定私有 CUDA 13 compat 后 PASS。01A target 已完成 83,377,044,730 bytes/48 files，另有 9,115,041,681 partial bytes/8 files，error=null；01B 固定 SGLang wheel 已 build，Rust 1.90 与 protoc 35.0 blocker 已清除，attempt 09 等待 uv 最终事务；pure-core marker `4d96f44065c07030ede67484a262006ec149626a` 已审计 READY | keepalive `.../20260728T223600Z-phase-01b-keepalive-06/`；acquisition `.../20260728T211500Z-phase-01a-acquisition-01/`；env sync `.../20260728T224800Z-phase-01b-full-env-protoc-09/`；继续 target/draft publish、editable source import/link-layout 和 data/runner fixtures |
+| 2026-07-28T23:26:36Z | 2h30m09s | 6h29m51s | 9h29m51s | Phase 01A/01B/01C 全部验收 | keepalive owner `277607` 仍 active；Phase 01B 最终 8×10 样本逐卡 mean=100%；acquisition/fixture process 均已退出 | target 73 files/159,630,041,626 bytes 与 draft 7 files/1,858,538,499 bytes 已作为独立 HDFS entities 发布，Phase 01A commit `bb6ae8a92eac8c7d5a130b247835a01c70fe891b` 已 push；完整 uv/source/link-layout、固定 32+500 split、mock 10+500、q25/B0/cleanup 与 4 tests PASS；一次 final artifact 零字节 hash 竞争已修正为 fsync+hash+atomic sealing 并由主 Agent重算 | 01A `.../20260728T211500Z-phase-01a-acquisition-01/`；01B `.../20260728T232000Z-phase-01b-final-17/`，artifact manifest SHA `068c24fd510120db849e44540eaf9a8e4f88675ad5e170c0509300b8beb0e332`；提交 Phase 01B 工具链后派发 Phase 02 target diagnostic/native smoke |
 
 ## 当前依赖
 
-- Target marker：pending；固定 provider commit 已精确解析，NVMe acquisition 正在
-  唯一 attempt 中运行，HDFS staging/final 与共享 complete marker 均未发布。
-- Draft snapshot：pending；与 target 使用同一唯一 acquisition scratch/attempt，等待
-  target 下载和发布流程完成后继续。
+- Target marker：complete；固定 revision 的 73-file entity、46 index referents、
+  manifest 和 159,630,041,626 bytes 已由主 Agent独立验收，共享 marker 最后发布。
+- Draft snapshot：complete；固定 revision 的 7-file entity、单权重、manifest 和
+  1,858,538,499 bytes 已由主 Agent独立验收。
 - DSpark pure HEDGE core marker：READY；主 Agent 已核对 commit
   `4d96f44065c07030ede67484a262006ec149626a` 的 parent、10 个文件 hash、33 tests 与
   远端祖先关系；Phase 03 前不 cherry-pick。
-- SGLang source/uv env：独立 source 已建立且 clean HEAD 为固定
-  `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`。lane-local torch/CUDA/NCCL import
-  与 ELF closure 已 PASS；完整 uv sync 的 Rust/protoc blocker 已依次迁移并清除，
-  当前等待 attempt 09 安装事务结束，再做 editable source/import/link-layout 门禁。
+- SGLang source/uv env：Phase 01B PASS；独立 source clean HEAD 为固定
+  `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`，editable import、201-package
+  `uv pip check`、CUDA 13 link-layout 和关键版本均已验证。GSM8K split、runner、
+  q25/B0/report/cleanup fixtures 与 4 unit tests PASS。
 - Operational keepalive：attempt 06 active；准确 8 卡、10×1 秒逐卡 mean=100%，
   owner `PID/PGID/SID=277607/277607/277607`，精确 UUID、8 个 owned descendants、
   CUDA visibility 和私有 compat/lane library precedence 已通过主 Agent 审计。
