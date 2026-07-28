@@ -3,12 +3,12 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-28T23:27:21Z`（首个合并 patch 上下文失配后拆分落盘，较 `23:24:41Z` 晚 2 分 40 秒）
+- 记录更新时间：`2026-07-28T23:57:08Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：`NOT_RUN`
-- 结论/首要事项：P00–P03 均已 PASS 并 commit/push；P04 静态 tooling
-  `IN_PROGRESS`，尚未验收。模型/server、native/B0 attempts 均未启动；
-  当前是调度/工具门禁，不是实验 blocker。
+- 结论/首要事项：P00–P03 均已 PASS 并 commit/push；P04 静态 tooling 已由
+  主 Agent 验收并以 `210b281` commit/push。模型/server、native/B0 attempts
+  均未启动；下一步是把 native live smoke 分配给新的 bounded executor。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / 模型参与 `NOT_RUN`；keepalive 8/8 gate `PASS`
@@ -33,10 +33,10 @@
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
-- current DeepSpec HEAD/pushed：
-  `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3`
-- 下一步：完成并验收 P04 静态 lifecycle/client/sampler/validator/tests 门禁，
-  之后才允许 native attempt
+- latest implementation HEAD/pushed：
+  `210b2815b8cdb1905a5ad57e8b565319567f8405`
+- 下一步：重新只读核对 lane/keepalive 后，运行唯一的新 native P04 attempt；
+  主 Agent 验收并恢复 keepalive 后才允许 B0 attempt
 
 ## 当前阶段
 
@@ -46,7 +46,7 @@
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
-| P04 | `IN_PROGRESS` | read-only preflight PASS；静态 tooling 已开始，三个离线契约 red→green | engine identity 复跑、其余 lifecycle/client/sampler/validator tests、主验收、native/B0 smoke |
+| P04 | `IN_PROGRESS` | read-only preflight PASS；静态 tooling 20/20、contract/syntax/identity/cleanup review PASS；commit/push `210b281` | native smoke、主验收、B0 smoke |
 | P05–P08 | `NOT_STARTED` | — | P04 门禁 |
 
 ## 固定实验协议
@@ -99,22 +99,30 @@
 | `20260728T224800Z-p03-locked-rebuild` | exact uv build lock 后 clean rebuild | PASS：zero-context artifact clean gate、tree/hash parity 与总回归均通过；commit/push `3d2c6cc` | final manifests/log、handoff、主 Agent replay 与 22:48 heartbeat |
 | `20260728T230700Z-p04-preflight` | P04 read-only lane/keepalive preflight | PASS：exact 8×H20、无未知任务、PID 4730、8×10×1s 100%；无 server | HDFS `worker_inventory.json` |
 | `20260728T230647Z-p04-native-smoke-r1` / B0 | 原计划 live attempts | `NOT_RUN`；首次 executor 被中断/重分配，未 pause keepalive、未动 GPU | 调度记录；无实验 artifact |
+| P04 static tooling | 固定 native/B0 lifecycle、client、sampler、process guard 与 validator | 主 Agent验收 PASS：executor 20/20，主复验 20/20，contract/syntax/whitespace PASS；commit/push `210b281` | `artifacts/hedge-dspark/p04-tooling/tooling_test.log` |
 
 ## P04 integration smoke 当前状态
 
-- 状态：`IN_PROGRESS`；B0 `NOT_RUN`；模型/server 从未启动。
+- 状态：`IN_PROGRESS`；静态 tooling `PASS_COMMITTED`；B0 `NOT_RUN`；
+  模型/server 从未启动。
 - 首次 read-only preflight artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T230700Z-p04-preflight/worker_inventory.json`。
   worker `4106666` 精确 8×H20、无未知任务、keepalive `4730/4730/4730`、
   8 卡 10×1 秒均 100%。
 - 首次 executor 在 preflight 后两 turn 无落盘而被主 Agent 中断/重分配；未暂停
   keepalive、未操作 GPU。该事件是调度问题，不是实验 blocker。
-- 当前 `p04_tooling` 仅新增未提交
-  `scripts/hedge_dspark_p04_prepare.py` 与
-  `tests/hedge_dspark_p04/test_tooling.py`，且不登录 worker。
-- native fixed flags/env/no-config、B0 exact config path/bytes、exact 8×H20 inventory
-  离线契约已 red→green；engine identity 实现刚完成、待复跑，其余静态门禁与
-  主 Agent验收 pending。验收前不得启动 native attempt。
+- `p04_tooling` 全程未登录 worker、未触碰 GPU/keepalive/model。它交付 6 个
+  lifecycle/client/sampler/process/validator 脚本、20 个离线测试与测试证据。
+- executor 20/20 tests PASS；主 Agent独立重跑 20/20 PASS，并复核 exact native
+  no-config、B0 config bytes、formal wheel/source/checkpoint identity、
+  PID/PGID/SID/start-ticks/cmdline/hostname、8-rank/8-GPU request evidence、
+  cleanup-before-keepalive 与 immutable archive 门禁。staged whitespace 和
+  contract JSON 均 PASS；工具 commit/push 为
+  `210b2815b8cdb1905a5ad57e8b565319567f8405`。
+- 直接执行非 executable shell 文件曾在本地得到一次 `Permission denied`；固定
+  合同一直是 `bash <absolute-script-path>`，按该方式复验 PASS。它不是 live
+  attempt、没有状态变化，也不是实验 blocker。
+- 下一 bounded executor 只运行 native live smoke；主 Agent验收前不得启动 B0。
 
 ## P03 integration 当前证据
 
@@ -184,7 +192,8 @@
 
 ## 限制与复现状态
 
-- P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 尚未启动。
+- P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 静态 tooling 已完成，
+  live GPU smoke 尚未启动。
 - B0、q25 calibration、native 500 与 HEDGE B>0 500 均未运行。
 - 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
 - 尚未发生模型 shutdown；env setup 失败属于依赖获取路径，不是 CUDA/NCCL/worker
