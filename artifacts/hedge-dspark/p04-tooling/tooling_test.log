@@ -1,0 +1,13 @@
+P04 DSpark tooling offline test evidence
+Recorded at: 2026-07-28T23:52:19Z
+Scope: local CPU/process/filesystem mocks only; no worker login, GPU, model, or keepalive action
+Command: PYTHONDONTWRITEBYTECODE=1 /home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest tests.hedge_dspark_p04.test_tooling -v
+Result: PASS
+Tests: 20 passed, 0 failed, 0 errors
+Elapsed: 0.877s
+
+Static checks:
+- bash -n scripts/hedge_dspark_p04_attempt.sh: PASS
+- PYTHONDONTWRITEBYTECODE source compile/import checks: PASS
+- lifecycle --print-contract JSON parse: PASS
+- git diff --check (P04 files only): PASS
