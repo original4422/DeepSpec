@@ -1,0 +1,33 @@
+HEDGE-on-V4 DSpark P02 pure-core test log
+Generated: 2026-07-28T21:05:46Z
+Source object: 9fb903d676254ea5f5d171051fb15c54f331111c
+Target worktree: /mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark
+
+[initial CPU run]
+Command: python -m unittest discover -s tests/hedge_spec -v
+Environment: /usr/bin/python 3.11.2; torch 2.7.1; torch.version.cuda 12.6
+Result: FAIL; Ran 32 tests; 1 failure
+First failure:
+  test_reset_clears_spend_before_slot_reuse expected the binary float
+  0.20000000000000018 to equal decimal literal 0.2 exactly.
+Resolution:
+  Changed only that test assertion to assertAlmostEqual. The implementation and
+  algorithm contract did not change.
+
+[repeatable CPU run]
+Command: PYTHONHASHSEED=0 python -m unittest discover -s tests/hedge_spec -v
+Environment: /usr/bin/python 3.11.2; torch 2.7.1; torch.version.cuda 12.6
+Result: PASS; Ran 33 tests in 0.148s
+
+[existing pinned CUDA 13 torch environment, CPU execution]
+Command: PYTHONHASHSEED=0 /home/tiger/venvs/deepspec-dspark/bin/python -m unittest discover -s tests/hedge_spec -v
+Environment: /home/tiger/venvs/deepspec-dspark/bin/python 3.11; torch 2.11.0+cu130; torch.version.cuda 13.0
+Result: PASS; Ran 33 tests in 0.159s
+
+[P00 HEDGE venv]
+Command: PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 /home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_spec -v
+Environment: /home/tiger/venvs/hedge-v4-dspark/bin/python 3.11.2; torch 2.11.0+cu130; torch.version.cuda 13.0
+Result: PASS; Ran 33 tests in 0.173s
+Finished: 2026-07-28T21:49:28Z
+Acceptance status: formal HEDGE venv test gate PASS; commit/push/READY marker
+remain main-Agent responsibilities.
