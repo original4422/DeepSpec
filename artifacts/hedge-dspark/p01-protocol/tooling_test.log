@@ -1,0 +1,60 @@
+test_started_utc=2026-07-28T21:18:06Z
+Python 3.11.2 (main, Apr 28 2025, 14:11:48) [GCC 12.2.0]
+uv 0.11.32 (x86_64-unknown-linux-gnu)
+test_model_uses_last_complete_boxed_answer_only (test_protocol.AnswerParsingTests.test_model_uses_last_complete_boxed_answer_only) ... ok
+test_numeric_normalization_is_strict (test_protocol.AnswerParsingTests.test_numeric_normalization_is_strict) ... ok
+test_reference_uses_last_hashes_marker (test_protocol.AnswerParsingTests.test_reference_uses_last_hashes_marker) ... ok
+test_manifest_and_jsonl_are_reproducible (test_protocol.DatasetMaterializationTests.test_manifest_and_jsonl_are_reproducible) ... ok
+test_split_is_deterministic_and_disjoint (test_protocol.DatasetMaterializationTests.test_split_is_deterministic_and_disjoint) ... ok
+test_10_warmups_are_fully_excluded_and_500_terminal_recompute (test_protocol.FormalTimingAndSummaryTests.test_10_warmups_are_fully_excluded_and_500_terminal_recompute) ... ok
+test_prompt_and_request_are_exact (test_protocol.FrozenConfigTests.test_prompt_and_request_are_exact) ... ok
+test_protocol_fingerprint_recomputes (test_protocol.FrozenConfigTests.test_protocol_fingerprint_recomputes) ... ok
+test_completion_tokens_must_match_token_ids (test_protocol.ResponseSchemaTests.test_completion_tokens_must_match_token_ids) ... ok
+test_counter_shape_is_validated (test_protocol.ResponseSchemaTests.test_counter_shape_is_validated) ... ok
+test_token_ids_are_required_and_never_reencoded (test_protocol.ResponseSchemaTests.test_token_ids_are_required_and_never_reencoded) ... ok
+test_permanent_error_becomes_terminal_after_three_attempts (test_protocol.RunnerRetryTests.test_permanent_error_becomes_terminal_after_three_attempts) ... ok
+test_schema_failures_retry_three_total_and_preserve_raw (test_protocol.RunnerRetryTests.test_schema_failures_retry_three_total_and_preserve_raw) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.122s
+
+OK
+{
+  "artifact_hashes": {
+    "gsm8k_calibration_32.jsonl": "28a7080565cde90b8cf1db79c88bb463861515fabe3fa7409481802104a6e47d",
+    "gsm8k_formal_500.jsonl": "33554b90f751252ced2cfd16333d749f427c84cf025dccef4c7934144e9d5108",
+    "protocol_config.json": "71437ecc1ec5144ed66616322dbb0b37d73eb28d20d49af8c14d58ae5b4c8699"
+  },
+  "checks": {
+    "calibration_count": true,
+    "calibration_hash": true,
+    "calibration_indices": true,
+    "cohorts_disjoint": true,
+    "formal_count": true,
+    "formal_hash": true,
+    "formal_indices": true,
+    "generator_file_set": true,
+    "generator_sources": true,
+    "manifest_calibration_indices": true,
+    "manifest_formal_indices": true,
+    "pinned_revision": true,
+    "prompt_exact": true,
+    "protocol_fingerprint": true,
+    "protocol_hash": true,
+    "record_identity": true,
+    "reference_recomputes": true,
+    "warmup_indices": true
+  },
+  "dataset_fingerprint": "59ec1b7f9357c7a2",
+  "schema_version": 1,
+  "source": {
+    "config": "main",
+    "provider": "Hugging Face",
+    "repo_id": "openai/gsm8k",
+    "resolved_revision": "740312add88f781978c0658806c59bc2815b9866",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "split": "test"
+  },
+  "status": "PASS"
+}
+test_finished_utc=2026-07-28T21:18:06Z

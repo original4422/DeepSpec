@@ -1,0 +1,147 @@
+{
+  "acceptance_counter_schema": {
+    "fields": {
+      "acceptance_length_including_bonus_count": "non-negative integer or null",
+      "acceptance_length_including_bonus_sum": "non-negative integer or null",
+      "accepted_draft_tokens": "non-negative integer",
+      "accepted_draft_tokens_by_position": "length-5 non-negative integer array",
+      "draft_tokens_proposed": "non-negative integer",
+      "proposal_count": "non-negative integer"
+    },
+    "location": "choices[0].meta_info.acceptance_counters (optional per-request delta until P03 instrumentation is enabled)",
+    "schema_version": 1,
+    "semantics": "per-request delta, never a cumulative server snapshot"
+  },
+  "dataset": {
+    "config": "main",
+    "provider": "Hugging Face",
+    "repo_id": "openai/gsm8k",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "shuffle": {
+      "calibration_count": 32,
+      "formal_count": 500,
+      "implementation": "indices=list(range(test_size)); random.Random(980406).shuffle(indices)",
+      "seed": 980406,
+      "warmup_count": 10,
+      "warmup_selection": "calibration[0:10]"
+    },
+    "split": "test"
+  },
+  "fingerprint_sha256": "eaa79a75fbf3bf78ed070e33b68a917172386db3b668e1be93b1fe97e0f2f152",
+  "formal_timing": {
+    "clock": "time.monotonic_ns",
+    "end_boundary": "immediately after formal request 500 is terminal",
+    "excluded": [
+      "service startup",
+      "model load",
+      "warmup requests"
+    ],
+    "formal_count": 500,
+    "included": [
+      "HTTP",
+      "generation",
+      "queueing",
+      "retry",
+      "retry backoff"
+    ],
+    "start_boundary": "immediately before formal request 1 is issued",
+    "tps_formula": "formal completion_tokens / timed_wall_seconds",
+    "warmup_count": 10
+  },
+  "hedge_counter_schema": {
+    "fields": {
+      "active_request_states": "non-negative post-terminal gauge; each terminal request must observe zero",
+      "budget_hit_requests": "0 or 1",
+      "budget_spent": "finite non-negative number",
+      "cap_bound_blocks": "non-negative integer",
+      "relaxed_tokens": "non-negative integer",
+      "requests_aborted": "non-negative integer",
+      "requests_finalized": "non-negative integer",
+      "requests_initialized": "non-negative integer",
+      "runtime_calls": "non-negative integer",
+      "slot_resets": "non-negative integer",
+      "state_leaks": "non-negative integer; arm-final aggregate must be zero"
+    },
+    "location": "choices[0].meta_info.hedge_counters (optional per-request delta until P03 instrumentation is enabled)",
+    "schema_version": 1,
+    "semantics": "per-request terminal observation; additive fields are deltas, active_request_states is a post-terminal gauge; never a cumulative server snapshot"
+  },
+  "per_request_record_schema": {
+    "required_identity": [
+      "cohort",
+      "cohort_position",
+      "dataset_index",
+      "dataset_revision",
+      "dataset_fingerprint"
+    ],
+    "required_request_evidence": [
+      "question",
+      "reference_response",
+      "reference_answer",
+      "request_body",
+      "attempts"
+    ],
+    "required_terminal_evidence": [
+      "terminal_status",
+      "attempt_count",
+      "retry_count",
+      "request_started_monotonic_ns",
+      "terminal_monotonic_ns",
+      "request_wall_seconds"
+    ],
+    "schema_version": 1,
+    "successful_response_evidence": [
+      "raw response in successful attempt",
+      "model_text",
+      "output_token_ids",
+      "completion_tokens",
+      "extracted_answer",
+      "extraction_rule",
+      "parse_status",
+      "answer_match"
+    ]
+  },
+  "request": {
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "max_tokens": 512,
+    "messages": [
+      {
+        "content_template": "<original question>\nPlease reason step by step, and put your final answer within \\boxed{}.",
+        "role": "user"
+      }
+    ],
+    "model": "deepseek-v4-flash-dspark",
+    "return_meta_info": true,
+    "stream": false,
+    "system_prompt": null,
+    "temperature": 0,
+    "top_p": 1
+  },
+  "response": {
+    "answer_rule": "last complete numeric \\\\boxed{...}",
+    "canonical_token_ids_path": "choices[0].meta_info.output_token_ids",
+    "completion_tokens_must_equal_token_id_count": true,
+    "completion_tokens_path": "usage.completion_tokens",
+    "model_text_path": "choices[0].message.content",
+    "raw_response_saved": true,
+    "reference_rule": "last numeric #### marker",
+    "token_ids_reencoding_forbidden": true,
+    "token_ids_required": true
+  },
+  "runner": {
+    "concurrency": 1,
+    "max_total_attempts_per_request": 3,
+    "order": "manifest cohort_position ascending",
+    "request_timeout_seconds": 600.0,
+    "retry_backoff_seconds": 1.0,
+    "retry_time_in_formal_timing": true,
+    "terminal_statuses": [
+      "succeeded",
+      "failed"
+    ]
+  },
+  "schema_version": 1
+}
