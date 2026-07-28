@@ -42,3 +42,12 @@ explicit = true
 name = "sglang-cu130"
 url = "https://docs.sglang.ai/whl/cu130"
 explicit = true
+
+[dependency-groups]
+p03-build = [
+    "build==1.5.0",
+    "setuptools==81.0.0",
+    "setuptools-rust==1.13.0",
+    "setuptools-scm==10.2.1",
+    "wheel==0.47.0",
+]

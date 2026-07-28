@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "generated_at_utc": "2026-07-28T22:58:59Z",
+  "deepspec": {
+    "branch": "exp/hedge-v4-dspark",
+    "head_during_p03": "7c2ac5a6f52c109c9a7a75c4146b872d3f27083f",
+    "pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
+    "integration_commit": null,
+    "integration_commit_owner": "main agent after P03 acceptance"
+  },
+  "sglang": {
+    "version": "0.5.16",
+    "base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "head_after_apply": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "primary_patched_source": "/home/tiger/src/hedge-v4-dspark-sglang-fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "clean_replay_source": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08",
+    "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08.replay_manifest.json",
+    "clean_replay_manifest_sha256": "57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8",
+    "final_tree_sha256": "996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb"
+  },
+  "patch": {
+    "path": "integrations/sglang_dspark_hedge/integration.patch",
+    "sha256": "8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170",
+    "size_bytes": 38518,
+    "format": "git full-index binary patch with unified context set to zero",
+    "apply_flags": [
+      "--unidiff-zero"
+    ],
+    "apply_script": "scripts/hedge_dspark_p03_apply.py",
+    "apply_script_sha256": "e884d57a1a1ecf80364ee15a48aab1eed4f170ac45bc4136c45d9809e8f341e4",
+    "patched_files": [
+      "python/sglang/srt/entrypoints/openai/serving_chat.py",
+      "python/sglang/srt/speculative/dspark_components/dspark_verify.py",
+      "python/sglang/srt/speculative/dspark_components/dspark_worker_v2.py",
+      "python/sglang/srt/speculative/dspark_components/hedge_dspark.py"
+    ]
+  },
+  "integration_invariants": {
+    "disabled_path": "TargetVerifyExecutor receives hedge_adapter=None and directly uses native accept_draft_tokens",
+    "active_path": "DSparkHedgeAdapter returns authoritative correct_len, bonus, and cap_trim_lens before native finalization and downstream propagation",
+    "score_seam": "native full-vocabulary next_token_logits after the existing LogitsProcessor TP all-gather",
+    "additional_tp_collectives": 0,
+    "proposal_width": 5,
+    "verify_width": 6,
+    "cutoff_before_budget_charge": true,
+    "stable_request_state_key": "request-pool slot with rid/serial lifecycle validation",
+    "calibration_overflow": "capacity+1 device sentinel row; snapshots expose only the first capacity rows",
+    "hot_path_host_sync": false,
+    "per_block_file_io": false
+  },
+  "build_reproducibility": {
+    "dependency_group": "p03-build",
+    "pyproject_sha256": "2ef3e7e58af7ea7c6835f975aa02ec87fb071743bd2368d9f471fe394710a9b1",
+    "uv_lock_sha256": "0524523b1c0875bdefb1cb9e5b809f60dcf6dc9941e139c74be5ceba0096c166",
+    "frozen_group_sync": true,
+    "exact_metadata_assertions": true
+  },
+  "artifact_checks": {
+    "zero_context_has_no_context_lines": true,
+    "isolated_staged_diff_check": "PASS",
+    "nine_source_files_match_prior_formal_build_tree": true,
+    "formal_wheel_rebuild_required": false
+  },
+  "clean_replay_status": [
+    " M python/sglang/srt/entrypoints/openai/serving_chat.py",
+    " M python/sglang/srt/speculative/dspark_components/dspark_verify.py",
+    " M python/sglang/srt/speculative/dspark_components/dspark_worker_v2.py",
+    "?? python/sglang/srt/speculative/dspark_components/hedge_dspark.py",
+    "?? python/sglang/srt/speculative/hedge_spec/"
+  ]
+}

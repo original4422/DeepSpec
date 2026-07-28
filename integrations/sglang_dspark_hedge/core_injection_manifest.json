@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "deepspec_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
+  "canonical_root": "deepspec/hedge_spec",
+  "target_root": "python/sglang/srt/speculative/hedge_spec",
+  "injection_method": "scripts/hedge_dspark_p03_apply.py reads the committed canonical bytes and writes them only after integration.patch passes git apply --check",
+  "sglang_base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "clean_replay_source": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08",
+  "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08.replay_manifest.json",
+  "clean_replay_manifest_sha256": "57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8",
+  "files": [
+    {
+      "name": "__init__.py",
+      "canonical_path": "deepspec/hedge_spec/__init__.py",
+      "target_path": "python/sglang/srt/speculative/hedge_spec/__init__.py",
+      "sha256": "e51bba48b8a67895270b3285775dfc3741421eb4a0c3cdf566a1cf0e9360daca",
+      "size_bytes": 415,
+      "byte_identical": true
+    },
+    {
+      "name": "budget.py",
+      "canonical_path": "deepspec/hedge_spec/budget.py",
+      "target_path": "python/sglang/srt/speculative/hedge_spec/budget.py",
+      "sha256": "c573fe2381416c70511f97968fe14fa9ef1e16d08c805eb55982efc0d23a5ce8",
+      "size_bytes": 6413,
+      "byte_identical": true
+    },
+    {
+      "name": "config.py",
+      "canonical_path": "deepspec/hedge_spec/config.py",
+      "target_path": "python/sglang/srt/speculative/hedge_spec/config.py",
+      "sha256": "03079c13b327b1c31374421060d07217401dc3049c7b8fb5fb6c68d30b6db176",
+      "size_bytes": 5688,
+      "byte_identical": true
+    },
+    {
+      "name": "torch_rule.py",
+      "canonical_path": "deepspec/hedge_spec/torch_rule.py",
+      "target_path": "python/sglang/srt/speculative/hedge_spec/torch_rule.py",
+      "sha256": "92bb84a3bf3f03fd127636c5d5ef6b7bb9e22d4198cc57dac320606ae1256c72",
+      "size_bytes": 5278,
+      "byte_identical": true
+    },
+    {
+      "name": "hedge_core_identity.json",
+      "canonical_path": "deepspec/hedge_spec/hedge_core_identity.json",
+      "target_path": "python/sglang/srt/speculative/hedge_spec/hedge_core_identity.json",
+      "sha256": "acd9ebe5cd71bd50313a06c5a7ebb2e02289aa010bc92d9fcd72e9f8ded80d2a",
+      "size_bytes": 9455,
+      "byte_identical": true
+    }
+  ],
+  "wheel_contains_all_files": true,
+  "installed_hashes_match_clean_replay": true,
+  "non_deepspec_cwd_import": {
+    "status": "PASS",
+    "cwd": "/tmp",
+    "pythonpath_unset": true,
+    "import_root": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/srt/speculative/hedge_spec"
+  }
+}

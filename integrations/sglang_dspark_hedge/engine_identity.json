@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "sglang": {
+    "version": "0.5.16",
+    "upstream_base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "actual_build_source_head": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "actual_build_source_tree": "/tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05",
+    "patched_tree_sha256": "996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb"
+  },
+  "hedge_core": {
+    "deepspec_commit": "4d96f44065c07030ede67484a262006ec149626a",
+    "source_commit": "9fb903d676254ea5f5d171051fb15c54f331111c",
+    "injection_manifest": "integrations/sglang_dspark_hedge/core_injection_manifest.json"
+  },
+  "dspark_integration": {
+    "deepspec_commit": null,
+    "commit_state": "pending main-agent acceptance and commit",
+    "patch_sha256": "8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170",
+    "patch_path": "integrations/sglang_dspark_hedge/integration.patch"
+  },
+  "current_patch_replay": {
+    "source": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08",
+    "manifest": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08.replay_manifest.json",
+    "manifest_sha256": "57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8",
+    "patched_tree_sha256": "996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb",
+    "matches_formal_wheel_source_files": true,
+    "wheel_rebuild_required": false
+  },
+  "wheel": {
+    "filename": "sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+    "sha256": "f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262",
+    "size_bytes": 14646094,
+    "build_attempt": "locked07",
+    "build_path": "/tmp/deepspec-hedge-dspark-p03-build.locked07/wheel/sglang-0.5.16-cp311-cp311-linux_x86_64.whl"
+  },
+  "build_lock": {
+    "dependency_group": "p03-build",
+    "pyproject_sha256": "2ef3e7e58af7ea7c6835f975aa02ec87fb071743bd2368d9f471fe394710a9b1",
+    "uv_lock_sha256": "0524523b1c0875bdefb1cb9e5b809f60dcf6dc9941e139c74be5ceba0096c166",
+    "build_script_sha256": "5553c8f603b6f2cd06d00da394c9970f4f2120b16249afddee3c25b3b57eccb3",
+    "lock_check": "PASS",
+    "frozen_group_sync": "PASS",
+    "exact_metadata_versions": {
+      "build": "1.5.0",
+      "setuptools": "81.0.0",
+      "setuptools-rust": "1.13.0",
+      "setuptools-scm": "10.2.1",
+      "wheel": "0.47.0"
+    }
+  },
+  "installation": {
+    "manager": "uv 0.11.32",
+    "venv": "/home/tiger/venvs/hedge-v4-dspark",
+    "distribution_version": "0.5.16",
+    "distribution_location": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages",
+    "record_sha256": "6226c8afa6c04ae20b44ec7eabafc99ce33e7c14f174ba706eedf77e281663d5",
+    "import_paths": {
+      "sglang": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/__init__.py",
+      "adapter": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/srt/speculative/dspark_components/hedge_dspark.py",
+      "core": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/srt/speculative/hedge_spec/__init__.py"
+    }
+  },
+  "runtime_identity": {
+    "proposal_width": 5,
+    "verify_width": 6,
+    "disabled_switch": {
+      "HEDGE_ENABLED": "0",
+      "SGLANG_DSPARK_HEDGE_CALIBRATION_TRACE": "0"
+    },
+    "calibration_switch": {
+      "HEDGE_ENABLED": "0",
+      "SGLANG_DSPARK_HEDGE_CALIBRATION_TRACE": "1"
+    },
+    "enabled_switch": {
+      "HEDGE_ENABLED": "1",
+      "config_source": "exactly one of SGLANG_DSPARK_HEDGE_CONFIG_JSON or SGLANG_DSPARK_HEDGE_CONFIG_PATH"
+    },
+    "decode_config_fingerprint": null,
+    "decode_config_state": "P05 calibration has not frozen B/g/m yet",
+    "formal_arm_rule": "native, B=0, and B>0 must reuse this wheel SHA unless a decode-affecting repair invalidates every prior arm"
+  }
+}

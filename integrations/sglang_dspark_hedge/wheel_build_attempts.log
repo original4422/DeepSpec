@@ -1,0 +1,98 @@
+HEDGE DSpark P03 wheel build attempt log
+status=PASS after bounded single-variable repairs
+
+Attempt 01
+  scratch=/tmp/deepspec-hedge-dspark-p03-build.9kxOq9
+  result=FAILED
+  first_error=build requirements missing from the formal venv:
+    setuptools-rust>=1.10, setuptools-scm>=8.0, wheel
+  change_for_next_attempt=install only those build requirements with uv into
+    /home/tiger/venvs/hedge-v4-dspark
+
+Attempt 02
+  scratch=/tmp/deepspec-hedge-dspark-p03-build.YxB2Zb
+  result=FAILED
+  first_error=can't find Rust compiler
+  progress=Python build dependency resolution passed; failure moved to build_rust
+  change_for_next_attempt=use the already-provisioned fixed Rust 1.90.0 toolchain
+    under /home/tiger/toolchains/deepspec-rust-1.90.0 and make its RUSTUP_HOME,
+    CARGO_HOME, and bin path explicit in the build script
+
+Attempt 03
+  scratch=/tmp/deepspec-hedge-dspark-p03-build.rustfix03
+  result=FAILED
+  first_error=Could not find `protoc`
+  progress=Rust compilation started successfully; failure moved to the
+    sglang-grpc protobuf build script
+  change_for_next_attempt=fix PROTOC to
+    /home/tiger/toolchains/deepspec-protoc-35.0/bin/protoc and assert
+    `libprotoc 35.0` in the build script
+
+Attempt 04
+  scratch=/tmp/deepspec-hedge-dspark-p03-build.protocfix04
+  result=PASS_SUPERSEDED
+  wheel_sha256=686aa66973134d3cb5de724ca1721958036e5944f53e7402f48437ecf31cb050
+  reason_superseded=main-agent review found calibration trace overflow could
+    overwrite the last retained row; this wheel is not the formal P03 wheel
+
+Clean replay 05
+  source=/tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05
+  result=PASS
+  base=fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1
+  patch_sha256=58174ef3c93d492f739f901ec1d0125e35d45809231ac17330f268ccedf5d0ba
+  final_tree_sha256=996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb
+
+Attempt 06
+  scratch=/tmp/deepspec-hedge-dspark-p03-build.cleanreplay06
+  source=/tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05
+  result=PASS_SUPERSEDED
+  rustc=rustc 1.90.0 (1159e78c4 2025-09-14)
+  cargo=cargo 1.90.0 (840b83a10 2025-07-30)
+  protoc=libprotoc 35.0
+  wheel=sglang-0.5.16-cp311-cp311-linux_x86_64.whl
+  wheel_sha256=2f26728ca3db4f344b43e266150298d250c788f6fcf1623d70577fd6405b9dd1
+  wheel_size_bytes=14646089
+  uv_install=PASS
+  non_deepspec_import_and_hash=PASS
+  reason_superseded=the five Python build dependencies were present only
+    through an earlier uv pip mutation; pyproject.toml/uv.lock and the build
+    workflow did not yet independently reproduce or assert them
+
+Attempt 07
+  scratch=/tmp/deepspec-hedge-dspark-p03-build.locked07
+  source=/tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05
+  result=PASS_FORMAL
+  dependency_group=p03-build
+  pyproject_sha256=2ef3e7e58af7ea7c6835f975aa02ec87fb071743bd2368d9f471fe394710a9b1
+  uv_lock_sha256=0524523b1c0875bdefb1cb9e5b809f60dcf6dc9941e139c74be5ceba0096c166
+  build_script_sha256=5553c8f603b6f2cd06d00da394c9970f4f2120b16249afddee3c25b3b57eccb3
+  lock_check=PASS
+  frozen_group_sync=PASS
+  exact_metadata_versions=build==1.5.0,setuptools==81.0.0,setuptools-rust==1.13.0,setuptools-scm==10.2.1,wheel==0.47.0
+  rustc=rustc 1.90.0 (1159e78c4 2025-09-14)
+  cargo=cargo 1.90.0 (840b83a10 2025-07-30)
+  protoc=libprotoc 35.0
+  wheel=sglang-0.5.16-cp311-cp311-linux_x86_64.whl
+  wheel_sha256=f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262
+  wheel_size_bytes=14646094
+  raw_build_log=/tmp/deepspec-hedge-dspark-p03-build.locked07.build.log
+  raw_build_log_sha256=133da0521d036d54a1657da0eb2973416c08ad374b1dd080c6c69711f9e485d2
+  uv_install=PASS
+  non_deepspec_import_and_hash=PASS
+
+Artifact replay 08
+  source=/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08
+  result=PASS_NO_WHEEL_REBUILD
+  patch_format=full-index,binary,unified-zero-context
+  patch_sha256=8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170
+  apply_script_sha256=e884d57a1a1ecf80364ee15a48aab1eed4f170ac45bc4136c45d9809e8f341e4
+  replay_manifest_sha256=57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8
+  final_tree_sha256=996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb
+  nine_source_files_match_attempt_07_source=true
+  integration_tests=22/22_PASS
+  isolated_staged_diff_check=PASS
+  reason_no_wheel_rebuild=only the patch representation and applicator flags
+    changed; the nine installed source/core files and patched tree are identical
+
+No worker login, GPU command, SGLang server, or keepalive action occurred in any
+P03 build attempt.

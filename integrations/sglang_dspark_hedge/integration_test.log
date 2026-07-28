@@ -1,0 +1,80 @@
+HEDGE DSpark P03 offline integration evidence
+generated_at_utc=2026-07-28T22:58:59Z
+status=PASS
+gpu_or_worker_used=false
+
+Clean replay:
+  base=fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1
+  source=/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08
+  patch_sha256=8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170
+  patch_format=full-index,binary,unified-zero-context
+  replay_manifest_sha256=57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8
+  final_tree_sha256=996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb
+  apply=PASS
+  git_diff_check=PASS
+
+Command:
+  PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 HEDGE_SGLANG_SOURCE=/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08 /home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_dspark_integration -v
+Result:
+  Ran 22 tests in 0.187s
+  OK
+
+The 22 fixtures cover:
+  compact full-vocabulary score alignment; B=0 zero-regret tie; bonus;
+  cutoff-before-charge; relaxed prefix propagation through native finalize and
+  downstream seams; counter-only negative fixture; batch reorder; finish/abort;
+  slot reuse; unbound decode; native disabled call-through; strict arm switches;
+  static eager runtime guards; stable output token IDs; no new TP collective;
+  no item/cpu/file I/O in hot acceptance methods; calibration cutoff exclusion;
+  and trace-capacity overflow.  The overflow fixture uses capacity=2, submits
+  four proposals, retains ordinals [0,1], retains forward_ct [1,2], and reports
+  trace_rows_seen=4 plus trace_rows_dropped=2.
+
+Command:
+  PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 /home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_spec -v
+Result:
+  Ran 33 tests in 0.159s
+  OK
+
+Command:
+  PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 /home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_protocol -v
+Result:
+  Ran 13 tests in 0.124s
+  OK
+
+Non-DeepSpec import/hash verification:
+  cwd=/tmp
+  PYTHONPATH=unset
+  distribution=sglang 0.5.16
+  import_root=/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages
+  source_to_installed_files_checked=9
+  source_to_installed_hash_mismatches=0
+  result=PASS
+
+Locked build environment:
+  dependency_group=p03-build
+  pyproject_sha256=2ef3e7e58af7ea7c6835f975aa02ec87fb071743bd2368d9f471fe394710a9b1
+  uv_lock_sha256=0524523b1c0875bdefb1cb9e5b809f60dcf6dc9941e139c74be5ceba0096c166
+  uv_lock_check=PASS
+  frozen_group_sync=PASS
+  exact_metadata_versions=build==1.5.0,setuptools==81.0.0,setuptools-rust==1.13.0,setuptools-scm==10.2.1,wheel==0.47.0
+  formal_wheel_sha256=f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262
+  formal_wheel_zip_integrity=PASS
+
+Artifact-only patch correction:
+  zero_context_lines=0
+  isolated_full_p03_staged_diff_check=PASS
+  replayed_source_files_compared=9
+  replayed_source_hash_mismatches=0
+  replayed_tree_matches_formal_tree=true
+  formal_wheel_rebuild_required=false
+
+Earlier test-only correction:
+  The first local fixture run exposed an inspect.getsource indentation error in
+  the test audit.  Applying textwrap.dedent was the only change; production
+  behavior was not changed.  The next run passed.
+
+Review correction:
+  A capacity clamp could overwrite the last retained calibration trace row.
+  The adapter now allocates one device-only sentinel row, snapshots only the
+  configured capacity, and has the explicit overflow fixture described above.
