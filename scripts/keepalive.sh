@@ -205,7 +205,7 @@ start_load() {
   (
     exec 9>&-
     export CUDA_VISIBLE_DEVICES="$CUDA_DEVICES"
-    export LD_LIBRARY_PATH="/usr/local/cuda/compat:/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}"
+    export LD_LIBRARY_PATH="${DEEPSPEC_KEEPALIVE_LD_LIBRARY_PATH:-/usr/local/cuda/compat:/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}}"
     exec setsid nohup "$PYTHON" "$LOAD_SCRIPT" load \
       --expected-gpus "$EXPECTED_GPUS" \
       --matrix-size "$MATRIX_SIZE"

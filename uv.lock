@@ -445,7 +445,7 @@ wheels = [
 ]
 
 [[package]]
-name = "deepspec-dspark-runtime"
+name = "deepspec-hedge-v4-eagle3-runtime"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

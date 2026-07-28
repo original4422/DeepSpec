@@ -1,7 +1,7 @@
 [project]
-name = "deepspec-dspark-runtime"
+name = "deepspec-hedge-v4-eagle3-runtime"
 version = "0.1.0"
-description = "Pinned runtime environment for the DeepSeek V4 Flash DSpark MVP"
+description = "Pinned runtime environment for DeepSeek V4 Flash Eagle3 plus HEDGE"
 requires-python = "==3.11.*"
 dependencies = [
   "cuda-bindings==13.0.3",

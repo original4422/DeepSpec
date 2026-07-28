@@ -18,4 +18,26 @@ export DEEPSPEC_KEEPALIVE_PYTHON="${DEEPSPEC_EAGLE3_KEEPALIVE_PYTHON:-/home/tige
 export DEEPSPEC_KEEPALIVE_EXPECTED_GPUS=8
 export DEEPSPEC_KEEPALIVE_CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7"
 
+EAGLE_SITE_PACKAGES="/home/tiger/venvs/deepspec-hedge-v4-eagle3/lib/python3.11/site-packages"
+EAGLE_COMPAT_ROOT="/home/tiger/toolchains/deepspec-cuda-compat-13.0-580.173.02/usr/local/cuda-13.0/compat"
+if [ ! -f "$EAGLE_COMPAT_ROOT/libcuda.so.1" ]; then
+  echo "fixed CUDA 13.0 forward-compatibility prefix is absent" >&2
+  exit 2
+fi
+EAGLE_NVIDIA_LIB_DIRS=()
+for library_dir in "$EAGLE_SITE_PACKAGES"/nvidia/*/lib; do
+  if [ -d "$library_dir" ]; then
+    EAGLE_NVIDIA_LIB_DIRS+=("$library_dir")
+  fi
+done
+if [ "${#EAGLE_NVIDIA_LIB_DIRS[@]}" -eq 0 ]; then
+  echo "no lane-local NVIDIA library directories found" >&2
+  exit 2
+fi
+EAGLE_LANE_LIBRARY_PATH="$(
+  IFS=:
+  printf '%s' "${EAGLE_NVIDIA_LIB_DIRS[*]}"
+)"
+export DEEPSPEC_KEEPALIVE_LD_LIBRARY_PATH="${EAGLE_COMPAT_ROOT}:${EAGLE_LANE_LIBRARY_PATH}:/usr/local/cuda/lib64"
+
 exec bash "$REPO_ROOT/scripts/keepalive.sh" "${1:-status}" "$WORKER_ID"
