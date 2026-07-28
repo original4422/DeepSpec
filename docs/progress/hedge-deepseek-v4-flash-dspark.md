@@ -3,27 +3,27 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-28T21:25:22Z`（计划 checkpoint 后约 41 秒落盘）
+- 快照时间：`2026-07-28T22:01:31Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`00:30:41` / `2026-07-29T08:54:41Z`
-- 当前 phase：P00 环境接管仍在进行；P01/P02 离线工作并行产生了待验收证据
+- elapsed / deadline：`01:06:50` / `2026-07-29T08:54:41Z`
+- 当前 phase：P00/P01/P02 均已 PASS；P03 eligible、尚未开始
 - executor / 结论：
-  - P00：阶段未验收；8×H20 inventory 与 keepalive gate 有通过证据，独立 uv 环境尚未完成
-  - P01：handoff 已完成，主 Agent 独立复核 `PASS`；尚未 commit
-  - P02：主 Agent 已复核 pinned-torch 33/33 tests 与 identity hashes；仍不得写为阶段 `PASS`
+  - P00：主 Agent 验收 `PASS`；canonical session 全部 checks true，CUDA probe、final inventory 与 handoff 已完成
+  - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
+  - P02：主 Agent 验收 `PASS`；新正式 venv 33/33 tests PASS，commit/push `4d96f44065c07030ede67484a262006ec149626a`，READY marker 已发布
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：最近 gate 为 8 卡各 100% 且 `PASS`，supervisor PID/PGID/SID `1697`；模型 server `NOT_STARTED`
-- 最新 attempt：P00 env-r2 `20260728T211739Z-p00-env-r2` 正在从现有 uv cache copy，venv 约 6.7 GiB，已有实质进展
+- keepalive / server / PID：已从旧 runtime 定向迁移到新 HEDGE venv；新 10×1 秒 gate `PASS`，supervisor PID/PGID/SID `4730/4730/4730`；模型 server 从未启动，PID `none`
+- 最新 attempt：P00 env-r2 `20260728T211739Z-p00-env-r2` PASS；checkpoint r1 PASS
 - HDFS artifact：`/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap`
-- Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；branch `exp/hedge-v4-dspark`；HEAD `cac6c78d88df97d395406fe831f573df3016e7f7`
-- commits：core / integration / config / result 均尚未由主 Agent 创建
-- 首要 blocker：`/home/tiger/venvs/hedge-v4-dspark` 尚未完成；env-r2 正在验证能否完全复用已有固定 checkout/cache，规避 env-r1 的网络 fetch timeout
-- 下一检查点：`2026-07-28T21:54:41Z`
-- 下一 30 分钟动作：完成并验收 P00 env-r2；由主 Agent提交已复核的 P01 节点；P02 待新 venv 中 33-test 复跑后再进入 commit/push/marker 验收
+- Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；branch `exp/hedge-v4-dspark`；P02 HEAD `4d96f44065c07030ede67484a262006ec149626a`
+- commits：P01 protocol `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration / config / result 尚未创建
+- 首要 blocker：无前置 blocker；P03 DSpark integration 尚未开始
+- 下一检查点：`2026-07-28T22:24:41Z`
+- 下一 30 分钟动作：提交 P00 支撑节点；执行 P03 DSpark integration 与
+  CPU/fixture/wheel 验证
 
-> Recorder 边界：这里只转录已有证据；未登录 worker、未探测实时进程、未操作
-> keepalive/GPU、未接触 Git index，也未 commit/push。因此 PID `1697` 是最近 artifact
-> 中的状态，不是本次文档更新做出的实时存活声明。
+> Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
+> 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
 
 ## 时间线
 
@@ -82,3 +82,50 @@
   和 READY marker。
 - Git 节点：本 checkpoint 记录时 core/integration/config/result commit 仍为空；
   commit/push 由主 Agent 单独处理。
+
+### 2026-07-28T21:54:41Z — 60 分钟 checkpoint
+
+- 记录开始时间：`2026-07-28T21:54:47Z`，比计划 checkpoint 晚约 6 秒；为纳入
+  紧随其后的 P00 keepalive 迁移与 P02 commit/marker evidence，最终证据快照于
+  `2026-07-28T21:56:44Z` 完成，约晚 2 分 03 秒。
+- P00 env/source：env-r2 `20260728T211739Z-p00-env-r2` 已完成
+  `uv sync --frozen` 与 `uv pip check`（201 packages compatible）并 PASS。
+  `/home/tiger/venvs/hedge-v4-dspark` 固定为 Python 3.11、
+  torch `2.11.0+cu130`、SGLang `0.5.16`、sglang-kernel `0.4.5+cu130`、
+  FlashInfer `0.6.14`、Triton `3.6`、NCCL `2.28.9`；独立 SGLang source
+  `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` 双侧 clean。
+- P00 checkpoint：checkpoint r1 PASS，记录 75 files、48 shards、
+  166898666759 bytes，按计划未做全量 hash；canonical
+  `checkpoint_identity.json` 已原子发布。首轮 checker-scope FAIL 保留在
+  `checkpoint-attempts/...scope-failed/`。
+- P00 operational：worker `4106666` 仍为精确 8×H20、无未知 GPU task。
+  keepalive 已从历史只读 runtime 定向迁移到
+  `/home/tiger/venvs/hedge-v4-dspark/bin/python`：旧 PID/PGID/SID
+  `1697/1697/1697` 精确停止后 CUDA contexts 为 none，新 supervisor
+  `4730/4730/4730` 的 10×1 秒八卡门禁 PASS；证据为
+  `keepalive-migration/keepalive_migration.json`。SGLang server/model 从未启动。
+  P00 仍缺 CUDA links/probe、session/worker final state 和 handoff，因此仍是
+  `IN_PROGRESS`。
+- P01：主 Agent 已完成 13 tests、18/18 verifier、indices/hash 独立复核并验收
+  PASS；commit/push 为 `77053dd`。
+- P02：主 Agent 已在新正式 venv 独立运行 33/33 tests PASS；历史 pinned venv tests
+  与 identity hashes 也 PASS。pure-core commit/push 为
+  `4d96f44065c07030ede67484a262006ec149626a`（parent `77053dd`）；READY marker
+  已原子发布到
+  `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/hedge-core.json`，
+  SHA-256
+  `c9c09cd23655e395d3f3b85cbc7e1740194f9e4e174938cb5f54594afe31b80c`。
+  P02 已由主 Agent验收 `PASS`。
+- server / GPU experiment：`NOT_STARTED`；无 TP rank 或模型参与证据。
+
+### 2026-07-28T22:01:31Z — P00 主验收
+
+- canonical `session.json` 于 `2026-07-28T21:58:38.374346Z` finalized，
+  `status=PASS`，worker/checkpoint/environment/SGLang base/CUDA link/keepalive/
+  no-model-server checks 全部为 true。
+- CUDA `lib64` guarded links 与秒级 `cc` link probe PASS；第二次 guarded pass
+  两个 link 均为 `verified`。
+- final inventory 没有 SGLang/model server；新 venv keepalive supervisor
+  PID/PGID/SID `4730/4730/4730`，八卡 10×1 秒逐卡 mean/min/max 均为 100%。
+- 主 Agent 已复算 session 引用 artifact 的 SHA-256、检查 P00 脚本 shell/Python
+  语法，并验收 P00 为 `PASS`。下一 eligible phase 为 P03。
