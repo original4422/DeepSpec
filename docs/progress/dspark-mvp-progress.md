@@ -1,33 +1,38 @@
 # DeepSeek V4 Flash DSpark MVP 进展
 
-> 最后更新：2026-07-29 02:50 CST
+> 最后更新：2026-07-29 03:19 CST
 >
-> 总体状态：Phase R 恢复 attempt 正在加载，原 linker blocker 已修复
+> 总体状态：`MVP_PASS`
 >
-> 下一步：完成 packed MXFP4 JIT，等待 API ready 后顺序执行 smoke
+> 下一步：MVP 必需工作已完成；worker 保持 keepalive，等待用户后续安排
 >
-> 阻塞：无新 blocker；正式 JIT 路径验证中
+> 阻塞：无
 >
-> 下一次记录：不晚于 2026-07-29 03:20 CST
+> 记录状态：本轮为最终记录；MVP 已结束，不再继续半小时定时提交
 
 ## 当前状态
 
 | 项目 | 状态 | 说明 |
 | --- | --- | --- |
-| 4×H20 worker | 正式加载中 | Worker `4105641`；keepalive 已按 lifecycle 暂停；TP0–TP3 context 均存在 |
+| 4×H20 worker | 保活正常 | Worker `4105641`；无 SGLang/CUDA context；keepalive PID `29335`，10×1 秒四卡均为 100% |
 | Phase 01：环境 preflight | PASS | 4×H20、CUDA、拓扑、存储和源 checkpoint 基线已确认 |
 | Phase 02：正式 checkpoint | PASS | ModelScope checkpoint 已发布到 DeepSpec-owned HDFS 路径 |
 | Phase 03：uv/SGLang 环境 | PASS | uv 环境和 SGLang `v0.5.16` 固定 commit 已验证，PyTorch 可见 4 卡 |
 | Phase 04：离线运行工具链 | PASS | attempt `20260728T174820Z-phase04-tooling` 门禁通过；提交 `230c1bd` 已推送 |
 | Phase 05 attempt 01 | 启动失败 | JIT link blocker 已定位；失败证据与 reproducer 提交 `bc64012` |
-| Phase R：CUDA link 恢复 | 进行中 | attempt `20260728T184242Z-phase05-dspark-r1`；target 和 draft 均完成 48/48 shards |
-| Phase 06 验收工具 | 已准备 | 离线验收器及 fixture 已通过；提交 `c018d13`，尚未执行最终验收 |
+| Phase R：CUDA link 恢复 | PASS | attempt `20260728T184242Z-phase05-dspark-r1` 端到端完成；提交 `a2ba417` |
+| Phase 06：最终验收 | `MVP_PASS` | 候选 16/16、人工 4/4 均 PASS；结果提交 `adcdb19` |
 | HF 备用 checkpoint | PASS | fixed revision 已发布为独立 HDFS 实体副本；提交 `66ec629` 已推送 |
 
 Phase R 仅在 CUDA 13 `lib64` 下补充 `libcudart.so` 和 `libnvrtc.so` 相对 symlink；
-RED→fix→GREEN probe 通过且修复幂等。恢复 attempt 保持原模型配置，当前四个 rank
-均已加载 target 和 `DeepseekV4ForCausalLMDSpark` draft architecture，四卡显存约
-43.9–44.1 GiB，正在准备 packed MXFP4/JIT；尚未出现 linker、OOM 或 NCCL error。
+RED→fix→GREEN probe 通过且修复幂等。恢复 attempt 保持原模型配置，四个 rank
+均加载 target 和 `DeepseekV4ForCausalLMDSpark` draft architecture，并完成 packed
+MXFP4 路径。OpenAI-compatible API 返回合法非空结果；GSM8K 前 10 条全部成功并
+到达终态，本次恰好 10/10 匹配、0 mismatch、0 parse failure，匹配率不作为 gate。
+运行期间无未处理的 CUDA、NCCL、OOM 或 worker crash。
+
+正式 artifacts：
+`/mnt/hdfs/pengzegang/DeepSpec/runs/20260728T184242Z-phase05-dspark-r1`。
 
 ## 已固定的 Phase 05 首轮配置
 
@@ -41,9 +46,8 @@ RED→fix→GREEN probe 通过且修复幂等。恢复 attempt 保持原模型�
 
 ## 下一步
 
-1. 确认 packed MXFP4 JIT 正式完成并等待服务 ready；
-2. 执行 OpenAI-compatible API smoke；
-3. 顺序完成 GSM8K test split 前 10 条并生成汇总，随后执行最终验收。
+1. 继续保持 worker `4105641` 的专用四卡 keepalive，直到用户决定释放或扩展范围；
+2. 后续若开展范围外工作，以最终报告和 HDFS artifacts 作为当前可复现基线。
 
 ## 历史记录
 
@@ -62,3 +66,6 @@ RED→fix→GREEN probe 通过且修复幂等。恢复 attempt 保持原模型�
 | 2026-07-29 02:34 | Phase 05 失败证据与 linker reproducer 提交 `bc64012`；离线验收工具提交 `c018d13` |
 | 2026-07-29 02:42 | Phase R linker layout 单变量修复通过 RED→GREEN 与幂等 probe |
 | 2026-07-29 02:50 | 恢复 attempt target/draft 48/48 shards 完成；四个 rank 均加载 DSpark draft architecture |
+| 2026-07-29 02:55 | 服务 ready；API smoke PASS；GSM8K 10/10 请求完成并保存 |
+| 2026-07-29 02:58 | Phase R PASS；CUDA context 清退，keepalive 恢复并通过四卡 10×1 秒门禁 |
+| 2026-07-29 03:18 | Phase 06 最终审计得出 `MVP_PASS`；结果与复现文档提交 `adcdb19` |
