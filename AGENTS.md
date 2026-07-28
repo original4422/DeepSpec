@@ -170,6 +170,20 @@ worker 上完整重做 preflight。不得把半成品写成成功。
 
 ## 8. Preflight 与证据
 
+核查默认只服务于尽快跑通主链路：
+
+- 只执行足以进入下一阶段的最小核查，不为提前排除潜在风险或“证据更完整”重复做
+  耗时验证；允许问题在真正加载模型或启动服务时暴露，再按具体错误回退；
+- 已由可信 source manifest 验明并通过实体复制 size/path 检查的 checkpoint，不为每个
+  新副本重复读取约 166 GB 做全量 SHA-256；实际模型加载是后续可用性门禁；
+- checkpoint 默认检查文件集合、总大小、48 个 shard、index、config、tokenizer 和
+  关键 DSpark/FP4 字段；只有具体 corruption/identity 证据出现时才升级为全量 hash；
+- 环境默认检查固定 source commit、uv lock、依赖一致性、SGLang import、四卡可见和
+  一次短 CUDA 操作；不做与启动无关的长时间细粒度审计；
+- 并行阶段不得因另一已登记任务的短暂 keepalive pause 产生假失败；需要暂停 GPU 时先
+  协调所有 watcher，或改用不暂停 keepalive 的最小检查；
+- 每项额外门禁都必须是进入下一阶段的直接必要条件；否则不加入主线。
+
 首次 GPU 启动前至少记录：
 
 - Git branch、HEAD、工作区状态；

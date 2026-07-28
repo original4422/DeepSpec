@@ -1,6 +1,7 @@
 # DeepSeek-V4-Flash-DSpark 4×H20 MVP 分阶段执行计划
 
-- 状态：Phase 01 PASS；Phase 02 已获用户授权；并行 HF staging download 持续运行
+- 状态：Phase 01 PASS；Phase 02 与 Phase 03 已获用户授权并行执行；并行 HF
+  staging download 持续运行
 - 更新日期：2026-07-29
 - 仓库：`/mlx_devbox/users/pengzegang/playground/github/DeepSpec`
 - 核心目标：在单机 4×NVIDIA H20-96G 上使用 SGLang 实际跑通
@@ -11,6 +12,10 @@
 [`AGENTS.md`](../../AGENTS.md) 为准，领域语言以
 [`CONTEXT.md`](../../CONTEXT.md) 为准；本文负责定义阶段边界、依赖关系、交付物和
 交接协议。
+
+执行优先级以跑通全流程为准：阶段门禁只保留进入下一阶段的直接必要条件，不为提前
+排除潜在风险增加耗时核查。允许问题在模型加载、服务启动或 smoke test 中暴露，再按
+实际错误回退。
 
 > 主 Agent 负责分配、调整和结果验收，每个阶段由独立 subagent 实施。阶段结束后，
 > 主 Agent 必须向用户提交结果汇总、符合预期判断和下一阶段就绪判断；只有用户确认
@@ -319,10 +324,12 @@ cache。该并行任务：
 4. 禁止 symlink、hardlink、reflink 或 Hugging Face cache 引用代替实体复制；
 5. 复制期间保存进度、心跳、源目录不变证据和 worker 存活状态；
 6. 在 staging 中验证：
-   - 文件清单、48 个 shard 和总字节数；
+   - 文件清单、逐文件 size、48 个 shard 和总字节数；
    - 关键配置与 tokenizer；
-   - 每个大文件的 provider hash/LFS OID 或等价完整 manifest；
+   - `dspark_block_size=5`、packed FP4 等关键字段；
    - 无 symlink，目标 inode 不与源文件共享；
+   - 默认不对约 166 GB 目标副本重复做全量 SHA-256；只有出现具体 corruption 或
+     identity 疑点时才升级核查；
 7. 完整验证后，在同一父目录内发布为 `$MODEL_SNAPSHOT_PATH`；
 8. 最后写入包含 provider、repo、revision 或 manifest snapshot ID、来源和完成时间的
    `.complete`。
@@ -346,7 +353,8 @@ storage_after.json
 ### PASS 门禁
 
 - `$MODEL_SNAPSHOT_PATH` 是完整独立实体副本；
-- snapshot identity、48 个 shard、大小和 manifest 验证全部通过；
+- source snapshot identity 已有 Phase 01 证据，目标文件集合、逐文件 size、48 个
+  shard、index/config/tokenizer 和关键 DSpark/FP4 字段通过最小核查；
 - 源 checkpoint 未被修改；
 - 没有 staging 目录被误写成正式路径；
 - keepalive 在整个长任务期间持续健康，阶段退出时再次通过门禁。
@@ -360,9 +368,13 @@ storage_after.json
 
 ### 前置条件
 
-- Phase 02 PASS；
+- Phase 01 PASS；
 - Phase 01 的 Driver/CUDA/toolchain 证据可用；
 - keepalive 健康。
+
+用户已授权 Phase 03 与 Phase 02 并行。该例外成立是因为 Phase 03 不读取或加载模型，
+也不依赖 Phase 02 的正式 checkpoint path；Phase 03 executor 不得访问未发布的
+checkpoint staging。Phase 05 仍必须等待 Phase 02、Phase 03 和 Phase 04 各自 PASS。
 
 ### 允许执行
 
@@ -383,7 +395,8 @@ storage_after.json
    - `torch.cuda.device_count() == 4`；
    - SGLang import path、release 和 source commit；
    - DSpark 参数、`flashinfer_mxfp4` 与 `marlin` backend 在固定源码中存在；
-10. CUDA import/通信验证前暂停 keepalive，验证结束后立即清理 context 并恢复。
+10. 只做一次短 CUDA 操作，不做长时间逐卡审计。若确需暂停 keepalive，先协调所有并行
+    watcher；否则在 keepalive 运行时完成最小检查，并在进程退出后确认没有残留 context。
 
 ### 必须保存
 
