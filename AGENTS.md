@@ -1,9 +1,186 @@
 # AGENTS.md
 
-本文档约束在本仓库中工作的 Agent。当前唯一核心目标是：尽快在单机
-4×NVIDIA H20-96G 上用 SGLang 跑通
-`deepseek-ai/DeepSeek-V4-Flash-DSpark`，并完成 GSM8K test split 前 10 条的
-顺序 smoke test。除非用户明确扩展范围，不进行吞吐调优、算法对比或生产化建设。
+本文档约束在本仓库中工作的 Agent。单机 4×H20 上的
+`deepseek-ai/DeepSeek-V4-Flash-DSpark` 与 GSM8K 前 10 条 smoke test 已经完成。
+当前用户又明确授权了下述 HEDGE-on-V4 三路线实验。执行三份新计划时，第 0 节覆盖
+本文档中与它冲突的旧目标、范围和阶段确认规则；未被覆盖的 uv、存储、保活、定向
+进程清理、证据保留和单变量故障归因纪律继续生效。第 1–12 节同时保留为历史 DSpark
+MVP 的复现约束。
+
+## 0. HEDGE-on-V4 授权扩展
+
+### 0.1 计划与优先级
+
+用户会为以下计划分别打开独立 Codex 会话：
+
+| 路线 | 计划 | 优先级 | GPU lane |
+| --- | --- | --- | --- |
+| DSpark + HEDGE | `docs/plan/hedge-deepseek-v4-flash-dspark.md` | 必须完成的核心目标 | worker `4106666` 全部 8 卡，TP=8 |
+| Eagle3 + HEDGE | `docs/plan/hedge-deepseek-v4-flash-eagle3.md` | best-effort | worker `4099544` 全部 8 卡，TP=8 |
+| DFlash + HEDGE | `docs/plan/hedge-deepseek-v4-flash-dflash.md` | best-effort | worker `4099543` 全部 8 卡，TP=8 |
+
+worker ID 是临时资源，实际执行前仍须运行 `mlx worker list` 并核对 GPU 数量与身份；
+不得自动占用用户未分配的其他 worker。历史 4 卡 worker `4105641` 不参与本次
+HEDGE-on-V4 实验。三条路线使用独立 Git worktree、branch、uv 环境、端口、PID/state、
+NVMe scratch 和 HDFS run 目录，不共享可写 worktree 或 virtualenv。
+
+每个会话是其整台 8 卡 worker 的唯一 operational steward。发现任何既有任务时必须
+让它自然结束，不发送 signal、不改环境；释放后运行本项目专用的整机 8 卡 sustained
+keepalive，并逐卡验证。正式模型 attempt 紧邻地暂停整机 keepalive、确认 8 张卡的
+CUDA context 都已退出，再启动 TP=8 服务；attempt 结束后定向清理并恢复整机 keepalive。
+三个会话之间不再拆分或共享 GPU，也不需要跨会话 keepalive ACK 或进程协调。
+
+DSpark 是唯一必须成功的核心路线。Eagle3 或 DFlash 的失败不改变 DSpark 结论，也
+不得阻塞或抢占 DSpark lane。
+
+### 0.2 主从 Agent 与 12 小时自主窗口
+
+每个会话的主 Agent 负责拆分阶段、把每个执行阶段分配给 bounded subagent、审查证据、
+纠偏、验收和提交。subagent 只处理被分配的阶段，不自行 commit/push，也不越过 lane。
+本节取代第 12 节“每阶段等待用户确认”的旧规则：
+
+- 每个会话从实际开始执行时起拥有连续 12 小时自主窗口；把开始时间和截止时间写入
+  对应 `docs/experiment/` 文档顶部；
+- 主 Agent 完成阶段验收后自主进入下一阶段，无需等待用户；
+- 同一根因连续 3 次没有新证据时，不停止等待人工决策，而是主动检索一手资料、调整
+  subagent 或切换到计划内下一种最小策略；
+- “新证据”必须表现为 blocker 迁移、故障范围缩小或新的最小 reproducer，不能只因
+  参数或日志文字变化而重置计数；
+- Eagle3/DFlash 到第 9 小时仍未完成 HEDGE `B=0` 路径时，停止继续实现，用剩余
+  3 小时整理证据、复现步骤、实验文档、keepalive、commit 和 push；
+- DSpark 不执行第 9 小时早停，持续推进到成功或第 12 小时截止；
+- 截止时保留所有 attempt，恢复所属 lane keepalive，提交并 push 当前可复现状态，
+  不把不完整结果写成成功。
+
+自主授权包括：在分配的 lane 内修改 SGLang/HEDGE 源码、uv 环境和脚本，下载固定
+checkpoint，运行模型与评测，联网查询官方资料，以及定向停止本项目登记的进程。
+它不包括：切换正式引擎到 vLLM、训练新 drafter、使用未分配 worker/GPU、终止未知
+进程、执行破坏性清理或改变三路线任务定义。
+
+### 0.3 固定源码与 checkpoint
+
+三条路线统一从 SGLang `v0.5.16` source commit
+`fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` 开始。DSpark 会话负责发布一个只含
+HEDGE 核心规则及测试、可被另外两条路线 cherry-pick 的 pure core commit；每条路线
+再叠加独立 integration commits。同一路线的 native baseline、`B=0` 和 `B>0` 必须
+运行相同的最终 SGLang 源码，只通过 HEDGE 配置开关切换。
+
+pure core 的 canonical 位置是各路线 DeepSpec branch 中的 `deepspec/hedge_spec/`；
+Eagle3/DFlash 把 DSpark 发布的 pure-core commit cherry-pick 到各自 DeepSpec branch，
+再通过可复现的 patch/build 把同一 hash 的 core 注入各自独立 SGLang source。不得依赖
+当前工作目录的偶然 Python import，也不得把 DeepSpec pure-core commit 误写成 SGLang
+base 的直接父提交；最终记录同时固定 DeepSpec core SHA、SGLang base/final SHA 和注入
+内容 hash。
+
+HEDGE 核心复制源固定为
+`/mlx_devbox/users/pengzegang/playground/github/HEDGE` commit
+`9fb903d676254ea5f5d171051fb15c54f331111c` 的 tracked core/tests。复制时记录源
+SHA 与文件 hash；忽略该工作区的 untracked 文档、assets 和既有实验编排。
+
+只有实际 blocker 对应已有上游修复时，才允许 cherry-pick 最小的固定 commit，并在
+实验文档记录错误、来源 SHA 和影响；禁止切换到浮动 `main`。vLLM 或 checkpoint 作者
+的 overlay 只能作为实现参考，不能产生正式结果。
+
+固定模型身份：
+
+- DSpark：现有已验证 `deepseek-ai/DeepSeek-V4-Flash-DSpark` snapshot，HF 参考
+  revision `62af8fffb2f7030cac4de2f0169f5b8d1101b646`；
+- Eagle3 draft：`SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1` revision
+  `4c68aa4689d59cb1064f20abec7708174ee4613d`；
+- DFlash draft：`RedHatAI/DeepSeek-V4-Flash-speculator.dflash` revision
+  `e44fc94ceb1e7ed45550d15e782aeadd08050483`；
+- DFlash 唯一允许的 checkpoint-specific 备选：
+  `inference-optimization/dflash-DeepSeek-V4-Flash-speculators-50k` revision
+  `b4863ac427d3230ac0f6f6b08afeadc4ee14046a`；
+- Eagle3/DFlash 共用 target：`deepseek-ai/DeepSeek-V4-Flash` revision
+  `60d8d70770c6776ff598c94bb586a859a38244f1`。
+
+Eagle3 会话负责把共用 target 下载、最小校验并原子发布到 HDFS，DFlash 会话在完成
+标记出现后只读复用，不重复下载。只有 DFlash 首选 checkpoint 出现明确的 checkpoint
+特有问题时，才允许选择一个固定 revision 的 `inference-optimization` 备选；禁止浮动
+`latest` 或无界轮换 checkpoint。
+
+checkpoint 下载与 HDFS 发布只做进入模型加载所需的简单核查：固定 provider revision、
+核对 index referent/文件数/总大小/关键 config，并优先复用 provider LFS/OID。默认不为
+“更安全”而把约 160 GiB 权重在 NVMe 与 HDFS 各完整重读一遍计算 SHA-256；真实加载
+成功是后续可用性核查。只有发现传输损坏或身份矛盾的实际证据时才追加重校验。
+
+### 0.4 HEDGE 与正式实验协议
+
+只从 HEDGE 仓库复制核心风险预算规则、必要测试和确有用处的最小接入代码；不得继承
+其 Qwen 路线、ticket、门禁、旧实验编排或历史结论。HEDGE 核心语义包括：
+
+- `regret=max(target top logit - draft-token logit, 0)`；
+- 跨整条 request 持续存在的 per-request risk budget `B`；
+- `value_scheme=normalized_suffix`；
+- 单 token `regret/value` gate `g`；
+- 每 block 最大 relaxed mismatch 数 `m`。
+
+三条路线都独占 8×H20 并使用 TP=8。方法使用原生 proposal 宽度：DSpark 为 5，
+Eagle3 为 3，DFlash 为模型 block 8（7 个 draft candidates）。同一路线的三个 arm
+不得改变 TP、proposal 宽度或其他 decode-affecting server 配置。
+
+数据固定为 Hugging Face `openai/gsm8k`、`main/test` revision
+`740312add88f781978c0658806c59bc2815b9866`。使用 DeepSpec seed `980406` 做一次
+确定性 shuffle，前 32 条为 calibration，随后不重叠的 500 条为 formal；保存 dataset
+revision、索引和 fingerprint。请求统一为：
+
+- user content：原始 question 加
+  `Please reason step by step, and put your final answer within \boxed{}.`；
+- 无 system prompt，`chat_template_kwargs.enable_thinking=false`；
+- `temperature=0`、`top_p=1`、`max_tokens=512`；
+- 单请求顺序执行，保存完整响应。
+
+每条路线运行三类 arm：
+
+1. native speculative baseline；
+2. 32 条 calibration 上的 HEDGE `B=0`；
+3. 自动校准后的唯一 HEDGE `B>0` 正式 arm。
+
+`B=0` 只做轻量核查：比较 32 条完整输出 token IDs，有现成 trace 时再比较逐 proposal
+接受长度，不做逐 logits、逐 rank 或浮点 bitwise 审计。若失败，保存首个最小反例并
+优先修复，但仍继续完成后续流程；实验文档顶部必须标记 `B0 failed`，`B>0` 只能称为
+探索性结果。
+
+正预算在每条路线自己的 32 条 calibration 上自动确定：收集首次 strict-rejection
+barrier 的正 `regret/value`，令 `g=q25`、`B=g`、`m=1`。不得依据正式 500 条结果
+回调参数；三条路线的 `g/B` 可以不同。
+
+native baseline 和 `B>0` 各只做一次正式 500 条运行。每个 arm 在新启动的服务 ready
+后，先用 calibration 固定前 10 条 warmup；正式计时从第 1 条 formal 请求发出到第
+500 条达到终态。端到端 TPS 为全部 completion tokens 除以客户端墙钟时间；启动、
+加载和 warmup 不计入，HTTP、生成、排队与 retry 时间计入且 retry 另行报告。
+
+至少报告：
+
+- accepted draft tokens/proposal、acceptance length 与可得的逐位置接受统计；
+- completion tokens、客户端总墙钟时间和端到端 output TPS；
+- 请求成功/失败/retry、答案匹配/不匹配/解析失败；
+- baseline 与 `B>0` 的路线内差值。
+
+GPU 证据做最小充分核查：八个 TP rank 均初始化、八张物理 H20 均有模型显存并在请求
+期间参与、没有未处理的 CUDA/NCCL/worker crash。accept-index、commit length、
+request-state lifecycle 和 hidden-state layout 等深层正确性优先由小型 fixture/test
+覆盖；不得为了 live 证据增加复杂、耗时且不影响进入下一步的门禁。
+
+不设置 TPS、接受长度或 GSM8K 匹配率门槛；不做跨方法绝对 TPS 排名。
+
+### 0.5 记录、提交与结束状态
+
+每条路线在 `docs/experiment/` 维护唯一权威实验记录。文件顶部必须是快速阅读区，
+列出状态、结论或 blocker、worker/lane、源码和 checkpoint identity、B0 状态、
+校准参数、baseline/HEDGE 核心指标、正式 artifact、commit 和下一步；正文详细记录
+每个 attempt 的单变量变化、配置、日志/HDFS 路径、失败分析、复现命令和限制。
+
+每个会话还要在 `docs/progress/` 维护独立进展文件。自主窗口内至少每 30 分钟更新
+一次状态，并 commit/push；若一个长命令跨过检查点，先记录心跳，命令结束后立即补记。
+`docs/progress/` 是过程日志，不能替代 `docs/experiment/`。
+
+计划基线、pure HEDGE core、native baseline、`B=0`、自动校准、正式 500 条、关键
+恢复结论和最终收尾都属于关键 Git 节点。主 Agent 只显式暂存本路线相关小文件，按
+`$git-commit-message` 的 staged diff/status/recent log 流程生成 Conventional Commit，
+然后 commit 并 push。不得提交 checkpoint、virtualenv、cache、worker scratch、大型
+run artifact 或其他会话/用户的修改。
 
 ## 1. 优先级与完成定义
 

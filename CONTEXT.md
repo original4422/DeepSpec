@@ -1,29 +1,86 @@
-# DeepSeek-V4-Flash-DSpark MVP
+# DeepSeek-V4 Speculative Decoding Experiments
 
-本仓库当前围绕单机四卡上的 DSpark 服务与最小端到端验证开展工作。这里记录讨论中已经达成一致、且会影响后续判断的领域语言。
+本上下文定义 DeepSeek-V4 speculative decoding 与 HEDGE 实验中使用的领域语言。
+具体 worker、revision、参数和阶段步骤由 `AGENTS.md` 与 `docs/plan/` 规定。
 
 ## Language
 
-**需求对齐阶段（alignment phase）** — 用户与 Agent 正在逐项确认目标、成功标准和执行边界的阶段。此阶段不开始模型实验，也不把任何操作结果作为 MVP 成功证据；只有用户单独明确授权的 operational keepalive 可以运行。
-_Avoid_: “准备阶段”，因为它容易把环境安装、checkpoint 操作和 GPU 实验也含混地纳入授权范围。
+**Operational keepalive**:
+为避免临时 GPU worker 因低利用率被回收而运行的持续负载；它不属于模型实验，也不构成任何模型或推理链路证据。
+_Avoid_: 保活实验, 模型负载
 
-**Operational keepalive** — 唯一目的是避免临时 GPU worker 因低利用率被平台回收的运行负载。它不属于模型实验，不证明 DSpark、SGLang、checkpoint 或推理链路可用，也不能计入 MVP 完成条件。
-_Avoid_: “保活实验”或“模型负载”，因为这些说法会混淆资源保留与正式实验。
+**历史 DSpark MVP**:
+已经完成的四卡 DSpark 服务与十条 GSM8K smoke test，其规则只用于复现该结果。
+_Avoid_: 当前实验, HEDGE 基线
 
-**阶段门禁执行（stage-gated execution）** — 每个阶段由主 Agent 派出的独立 subagent 实施。阶段结束后，主 Agent 必须汇总结果、判断是否符合预期并判断能否进入下一阶段，然后等待用户确认；未获确认不得派发下一阶段。范围扩大和连续 3 次无进展后的新方向同样由用户决策。
-_Avoid_: “自动连续推进”，因为阶段间转换始终需要用户确认。
+**Phase executor**:
+由主 Agent 分配一个有界执行阶段的 subagent；跨阶段排序、纠偏、验收与提交仍属于主 Agent。
+_Avoid_: 并行总负责人
 
-**Phase executor** — 由主 Agent 为一个明确阶段派出的 subagent。它只实施被分配的阶段，负责过程日志、退出清理和 handoff；无权自行进入下一阶段或扩大范围。
-_Avoid_: “并行总负责人”，因为跨阶段排序、调整和最终验收属于主 Agent。
+**HEDGE-on-V4**:
+把 HEDGE 的风险预算接受规则及必要测试接入可运行的 DeepSeek-V4 speculative decoding 路线，而不是迁移 HEDGE 仓库的完整项目流程。
+_Avoid_: 迁移 HEDGE 项目
 
-**DeepSpec-owned checkpoint copy** — 从已验证的既有 checkpoint 创建、由 DeepSpec 存储命名空间独立持有的完整实体副本。源副本保持只读；symlink、hardlink 和 Hugging Face cache 引用不构成独立副本；目标只有在身份与完整性验证通过后才可发布为正式模型路径。
-_Avoid_: “复用 checkpoint”，因为它无法区分独立复制与跨项目引用。
+**核心路线**:
+必须完成 HEDGE 集成并取得结果的 DSpark 路线；扩展路线不能替代或稀释它。
+_Avoid_: 三路线同等优先
 
-**Pinned checkpoint snapshot** — 来自 Hugging Face 或 ModelScope 官方 `deepseek-ai/DeepSeek-V4-Flash-DSpark` 仓库、且身份不可变地记录的 checkpoint snapshot。优先使用 provider revision；若 provider 未提供可验证 revision，则使用完整逐文件 cryptographic manifest 的 hash 作为 snapshot ID。不同 provider 的非模型 metadata 不要求逐字节相同。
-_Avoid_: “latest checkpoint”，因为浮动名称不能支持复现。
+**Best-effort 扩展路线**:
+尝试把 HEDGE 接入 Eagle3 或 DFlash 的附加路线；有证据的阻碍本身可以成为最终记录。
+_Avoid_: 必须成功路线
 
-**Post-smoke handoff** — 正式 smoke test 产物完整保存后，将 SGLang 服务定向停止、确认其 CUDA context 全部退出，并恢复 operational keepalive 的交接状态。MVP 完成不承诺 API 在交接后继续在线。
-_Avoid_: “服务保持可用”，除非另行授权持续请求负载及其监控。
+**统一 SGLang V4 栈**:
+三条路线共享固定的 SGLang-derived DeepSeek-V4 target 基线，其他引擎只提供实现参考。
+_Avoid_: 多引擎对比
 
-**Diagnostic attempt** — 已有正式 DSpark attempt 失败证据后，为定位故障所属层而进行的隔离运行。它可以临时使用 target-only 启动来区分基础 checkpoint/FP4 backend 与 DSpark drafter 问题，但不得用于 benchmark、A/B 或替代 DSpark 成功；连续 3 个 attempt 均无可验证进展后，Agent 必须提交证据、后续选项与建议，由用户决定是否扩大范围。
-_Avoid_: “降级成功”，因为 diagnostic attempt 永远不满足 MVP 成功定义。
+**Native speculative baseline**:
+某条路线原生 verifier 的正式对照 arm；它使用与 HEDGE arm 相同的引擎源码、请求和 proposal 设置。
+_Avoid_: target-only baseline
+
+**轻量 `B=0` 等价性核查**:
+用零风险预算检查 HEDGE 接入是否复现 native 输出的低成本诊断；失败不阻断产物生成，但会降低后续结论等级。
+_Avoid_: B=0 硬门禁
+
+**HEDGE `B>0` arm**:
+使用校准阶段唯一确定的正风险预算运行的正式 HEDGE arm。
+_Avoid_: 手工调优 arm, 多点择优
+
+**方法原生 proposal 宽度**:
+由各 draft 方法自身定义、并在同一路线所有 arm 间保持不变的 proposal 规模。
+_Avoid_: 统一 block size
+
+**HEDGE 实验效果**:
+结合接受行为、端到端输出吞吐和答案匹配描述 HEDGE 相对 native baseline 的路线内变化。
+_Avoid_: HEDGE 加速结果
+
+**Calibration cohort**:
+只用于等价性核查和确定唯一 HEDGE 正预算的固定样本集合，不参与正式结果选择。
+_Avoid_: tuning set
+
+**Formal cohort**:
+在参数冻结后用于 native baseline 与 HEDGE 正式对照的固定、互不重叠样本集合。
+_Avoid_: calibration set
+
+**自主执行窗口**:
+用户预先授权主 Agent 在既定 lane 和范围内连续推进、换策略并提交结果的固定 timebox。
+_Avoid_: 无边界自主执行
+
+**并行 lane 所有权**:
+三个会话对各自 worktree、环境、整台 8 卡 worker、进程和运行目录拥有排他管理责任。
+_Avoid_: 共享工作区
+
+**Pinned checkpoint snapshot**:
+用不可变 provider revision 或等价 manifest 身份固定的模型快照。
+_Avoid_: latest checkpoint
+
+**共用 target snapshot**:
+由一个会话发布、供另一个会话只读复用的同一 target 实体，draft checkpoint 不包含在其中。
+_Avoid_: 重复 target 副本
+
+**Diagnostic attempt**:
+为缩小已知 blocker 范围而运行、保留完整证据且不能冒充正式成功的隔离尝试。
+_Avoid_: 降级成功
+
+**权威实验记录**:
+每条路线在 `docs/experiment/` 中维护的唯一完整实验叙事，顶部提供快速结果，正文保留复现与失败证据。
+_Avoid_: 进展日志, 最终结果摘要
