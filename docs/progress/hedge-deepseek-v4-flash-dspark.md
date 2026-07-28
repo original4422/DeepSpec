@@ -240,3 +240,27 @@
   fail-closed 拒绝且无状态变化，随后正确 status PASS；worker `4106666`
   精确 8×H20，PID/PGID/SID `4730/4730/4730`，8 卡 10×1 秒均 100%，无 server。
   这些是 operational evidence，不是正式实验负载或结果。
+
+### 2026-07-28T23:54:41Z — 180 分钟 checkpoint
+
+- 实际状态快照始于 `2026-07-28T23:54:50Z`，较计划 checkpoint 晚 9 秒。
+- P04 静态 tooling executor 已完成 handoff，未登录 worker、未暂停 keepalive、
+  未启动模型/server，也未宣称 GPU smoke PASS。新增 exact native/B0 lifecycle、
+  fixed request client、8-GPU sampler、进程归属 guard、artifact validator 与
+  immutable archive 工具。
+- executor 离线证据为 20/20 tests PASS（0 failure / 0 error，0.877 秒），
+  `bash -n`、Python compile/import、contract JSON 与 whitespace checks 均 PASS；
+  evidence：
+  `artifacts/hedge-dspark/p04-tooling/tooling_test.log`。
+- 主 Agent 独立重跑同一 20/20 tests PASS（0.936 秒），并复核 lifecycle contract：
+  native 不写 HEDGE config；B0 固定
+  `B=0,g=1e30,m=5,value_scheme=normalized_suffix,block_size=5`；formal wheel
+  实际 SHA、installed import path、patched-tree identity、PID/PGID/SID/start-ticks/
+  cmdline/hostname 与 early-exit fail-closed 规则均进入门禁。
+- 首次直接执行非 executable shell 文件的 contract 命令仅得到本地
+  `Permission denied`；运行合同本来固定为 `bash <absolute-script-path>`。
+  主 Agent 随即按该固定调用方式复验，contract JSON PASS；这未触碰 worker，
+  不是模型 attempt 或实验 blocker。
+- P04 仍为 `IN_PROGRESS`：静态 tooling 尚待独立 Git 节点 commit/push，随后才可
+  分配 native runtime executor。B0、模型参与和所有 P04 GPU attempt 仍为
+  `NOT_RUN`。
