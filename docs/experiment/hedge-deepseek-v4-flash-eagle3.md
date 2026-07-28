@@ -1,7 +1,10 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_00_ACCEPTED`。** 主 Agent 已按原始 artifact、两次只读 inventory、
-> 仓库 diff 和静态门禁验收 Phase 00。分配的 worker
+> **状态：`PHASE_01_IN_PROGRESS`。** Phase 00 已验收；Phase 01C 的一手兼容性研究
+> 与无 GPU aux contract 已验收。固定 SGLang 的顺序 blocker 已缩小为：
+> DeepSeek-V4 guard 首先拒绝 `EAGLE3`，放开后缺少独立
+> `set_eagle3_layers_to_capture` 与 V4 mHC aux capture。Phase 01A acquisition 和
+> Phase 01B 环境/runner 仍在进行，尚无模型或正式结果。分配的 worker
 > `4099544` 是准确的 8×NVIDIA H20，采集时没有 compute PID、既有 keepalive 或
 > CUDA context。按 Phase 00 授权，本阶段没有启动 keepalive、GPU workload、模型、
 > 下载或正式环境安装，也没有发送 signal。后续结果仍全部 pending。
@@ -39,7 +42,9 @@
 | Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; not acquired |
 | HEDGE core | pending DSpark pure-core marker |
 | Formal artifacts | pending |
-| Key commits | Phase 00 bootstrap 待本次主 Agent 提交后回填 SHA |
+| Phase 01C contract | logical `[1,21,40]` → hook `[2,22,41]` → 4-stream mean → `[N,3,4096]` → runner `[N,12288]`; 3 CPU tests PASS |
+| Phase 01C research | `docs/research/hedge_eagle3_phase01c/eagle3_compatibility_research.md` |
+| Key commits | Phase 00 bootstrap `9369479acb6cbd88ae98a6e04446c6d50134feae`（已 push）；Phase 01C contract 待本次主 Agent 提交后回填 |
 
 ## Phase 00：bootstrap 与 operational ownership
 
@@ -95,10 +100,11 @@ NVIDIA H20、每卡 `97871 MiB`、compute capability `9.0`。完整 UUID 和拓�
 | Attempt | Phase/mode | 单一变化 | 结果 | 根因/新证据 | Artifact |
 | --- | --- | --- | --- | --- | --- |
 | `20260728T205627Z-phase-00-bootstrap-01` | Phase 00 / CPU-only bootstrap | 新建 Eagle3 独立身份并只读 inventory | PASS，主 Agent 已验收 | 4099544 准确 8×H20 且两次 inventory 均无 compute PID/keepalive；未发 signal | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T205627Z-phase-00-bootstrap-01` |
+| `phase-01c-contract` | Phase 01C / CPU-only research + fixture | 固定 checkpoint、SGLang 与一手实现上建立 aux interface | PASS，主 Agent 复跑 3 tests | blocker 顺序缩小为 guard → V4 capture；TP ownership 明确保留到 Phase 02 live assertion | `docs/research/hedge_eagle3_phase01c/` |
 
 ## 下一步
 
-主 Agent 只读复核 Phase 00 artifact 和专属 worktree diff。验收通过后可并行派发
-Phase 01A、01B、01C；在任何长下载或等待前，应由下一阶段按授权为当前空闲 lane 建立
-并验证项目专用 8 卡 operational keepalive。本记录不声称 Phase 01 或任何模型实验已
-开始。
+继续完成 Phase 01A/01B：先解决独立 uv transport blocker并建立通过 10×1 秒门禁的
+项目专用 8 卡 operational keepalive，再启动 pinned target/draft acquisition。
+Phase 02 只能在 01A/01B 同时通过后，按 01C 已证据化的 guard → capture → loader →
+runner 顺序进入 native bring-up。本记录不声称任何模型实验已开始。
