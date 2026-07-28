@@ -38,8 +38,13 @@ GSM8K 匹配率不设门槛。不得因为答案不匹配而把一次基础设�
 - 硬件：当前 `mlx worker list` 中准确的 4×NVIDIA H20 worker；worker ID 是临时
   资源，每次操作前重新查询，不把旧 ID 当作永久配置；
 - 模型：`deepseek-ai/DeepSeek-V4-Flash-DSpark`；
-- Hugging Face revision：
-  `62af8fffb2f7030cac4de2f0169f5b8d1101b646`；
+- checkpoint provider：Hugging Face 或 ModelScope 的官方 `deepseek-ai` snapshot
+  均可；当前优先验证并复制 HDFS 上已有的 ModelScope snapshot；
+- Hugging Face 跨源参考 revision：
+  `62af8fffb2f7030cac4de2f0169f5b8d1101b646`，但不要求 ModelScope 的非模型
+  metadata 与其逐字节相同；
+- checkpoint identity：优先记录 provider revision；provider 无可验证 revision 时，
+  用完整逐文件 cryptographic manifest hash 固定 snapshot ID；
 - SGLang release：`v0.5.16`；
 - SGLang source commit：
   `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`；
@@ -119,21 +124,31 @@ worker 上完整重做 preflight。不得把半成品写成成功。
 | --- | --- |
 | 本 Git 仓库 | 代码、配置、脚本、文档和小型可复现结果 |
 | `/home/tiger/venvs/deepspec-dspark` | uv 创建的独立 Python 环境 |
-| `/mnt/hdfs/pengzegang/DeepSpec` | 模型、Hugging Face 大文件、持久 run artifacts |
-| worker `/tmp` | 可丢弃的编译和单次运行 scratch |
+| `/mnt/hdfs/pengzegang/DeepSpec` | 模型、需要跨 worker/阶段保留的大文件和持久 run artifacts |
+| worker NVMe `/tmp` | 需要 POSIX 语义的下载、编译、cache、活动日志和单次运行 scratch |
 
 硬约束：
 
 - checkpoint、转换权重和大型 cache 不得写入开发机共享 root 或 Git 仓库；
-- worker `/tmp` 不得保存唯一副本；
-- HDFS 不用于高频小文件 scratch；
-- 下载必须使用固定 revision、临时目录和完成标记；校验完整后才发布为正式模型路径；
-- 对已经存在的 HDFS checkpoint，必须先用 manifest 证明它是同一固定 revision，再从
-  源目录只读地复制到 DeepSpec 命名空间中的临时目录；完整校验通过后才发布；
+- 并非所有中间数据都必须直接写入 HDFS。凡是依赖 file lock、`ftruncate`、长时间
+  append、频繁小文件、mmap 或其他 HDFS FUSE 不完整支持的 POSIX 操作，必须先在
+  worker NVMe `/tmp` 的项目专用目录完成；
+- 只有需要跨 worker、跨阶段或供最终验收留存的数据才转移到 HDFS。转移前先在 NVMe
+  完成校验，转移时使用唯一 staging，转移后再次验证 size/hash/manifest；二次校验
+  通过后才可删除 NVMe 唯一副本或发布 HDFS 正式路径；
+- worker `/tmp` 不得保存唯一持久副本；用户已授权 Hugging Face acquisition 先在
+  worker NVMe `/tmp` 完成固定 snapshot 下载和校验，再复制到 HDFS staging。NVMe
+  内容始终视为可丢弃 acquisition scratch，不得直接发布为正式模型路径；
+- HDFS 不用于高频小文件或要求完整 POSIX 语义的活动 scratch；活动日志可先写 NVMe，
+  在检查点或任务结束时以短生命周期文件操作封存到 HDFS；
+- 下载必须使用 pinned snapshot、临时目录和完成标记；校验完整后才发布为正式模型路径；
+- 对已经存在的 HDFS checkpoint，必须证明它来自允许的官方 provider，并用 provider
+  revision 或完整逐文件 cryptographic manifest 固定 snapshot identity，再从源目录
+  只读地复制到 DeepSpec 命名空间中的临时目录；完整校验通过后才发布；
 - DeepSpec 模型路径必须是约 155.4 GiB 的独立实体副本，禁止用 symlink、hardlink 或
-  Hugging Face cache 引用代替复制；源目录保持不变；
-- 若既有 checkpoint 无法证明 revision 或完整性，不凭目录名复制，改为下载固定
-  revision 并按同样的临时目录、校验和发布流程处理；
+  provider cache 引用代替复制；源目录保持不变；
+- 若既有 checkpoint 无法证明官方来源、snapshot identity 或完整性，不凭目录名复制，
+  改为下载 pinned snapshot 并按同样的临时目录、校验和发布流程处理；
 - 运行前检查开发机、HDFS 和 worker `/tmp` 容量。
 
 ## 7. uv 与依赖纪律
@@ -162,7 +177,8 @@ worker 上完整重做 preflight。不得把半成品写成成功。
 - Driver、CUDA compatibility、NCCL 和 GPU topology；
 - PyTorch CUDA 可用性与准确的 4 卡数量；
 - HDFS、共享 root 和 worker `/tmp` 容量；
-- 模型 revision、总文件数、48 个权重 shard、文件大小与关键 manifest hash；
+- 模型 provider、repo、provider revision 或 manifest snapshot ID、总文件数、48 个
+  权重 shard、文件大小与关键 manifest hash；
 - SGLang import path、版本和 source commit；
 - resolved 启动命令与显式环境变量。
 
@@ -211,7 +227,7 @@ FlashInfer、Hugging Face 文档、release notes、issue 和 PR。技术问题�
 默认回退顺序：
 
 1. 环境、Driver/CUDA/toolchain、PyTorch 和固定 SGLang identity；
-2. 模型 revision、manifest、DSpark config 与 FP4 layout；
+2. 模型 provider/snapshot identity、manifest、DSpark config 与 FP4 layout；
 3. packed-FP4 Hopper backend：`flashinfer_mxfp4` 后 `marlin`；
 4. 更短 context、更低 `mem-fraction-static` 和准确的单并发；
 5. 确认所有 CUDA Graph、overlap、compact verify 和高级 cache 已关闭；
@@ -261,6 +277,10 @@ diagnostic attempt，以区分基础 checkpoint/FP4 backend 与 DSpark drafter �
   自行进入下一阶段。
 - 主 Agent 不替代 phase executor 实施阶段性工作；它可以维护 operational keepalive、
   修改协调文档、做只读复核，并在验收不通过时向原 subagent 追派修正或重新分配阶段。
+- 用户已单独授权在 Phase 01 期间由另一 subagent 并行下载固定 Hugging Face revision：
+  先下载到 worker NVMe 的唯一 `/tmp` scratch，完整校验后复制到唯一 HDFS staging。
+  该下载只产生候选实体文件，不构成 Phase 02 PASS，不得发布或替换正式模型路径，也
+  不得干扰 ModelScope source 的只读 manifest 校验。
 - 每个阶段结束后，主 Agent 必须向用户提交结果汇总、是否符合预期的判断，以及是否
   具备进入下一阶段的条件。只有用户明确确认后，主 Agent 才能调度下一阶段。
 - 扩大硬件范围、引入 offload、改变 checkpoint 表示或执行破坏性操作仍须另行确认。

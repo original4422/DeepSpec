@@ -1,7 +1,7 @@
 # DeepSeek-V4-Flash-DSpark 4×H20 MVP 分阶段执行计划
 
-- 状态：Phase 01 已授权；后续阶段采用用户确认门禁
-- 更新日期：2026-07-28
+- 状态：Phase 01 PASS；Phase 02 已获用户授权；并行 HF staging download 持续运行
+- 更新日期：2026-07-29
 - 仓库：`/mlx_devbox/users/pengzegang/playground/github/DeepSpec`
 - 核心目标：在单机 4×NVIDIA H20-96G 上使用 SGLang 实际跑通
   `deepseek-ai/DeepSeek-V4-Flash-DSpark`，并完成 GSM8K test split
@@ -23,7 +23,7 @@
 1. 当前 worker 被准确识别为单机 4×NVIDIA H20-96G，且四张卡实际参与推理；
 2. 正式环境由 uv 独立管理；
 3. 实际运行固定的 SGLang source commit；
-4. 固定 revision 的官方 checkpoint 完整加载；
+4. pinned official checkpoint snapshot 完整加载；
 5. 日志证明 `speculative_algorithm='DSPARK'`；
 6. 四个 TP rank 均成功加载 DSpark draft architecture，无静默降级；
 7. OpenAI-compatible API 返回合法、非空响应；
@@ -43,7 +43,9 @@ GSM8K 匹配率只展示，不设成功门槛。target-only diagnostic attempt �
 | --- | --- |
 | 硬件 | 当前 `mlx worker list` 中准确的单机 4×H20-96G worker |
 | 模型 | `deepseek-ai/DeepSeek-V4-Flash-DSpark` |
-| Hugging Face revision | `62af8fffb2f7030cac4de2f0169f5b8d1101b646` |
+| checkpoint provider | Hugging Face 或 ModelScope 官方 `deepseek-ai` snapshot；优先已有 ModelScope source |
+| Hugging Face 跨源参考 | `62af8fffb2f7030cac4de2f0169f5b8d1101b646`，不是 ModelScope metadata 相等门禁 |
+| snapshot identity | provider revision；若不可得则为完整逐文件 cryptographic manifest hash |
 | SGLang release | `v0.5.16` |
 | SGLang source commit | `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` |
 | 并行方式 | TP=4；禁用 DP、PP、EP 和分离式部署 |
@@ -54,7 +56,8 @@ GSM8K 匹配率只展示，不设成功门槛。target-only diagnostic attempt �
 | 首轮禁止项 | FP4→FP8 dequant、compact verify、所有 CUDA Graph、overlap schedule、radix cache |
 | 请求模型 | 单请求顺序执行、低并发、短上下文 |
 | 环境 | uv；正式虚拟环境 `/home/tiger/venvs/deepspec-dspark` |
-| 大文件 | `/mnt/hdfs/pengzegang/DeepSpec` |
+| 持久大文件 | `/mnt/hdfs/pengzegang/DeepSpec` |
+| POSIX scratch | worker NVMe `/tmp` 下的项目专用、attempt 唯一目录 |
 | 故障停止点 | 连续 3 个 attempt 无可验证进展后停止并交还用户决策 |
 | 结束状态 | 停止 SGLang、清空 CUDA context、恢复 keepalive |
 
@@ -72,9 +75,24 @@ FORMAL_VENV=/home/tiger/venvs/deepspec-dspark
 HDFS_ROOT=/mnt/hdfs/pengzegang/DeepSpec
 SOURCE_MODEL=/mnt/hdfs/pengzegang/HEDGE/models/deepseek-ai__DeepSeek-V4-Flash-DSpark
 MODEL_PARENT=/mnt/hdfs/pengzegang/DeepSpec/models/deepseek-ai__DeepSeek-V4-Flash-DSpark
-MODEL_REVISION_PATH=/mnt/hdfs/pengzegang/DeepSpec/models/deepseek-ai__DeepSeek-V4-Flash-DSpark/revisions/62af8fffb2f7030cac4de2f0169f5b8d1101b646
+MODEL_SNAPSHOT_PATH=/mnt/hdfs/pengzegang/DeepSpec/models/deepseek-ai__DeepSeek-V4-Flash-DSpark/snapshots/<snapshot-id-from-phase01>
 RUN_ROOT=/mnt/hdfs/pengzegang/DeepSpec/runs
 ```
+
+### 存储执行原则
+
+不要求所有数据直接写入 HDFS。HDFS 是持久留存层；worker NVMe `/tmp` 是需要完整
+POSIX 语义的执行层：
+
+- Hugging Face cache/lock、`ftruncate`、长时间 append、频繁小文件、mmap、编译
+  scratch 和活动日志先放在 `/tmp/deepspec-<attempt-id>/`；
+- 在 NVMe 上先完成本阶段要求的 size/hash/manifest 或结果完整性校验；
+- 只有需要跨 worker、跨阶段或供最终验收留存的数据才复制到 HDFS 的唯一 staging；
+- HDFS 副本完成后二次校验，通过后才发布正式路径或删除 NVMe 上的唯一候选副本；
+- NVMe 数据在完成持久化前不得被描述为 durable artifact；HDFS staging 在发布前
+  不得写正式 `.complete`；
+- 每个 handoff 必须记录 NVMe 路径、HDFS 目标、转移状态、二次校验状态，以及仍可
+  安全清理的 scratch。
 
 attempt ID 使用 UTC 时间和阶段名，示例：
 
@@ -226,18 +244,19 @@ Phase 01 → Phase 02 → Phase 03 → Phase 04 → Phase 05 → Phase 06
    - 48 个权重 shard；
    - `config.json`、tokenizer、权重 index 和 `.complete`；
    - `dspark_block_size=5`、量化配置和 DSpark draft 配置；
-   - 本地 manifest、关键文件 hash 和 revision provenance；
-7. 使用 Hugging Face 固定 revision 的官方文件/LFS metadata 验证源目录身份，不能凭
-   目录名推断；
+   - provider/repo provenance、本地完整 manifest、关键文件 hash；
+   - provider revision；若不可得则计算完整 manifest snapshot ID；
+7. 可使用 Hugging Face 参考 revision 的官方文件/LFS metadata 做跨源对照，但
+   ModelScope 非模型 metadata 不需要与 Hugging Face 逐字节相同；
 8. 对需要占用 GPU 的短 NCCL/P2P 检查，按通用协议暂停并恢复 keepalive。
 
 ### 获取方式决策
 
-- 如果既有源 checkpoint 可证明与固定 revision 完全一致，Phase 02 选择
-  `copy_verified_source`；
-- 如果无法证明 revision 或完整性，记录具体缺口，Phase 02 选择
-  `download_fixed_revision`；
-- 不允许把“文件看起来齐全”当作 revision 证明。
+- 如果既有 ModelScope source 可证明官方 repo provenance、内容完整，并能用 provider
+  revision 或完整 manifest hash 固定身份，Phase 02 选择 `copy_verified_source`；
+- 如果无法证明官方来源、snapshot identity 或完整性，记录具体缺口，Phase 02 选择
+  `download_pinned_snapshot`；
+- 不允许把“文件看起来齐全”当作 snapshot identity 或完整性证明。
 
 ### 必须保存
 
@@ -256,7 +275,7 @@ preflight.log
 - Driver/CUDA compatibility、topology、P2P/NCCL 没有未解释的硬 blocker；
 - 三类存储位置容量均已记录，HDFS 能容纳独立模型副本和运行产物；
 - 模型获取方式被明确判定为 `copy_verified_source` 或
-  `download_fixed_revision`；
+  `download_pinned_snapshot`；
 - keepalive 在阶段退出时健康。
 
 ### Handoff
@@ -266,27 +285,47 @@ preflight.log
 
 ## 7. Phase 02：创建 DeepSpec-owned checkpoint copy
 
+### Phase 01 并行下载例外
+
+用户已明确授权在 Phase 01 只读校验 ModelScope source 的同时，由另一 subagent 将
+Hugging Face 固定参考 revision 下载到 worker NVMe，再复制到唯一 HDFS staging。
+worker `/tmp` 已记录约 3.08 TB 可用空间，足以容纳完整 snapshot 和 acquisition
+cache。该并行任务：
+
+- 在唯一 `/tmp` scratch 中保存 HF cache、lock、partial 和 live log，避免 HDFS FUSE
+  不支持 `ftruncate`/file lock 的问题；
+- NVMe 下载完成后先验证固定 revision、74 files、48 shards、size/hash，再按官方
+  文件清单复制实体文件到 HDFS staging；
+- NVMe 与 HDFS staging 都只生成候选实体文件，不发布 `$MODEL_SNAPSHOT_PATH`；
+- 不构成 Phase 02 PASS，也不绕过阶段间用户确认；
+- 不修改 ModelScope source，不暂停 keepalive，不启动模型；
+- 使用独立 attempt/artifact/handoff；
+- Phase 01 验收后由主 Agent 比较 provider identity、manifest、完整性、耗时和已下载
+  状态，再向用户建议 Phase 02 应复制 ModelScope、发布 HF staging，或采用其他最小
+  数据移动方案。
+
 ### 前置条件
 
 - Phase 01 PASS；
 - `acquisition_decision.json` 明确模型来源；
-- `$MODEL_REVISION_PATH` 的父目录空间充足；
+- `$MODEL_SNAPSHOT_PATH` 的父目录空间充足；
 - keepalive 健康。
 
 ### 允许执行
 
-1. 在 `$MODEL_PARENT/revisions/` 下创建同文件系统的唯一 staging 目录；
+1. 在 `$MODEL_PARENT/snapshots/` 下创建同文件系统的唯一 staging 目录；
 2. `copy_verified_source` 模式下只读复制 `$SOURCE_MODEL`；
-3. `download_fixed_revision` 模式下只下载固定 revision，不跟随浮动 branch；
+3. `download_pinned_snapshot` 模式下只下载明确 pinned snapshot，不跟随浮动 branch；
 4. 禁止 symlink、hardlink、reflink 或 Hugging Face cache 引用代替实体复制；
 5. 复制期间保存进度、心跳、源目录不变证据和 worker 存活状态；
 6. 在 staging 中验证：
    - 文件清单、48 个 shard 和总字节数；
    - 关键配置与 tokenizer；
-   - 每个大文件的固定 revision hash/LFS OID 或等价完整 manifest；
+   - 每个大文件的 provider hash/LFS OID 或等价完整 manifest；
    - 无 symlink，目标 inode 不与源文件共享；
-7. 完整验证后，在同一父目录内发布为 `$MODEL_REVISION_PATH`；
-8. 最后写入包含 revision、manifest hash、来源和完成时间的 `.complete`。
+7. 完整验证后，在同一父目录内发布为 `$MODEL_SNAPSHOT_PATH`；
+8. 最后写入包含 provider、repo、revision 或 manifest snapshot ID、来源和完成时间的
+   `.complete`。
 
 如果正式目标目录已经存在：
 
@@ -306,8 +345,8 @@ storage_after.json
 
 ### PASS 门禁
 
-- `$MODEL_REVISION_PATH` 是完整独立实体副本；
-- revision、48 个 shard、大小和 manifest 验证全部通过；
+- `$MODEL_SNAPSHOT_PATH` 是完整独立实体副本；
+- snapshot identity、48 个 shard、大小和 manifest 验证全部通过；
 - 源 checkpoint 未被修改；
 - 没有 staging 目录被误写成正式路径；
 - keepalive 在整个长任务期间持续健康，阶段退出时再次通过门禁。
@@ -552,7 +591,7 @@ Phase R 不是固定主路径；只有 Phase 05 或前一个 Phase R 留下完�
 ### 默认排查顺序
 
 1. 正式环境、Driver/CUDA/toolchain、PyTorch 和 SGLang identity；
-2. 模型 revision、manifest、DSpark config 与 packed FP4 layout；
+2. 模型 provider/snapshot identity、manifest、DSpark config 与 packed FP4 layout；
 3. 有明确 `flashinfer_mxfp4` backend/kernel 证据后，单变量切换到 `marlin`；
 4. 分别尝试更短 context 或更低 `mem-fraction-static`，一次只能改变一个；
 5. 再次确认所有 CUDA Graph、overlap、compact verify 和高级 cache 已关闭；
@@ -609,7 +648,8 @@ worker 被平台回收导致的 `INTERRUPTED` 不写成技术失败，但 replac
 
 1. 交叉核对正式 attempt 的配置、环境、源码、模型、日志和 API/GSM8K 产物；
 2. 验证四个 TP rank、四卡显存与请求期间逐卡利用率证据；
-3. 验证 checkpoint revision、SGLang source commit 和 uv 环境 identity；
+3. 验证 checkpoint provider/snapshot identity、SGLang source commit 和 uv 环境
+   identity；
 4. 重新计算 GSM8K summary，确认原始 JSONL 与汇总一致；
 5. 区分正常 shutdown 与真实 crash；
 6. 检查没有未登记的模型进程或 CUDA context；

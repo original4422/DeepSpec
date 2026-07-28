@@ -19,6 +19,9 @@ _Avoid_: “并行总负责人”，因为跨阶段排序、调整和最终验�
 **DeepSpec-owned checkpoint copy** — 从已验证的既有 checkpoint 创建、由 DeepSpec 存储命名空间独立持有的完整实体副本。源副本保持只读；symlink、hardlink 和 Hugging Face cache 引用不构成独立副本；目标只有在身份与完整性验证通过后才可发布为正式模型路径。
 _Avoid_: “复用 checkpoint”，因为它无法区分独立复制与跨项目引用。
 
+**Pinned checkpoint snapshot** — 来自 Hugging Face 或 ModelScope 官方 `deepseek-ai/DeepSeek-V4-Flash-DSpark` 仓库、且身份不可变地记录的 checkpoint snapshot。优先使用 provider revision；若 provider 未提供可验证 revision，则使用完整逐文件 cryptographic manifest 的 hash 作为 snapshot ID。不同 provider 的非模型 metadata 不要求逐字节相同。
+_Avoid_: “latest checkpoint”，因为浮动名称不能支持复现。
+
 **Post-smoke handoff** — 正式 smoke test 产物完整保存后，将 SGLang 服务定向停止、确认其 CUDA context 全部退出，并恢复 operational keepalive 的交接状态。MVP 完成不承诺 API 在交接后继续在线。
 _Avoid_: “服务保持可用”，除非另行授权持续请求负载及其监控。
 
