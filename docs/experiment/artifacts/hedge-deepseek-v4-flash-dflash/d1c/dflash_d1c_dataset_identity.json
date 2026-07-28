@@ -1,0 +1,53 @@
+{
+  "acquisition": {
+    "cache_dir": "/tmp/deepspec-hedge-dflash/dflash_d1c_hf_cache",
+    "provider_revision_resolved_via": "HfApi.dataset_info",
+    "requested_revision": "740312add88f781978c0658806c59bc2815b9866",
+    "resolved_revision": "740312add88f781978c0658806c59bc2815b9866"
+  },
+  "dataset": {
+    "column_names": [
+      "question",
+      "answer"
+    ],
+    "content_sha256": "32f83c6becb3ba208d16bff80901547266e937b3f77c56d3ebe6a9bc3a9b41c4",
+    "datasets_fingerprint": "59ec1b7f9357c7a2",
+    "row_count": 1319
+  },
+  "generator": {
+    "versions": {
+      "datasets": "4.8.5",
+      "fsspec": "2026.2.0",
+      "huggingface_hub": "0.36.2",
+      "pyarrow": "25.0.0",
+      "python": "3.11.2"
+    }
+  },
+  "immutable": true,
+  "schema_version": 1,
+  "selection_authority": {
+    "authority": "dspark_published_shared_manifest",
+    "shared_manifest": {
+      "git_commit": "77053dd3ea84bb1c8dde7971f5f12759c1375e1f",
+      "local_copy": "dflash_d1c_dspark_shared_dataset_manifest.json",
+      "provider_lane": "dspark",
+      "published_git_branch": "origin/exp/hedge-v4-dspark",
+      "sha256": "34db2fc76099b2725f51dfd6ceeb1410802ad54c9008b2ab3cc1b8927f02be90",
+      "source_path_at_generation": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark/artifacts/hedge-dspark/p01-protocol/dataset_manifest.json",
+      "validated_fields": [
+        "source repo/config/split/revision/resolved_revision",
+        "dataset row_count/datasets_fingerprint/content_sha256",
+        "selection seed/counts/indices/disjointness"
+      ],
+      "validation": "PASS"
+    }
+  },
+  "source": {
+    "config": "main",
+    "provider": "Hugging Face",
+    "repo_id": "openai/gsm8k",
+    "resolved_revision": "740312add88f781978c0658806c59bc2815b9866",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "split": "test"
+  }
+}

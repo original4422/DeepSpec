@@ -1,0 +1,68 @@
+{
+  "request_record": {
+    "answer_statuses": [
+      "match",
+      "mismatch",
+      "parse_failure",
+      "request_failed"
+    ],
+    "format": "JSON Lines; one durable terminal record per sample",
+    "required_fields": [
+      "request_index",
+      "dataset_index",
+      "cohort",
+      "cohort_position",
+      "question",
+      "answer",
+      "reference_answer",
+      "prompt",
+      "request_payload",
+      "request_started_at_utc",
+      "attempts",
+      "retry_count",
+      "terminal",
+      "terminal_state",
+      "terminal_at_utc",
+      "latency_seconds",
+      "tokenized_input",
+      "full_response",
+      "model_text",
+      "output_token_ids",
+      "usage",
+      "extracted_answer",
+      "extraction_rule",
+      "parse_status",
+      "answer_status"
+    ],
+    "terminal_states": [
+      "success",
+      "request_failed"
+    ]
+  },
+  "response_evidence": {
+    "completion_tokens_must_equal_output_token_id_count": true,
+    "completion_tokens_path": "usage.completion_tokens",
+    "logprob_fallback_forbidden": true,
+    "output_token_ids_path": "choices[0].meta_info.output_token_ids",
+    "output_token_ids_required": true,
+    "prompt_token_ids_path": "choices[0].prompt_token_ids"
+  },
+  "schema_version": 1,
+  "summary": {
+    "e2e_output_tps": "completion_tokens / wall_time_seconds",
+    "required_fields": [
+      "cohort_kind",
+      "request_count",
+      "timed_request_count",
+      "all_terminal",
+      "terminal_counts",
+      "retry_count",
+      "completion_tokens",
+      "wall_time_started_at_utc",
+      "wall_time_ended_at_utc",
+      "wall_time_seconds",
+      "e2e_output_tps",
+      "timing_definition"
+    ]
+  }
+}

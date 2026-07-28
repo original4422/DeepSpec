@@ -1,0 +1,54 @@
+{
+  "cohorts": {
+    "calibration": {
+      "count": 32,
+      "prompt_content_sha256": "51cd956f264e6c2efb748351b6170a1207c616cea01871049514579bda5de334"
+    },
+    "formal": {
+      "count": 500,
+      "prompt_content_sha256": "91e22f7adeca7ab29c90e0807c61171ec4713e1d5e6755dbf012c48351955986"
+    },
+    "warmup": {
+      "count": 10,
+      "prompt_content_sha256": "20200fae9dc779c5811cb1d95f39983cbb64d78fb81eb65a10012c15fbf8f803",
+      "source": "first 10 calibration rows in fixed order"
+    }
+  },
+  "evidence_extensions": {
+    "logprobs_requested": false,
+    "observational_only": [
+      "return_prompt_token_ids",
+      "return_meta_info"
+    ],
+    "output_token_ids_path": "choices[0].meta_info.output_token_ids",
+    "prompt_token_ids_path": "choices[0].prompt_token_ids",
+    "return_meta_info": true,
+    "return_prompt_token_ids": true
+  },
+  "execution": {
+    "max_concurrency": 1,
+    "request_order": "single_request_sequential"
+  },
+  "generation": {
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "max_tokens": 512,
+    "stream": false,
+    "temperature": 0,
+    "top_p": 1
+  },
+  "prompt": {
+    "composition": "raw_question + newline + exact_suffix",
+    "messages": [
+      {
+        "content": "<composed prompt>",
+        "role": "user"
+      }
+    ],
+    "separator": "\n",
+    "suffix": "Please reason step by step, and put your final answer within \\boxed{}.",
+    "system_prompt": null
+  },
+  "schema_version": 1
+}

@@ -14,7 +14,7 @@ SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / `NO
 
 HEDGE pure-core SHA: `WAIT`
 
-Dataset revision / seed / fingerprint: `openai/gsm8k@740312add88f781978c0658806c59bc2815b9866` / `980406` / `NOT_PREPARED`
+Dataset revision / seed / fingerprint: `openai/gsm8k@740312add88f781978c0658806c59bc2815b9866` / `980406` / HF `59ec1b7f9357c7a2`, content `32f83c6b…b41c4`
 
 B0 PASS|FAIL|NOT_RUN: `NOT_RUN`
 
@@ -32,7 +32,7 @@ Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d0/`
 
 Git commit: `D0 governance baseline — this commit; exact SHA will be recorded at the next progress checkpoint`
 
-下一步：保持本 lane keepalive，并行调度 D1A/D1B/D1C。
+下一步：保持本 lane keepalive，完成 D1A/D1B 验收后调度独立 D2 executor。
 
 ## D0 会话与资源基线
 
@@ -49,3 +49,16 @@ Eagle target 与 DSpark pure-core canonical coordination pointer 当前均不存
 
 主 Agent 已直接复核 D0 的 6 份 JSON、80 行逐卡采样、脚本语法、跨 artifact identity、
 远端实时 keepalive 状态和原 DSpark worktree 状态；D0 退出门禁验收通过。
+
+## D1C 数据与请求 harness
+
+固定 GSM8K test split 经 seed `980406` 一次 shuffle，形成 32 条 calibration 与其后
+不重叠的 500 条 formal；前 10 条 calibration 固定为每个正式 arm 的 warmup。DFlash
+保存的 shared manifest 与 DSpark `77053dd3ea84bb1c8dde7971f5f12759c1375e1f`
+byte-identical，SHA-256 为 `34db2fc76099b2725f51dfd6ceeb1410802ad54c9008b2ab3cc1b8927f02be90`。
+
+顺序 harness 固定单条 user message、非思考、temperature 0、top_p 1、max_tokens 512，
+保存 prompt/output token IDs、完整响应、usage、latency、retry、终态与答案解析。
+正式请求不启用 `logprobs`；canonical output token IDs 严格来自
+`choices[0].meta_info.output_token_ids`，避免给正式 TPS 引入计划外开销。主 Agent
+复跑 13 个 mock tests，并复算 9 个 artifact hash、32/500 indices 与无重叠，均 PASS。
