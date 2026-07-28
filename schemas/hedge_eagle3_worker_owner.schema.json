@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deepspec.local/schemas/hedge-eagle3-worker-owner.schema.json",
+  "title": "DeepSpec HEDGE Eagle3 worker assignment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "session",
+    "status",
+    "worker_id",
+    "expected_gpu_count",
+    "expected_gpu_model",
+    "gpu_indices",
+    "gpu_uuids",
+    "tp_size",
+    "cuda_visible_devices",
+    "worktree",
+    "branch",
+    "state_dir",
+    "scratch_root",
+    "hdfs_root",
+    "run_root",
+    "coordination_root",
+    "http_port",
+    "assigned_at",
+    "implementation_cutoff",
+    "hard_stop",
+    "signals_sent"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "worker_assignment"
+    },
+    "session": {
+      "const": "hedge-v4-eagle3"
+    },
+    "status": {
+      "enum": [
+        "WAIT_EXISTING_TASKS",
+        "READY_FOR_KEEPALIVE",
+        "KEEPALIVE_ACTIVE",
+        "MODEL_ATTEMPT_ACTIVE",
+        "CLOSED"
+      ]
+    },
+    "worker_id": {
+      "const": "4099544"
+    },
+    "expected_gpu_count": {
+      "const": 8
+    },
+    "expected_gpu_model": {
+      "const": "NVIDIA H20"
+    },
+    "gpu_indices": {
+      "const": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "gpu_uuids": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^GPU-"
+      }
+    },
+    "tp_size": {
+      "const": 8
+    },
+    "cuda_visible_devices": {
+      "const": "0,1,2,3,4,5,6,7"
+    },
+    "worktree": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "branch": {
+      "const": "exp/hedge-v4-eagle3"
+    },
+    "state_dir": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "scratch_root": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "hdfs_root": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "run_root": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "coordination_root": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "http_port": {
+      "const": 31001
+    },
+    "assigned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "implementation_cutoff": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "hard_stop": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signals_sent": {
+      "type": "array",
+      "maxItems": 0
+    }
+  }
+}

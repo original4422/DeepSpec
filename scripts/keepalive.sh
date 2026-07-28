@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# Retain the exact 4-GPU DSpark worker above the platform utilization floor.
+# Generic controller defaulting to DSpark's 4-GPU lane; a dedicated wrapper
+# may pin exact lane-specific overrides, such as Eagle3's 8-GPU inventory.
 # This operational load must never overlap with a model experiment.
 
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STATE_DIR="/home/tiger/.deepspec-dspark-keepalive"
-PYTHON="${DEEPSPEC_DSPARK_KEEPALIVE_PYTHON:-/home/tiger/venvs/hedge-deepspec/bin/python}"
+STATE_DIR="${DEEPSPEC_KEEPALIVE_STATE_DIR:-/home/tiger/.deepspec-dspark-keepalive}"
+PYTHON="${DEEPSPEC_KEEPALIVE_PYTHON:-${DEEPSPEC_DSPARK_KEEPALIVE_PYTHON:-/home/tiger/venvs/hedge-deepspec/bin/python}}"
 LOAD_SCRIPT="$REPO/scripts/keepalive_load.py"
-EXPECTED_GPUS=4
+EXPECTED_GPUS="${DEEPSPEC_KEEPALIVE_EXPECTED_GPUS:-4}"
+CUDA_DEVICES="${DEEPSPEC_KEEPALIVE_CUDA_VISIBLE_DEVICES:-0,1,2,3}"
 MINIMUM_UTILIZATION=40
 PLATFORM_THRESHOLD=30
 MATRIX_SIZE=8192
@@ -119,7 +121,7 @@ require_idle_gpu_inventory() {
     }
     END { exit !(count == expected && !busy) }
   ' <<<"$utilization"; then
-    echo "refusing keepalive on a busy or non-4-GPU inventory" >&2
+    echo "refusing keepalive on a busy or non-${EXPECTED_GPUS}-GPU inventory" >&2
     printf '%s\n' "$utilization" >&2
     return 1
   fi
@@ -202,6 +204,7 @@ start_load() {
     "keepalive start worker=$WORKER_ID host=$HOST expected_gpus=$EXPECTED_GPUS minimum_utilization=$MINIMUM_UTILIZATION platform_threshold=$PLATFORM_THRESHOLD"
   (
     exec 9>&-
+    export CUDA_VISIBLE_DEVICES="$CUDA_DEVICES"
     export LD_LIBRARY_PATH="/usr/local/cuda/compat:/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}"
     exec setsid nohup "$PYTHON" "$LOAD_SCRIPT" load \
       --expected-gpus "$EXPECTED_GPUS" \

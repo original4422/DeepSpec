@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deepspec.local/schemas/hedge-eagle3-keepalive-owner.schema.json",
+  "title": "DeepSpec HEDGE Eagle3 eight-GPU keepalive owner",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "session",
+    "worker_id",
+    "hostname",
+    "pid",
+    "pgid",
+    "sid",
+    "start_ticks",
+    "uid",
+    "user",
+    "command_line",
+    "state_dir",
+    "expected_gpu_count",
+    "gpu_indices",
+    "gpu_uuids",
+    "cuda_visible_devices",
+    "minimum_mean_utilization",
+    "sample_count",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "operational_keepalive_owner"
+    },
+    "session": {
+      "const": "hedge-v4-eagle3"
+    },
+    "worker_id": {
+      "const": "4099544"
+    },
+    "hostname": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pid": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "pgid": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sid": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "start_ticks": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "uid": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "user": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command_line": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "string"
+      }
+    },
+    "state_dir": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "expected_gpu_count": {
+      "const": 8
+    },
+    "gpu_indices": {
+      "const": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "gpu_uuids": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^GPU-"
+      }
+    },
+    "cuda_visible_devices": {
+      "const": "0,1,2,3,4,5,6,7"
+    },
+    "minimum_mean_utilization": {
+      "const": 40
+    },
+    "sample_count": {
+      "const": 10
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
