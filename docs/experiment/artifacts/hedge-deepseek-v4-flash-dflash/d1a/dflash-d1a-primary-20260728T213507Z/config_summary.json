@@ -1,0 +1,105 @@
+{
+  "checks": {
+    "algorithm": true,
+    "all_sliding_attention_layers": true,
+    "architecture": true,
+    "aux_hidden_state_layer_ids": true,
+    "block_size": true,
+    "derived_target_feature_width": true,
+    "draft_layer_count": true,
+    "draft_vocab_size": true,
+    "hc_mult": true,
+    "hidden_size": true,
+    "proposal_width": true,
+    "sliding_window": true,
+    "target_vocab_size": true
+  },
+  "config_sha256": "2271198e97a0f443f6c530e5a1fc8c85ccc8f5b914293f08a3301551870522a5",
+  "derived": {
+    "draft_layer_indices": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "proposal_candidate_count": 7,
+    "target_feature_width": 16384
+  },
+  "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "schema_version": 1,
+  "selected": {
+    "architectures": [
+      "DFlashDraftModel"
+    ],
+    "auto_map": {
+      "": "config.DFlashSpeculatorConfig"
+    },
+    "aux_hidden_state_layer_ids": [
+      3,
+      13,
+      23,
+      32,
+      42
+    ],
+    "block_size": 8,
+    "draft_vocab_size": 32000,
+    "dtype": "bfloat16",
+    "mask_token_id": 1,
+    "max_anchors": 3072,
+    "speculators_config": {
+      "algorithm": "dflash",
+      "default_proposal_method": "greedy",
+      "proposal_methods": [
+        {
+          "accept_tolerance": 0.0,
+          "proposal_type": "greedy",
+          "speculative_tokens": 7,
+          "verifier_accept_k": 1
+        }
+      ],
+      "verifier": {
+        "architectures": [],
+        "name_or_path": "deepseek-ai/DeepSeek-V4-Flash"
+      }
+    },
+    "target_hidden_size": null,
+    "transformer_layer_config": {
+      "attention_bias": false,
+      "attention_dropout": 0.0,
+      "bos_token_id": 1,
+      "eos_token_id": 2,
+      "hc_mult": 4,
+      "head_dim": 256,
+      "hidden_act": "silu",
+      "hidden_size": 4096,
+      "initializer_range": 0.02,
+      "intermediate_size": 2048,
+      "layer_types": [
+        "sliding_attention",
+        "sliding_attention",
+        "sliding_attention",
+        "sliding_attention",
+        "sliding_attention"
+      ],
+      "max_position_embeddings": 1048576,
+      "mlp_bias": false,
+      "model_type": "llama",
+      "num_attention_heads": 64,
+      "num_hidden_layers": 5,
+      "num_key_value_heads": 1,
+      "pad_token_id": null,
+      "pretraining_tp": 1,
+      "rms_norm_eps": 1e-06,
+      "rope_parameters": {
+        "rope_theta": 10000,
+        "rope_type": "default"
+      },
+      "sliding_window": 2048,
+      "tie_word_embeddings": false,
+      "use_cache": true,
+      "vocab_size": 129280
+    }
+  }
+}

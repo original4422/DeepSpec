@@ -1,0 +1,205 @@
+{
+  "acquisition_processes": [
+    {
+      "argv": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=30s",
+        "10800s",
+        "python3",
+        "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/dflash_d1a_acquire_publish.py",
+        "--attempt-id",
+        "dflash-d1a-primary-20260728T213507Z"
+      ],
+      "file_descriptors": {
+        "0": "/dev/pts/2",
+        "1": "/dev/pts/2",
+        "2": "/dev/pts/2"
+      },
+      "io": "rchar: 10712447\nwchar: 139856\nsyscr: 2439\nsyscw: 165\nread_bytes: 4096\nwrite_bytes: 0\ncancelled_write_bytes: 0\n",
+      "pid": 35998,
+      "ps": "35998   35997   35998   35998 Wed Jul 29 05:35:25 2026    01:03:05 Ss+  timeout --signal=TERM --kill-after=30s 10800s python3 /mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/dflash_d1a_acquire_publish.py --attempt-id dflash-d1a-primary-20260728T213507Z",
+      "status": "Name:\ttimeout\nUmask:\t0022\nState:\tS (sleeping)\nTgid:\t35998\nNgid:\t0\nPid:\t35998\nPPid:\t35997\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t256\nGroups:\t1000 \nNStgid:\t35998\nNSpid:\t35998\nNSpgid:\t35998\nNSsid:\t35998\nVmPeak:\t    8608 kB\nVmSize:\t    8608 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t     312 kB\nVmRSS:\t     312 kB\nRssAnon:\t     104 kB\nRssFile:\t     208 kB\nRssShmem:\t       0 kB\nVmData:\t     224 kB\nVmStk:\t     180 kB\nVmExe:\t      24 kB\nVmLib:\t    1524 kB\nVmPTE:\t      48 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t1\nSigQ:\t2/8254259\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000300000\nSigCgt:\t0000000000016007\nCapInh:\t00000000a88465fb\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t00000000a88465fb\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\t7fffffff,fffeffff,fffffffe,7fffffff,fffeffff,fffffffe\nCpus_allowed_list:\t1-47,49-94,97-143,145-190\nMems_allowed:\t00000000,00000003\nMems_allowed_list:\t0-1\nvoluntary_ctxt_switches:\t159\nnonvoluntary_ctxt_switches:\t0\n",
+      "wchan": "entry_SYSCALL_64_after_hwframe"
+    },
+    {
+      "argv": [
+        "python3",
+        "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/dflash_d1a_acquire_publish.py",
+        "--attempt-id",
+        "dflash-d1a-primary-20260728T213507Z"
+      ],
+      "file_descriptors": {
+        "0": "/dev/pts/2",
+        "1": "/dev/pts/2",
+        "2": "/dev/pts/2",
+        "3": "pipe:[2334791571]",
+        "5": "pipe:[2334791572]"
+      },
+      "io": "rchar: 4049181\nwchar: 94287\nsyscr: 1555\nsyscw: 225\nread_bytes: 65536\nwrite_bytes: 630784\ncancelled_write_bytes: 0\n",
+      "pid": 36066,
+      "ps": "36066   35998   35998   35998 Wed Jul 29 05:35:36 2026    01:02:54 S+   python3 /mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/dflash_d1a_acquire_publish.py --attempt-id dflash-d1a-primary-20260728T213507Z",
+      "status": "Name:\tpython3\nUmask:\t0022\nState:\tS (sleeping)\nTgid:\t36066\nNgid:\t0\nPid:\t36066\nPPid:\t35998\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t64\nGroups:\t1000 \nNStgid:\t36066\nNSpid:\t36066\nNSpgid:\t35998\nNSsid:\t35998\nVmPeak:\t   37492 kB\nVmSize:\t   37492 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t   26132 kB\nVmRSS:\t   26132 kB\nRssAnon:\t   14816 kB\nRssFile:\t   11316 kB\nRssShmem:\t       0 kB\nVmData:\t   16648 kB\nVmStk:\t     180 kB\nVmExe:\t    2764 kB\nVmLib:\t    5384 kB\nVmPTE:\t     104 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t1\nSigQ:\t2/8254259\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t0000000000000002\nCapInh:\t00000000a88465fb\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t00000000a88465fb\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\t7fffffff,fffeffff,fffffffe,7fffffff,fffeffff,fffffffe\nCpus_allowed_list:\t1-47,49-94,97-143,145-190\nMems_allowed:\t00000000,00000003\nMems_allowed_list:\t0-1\nvoluntary_ctxt_switches:\t2403\nnonvoluntary_ctxt_switches:\t9\n",
+      "wchan": "hrtimer_nanosleep"
+    }
+  ],
+  "active_curl_stderr_status": "not consumed: stderr is captured by the acquisition parent and will be persisted only after curl exits; reading the pipe would interfere with the active transfer",
+  "active_transfer_continues": true,
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "captured_at_utc": "2026-07-28T22:38:31.205561Z",
+  "completed_download_events_sanitized": [
+    {
+      "actual_size_bytes": 1519,
+      "curl_result": {
+        "effective_endpoint": "huggingface.co",
+        "effective_url_query_redacted": true,
+        "http_code": 200,
+        "size_download": 1519,
+        "speed_download": 974,
+        "time_total": 1.558741
+      },
+      "curl_stderr": "",
+      "duration_seconds": 4.027063457062468,
+      "event": "curl_complete",
+      "expected_size_bytes": 1519,
+      "path": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/.gitattributes.partial",
+      "returncode": 0,
+      "timestamp_utc": "2026-07-28T21:35:43.348723Z"
+    },
+    {
+      "actual_size_bytes": 3109,
+      "curl_result": {
+        "effective_endpoint": "huggingface.co",
+        "effective_url_query_redacted": true,
+        "http_code": 200,
+        "size_download": 3109,
+        "speed_download": 3170,
+        "time_total": 0.980569
+      },
+      "curl_stderr": "",
+      "duration_seconds": 2.001608130056411,
+      "event": "curl_complete",
+      "expected_size_bytes": 3109,
+      "path": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/README.md.partial",
+      "returncode": 0,
+      "timestamp_utc": "2026-07-28T21:35:45.351620Z"
+    },
+    {
+      "actual_size_bytes": 1816,
+      "curl_result": {
+        "effective_endpoint": "huggingface.co",
+        "effective_url_query_redacted": true,
+        "http_code": 200,
+        "size_download": 1816,
+        "speed_download": 1455,
+        "time_total": 1.247939
+      },
+      "curl_stderr": "",
+      "duration_seconds": 2.0016037351451814,
+      "event": "curl_complete",
+      "expected_size_bytes": 1816,
+      "path": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/config.json.partial",
+      "returncode": 0,
+      "timestamp_utc": "2026-07-28T21:35:47.354406Z"
+    },
+    {
+      "actual_size_bytes": 3368,
+      "curl_result": {
+        "effective_endpoint": "huggingface.co",
+        "effective_url_query_redacted": true,
+        "http_code": 200,
+        "size_download": 3368,
+        "speed_download": 2358,
+        "time_total": 1.428034
+      },
+      "curl_stderr": "",
+      "duration_seconds": 2.0016182519029826,
+      "event": "curl_complete",
+      "expected_size_bytes": 3368,
+      "path": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/config.py.partial",
+      "returncode": 0,
+      "timestamp_utc": "2026-07-28T21:35:49.357344Z"
+    }
+  ],
+  "curl_configuration_evidence": {
+    "continue_at_auto": true,
+    "retry_all_errors": true,
+    "retry_count": 8,
+    "risk": "curl determines the auto-resume offset at process invocation; an internal retry can reopen/truncate from that original offset"
+  },
+  "curl_process": {
+    "argv": [
+      "curl",
+      "--location",
+      "--fail",
+      "--silent",
+      "--show-error",
+      "--retry",
+      "8",
+      "--retry-all-errors",
+      "--retry-delay",
+      "5",
+      "--connect-timeout",
+      "30",
+      "--speed-limit",
+      "1024",
+      "--speed-time",
+      "300",
+      "--max-time",
+      "7200",
+      "--continue-at",
+      "-",
+      "--output",
+      "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/model.safetensors.partial",
+      "--write-out",
+      "{\"http_code\":%{http_code},\"size_download\":%{size_download},\"speed_download\":%{speed_download},\"time_total\":%{time_total},\"url_effective\":\"%{url_effective}\"}",
+      "--user-agent",
+      "DeepSpec-DFlash-D1A/1.0",
+      "https://huggingface.co/RedHatAI/DeepSeek-V4-Flash-speculator.dflash/resolve/e44fc94ceb1e7ed45550d15e782aeadd08050483/model.safetensors?download=true"
+    ],
+    "file_descriptors": {
+      "0": "/dev/pts/2",
+      "1": "pipe:[2334791571]",
+      "2": "pipe:[2334791572]",
+      "3": "socket:[2335015976]",
+      "4": "socket:[2335015977]",
+      "5": "socket:[2338282812]",
+      "6": "socket:[2334925602]",
+      "7": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/model.safetensors.partial"
+    },
+    "io": "rchar: 705225\nwchar: 3657229911\nsyscr: 140\nsyscw: 447188\nread_bytes: 0\nwrite_bytes: 3657232384\ncancelled_write_bytes: 69632\n",
+    "pid": 36076,
+    "ps": "36076   36066   35998   35998 Wed Jul 29 05:35:48 2026    01:02:41 S+   curl --location --fail --silent --show-error --retry 8 --retry-all-errors --retry-delay 5 --connect-timeout 30 --speed-limit 1024 --speed-time 300 --max-time 7200 --continue-at - --output /tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/model.safetensors.partial --write-out {\"http_code\":%{http_code},\"size_download\":%{size_download},\"speed_download\":%{speed_download},\"time_total\":%{time_total},\"url_effective\":\"%{url_effective}\"} --user-agent DeepSpec-DFlash-D1A/1.0 https://huggingface.co/RedHatAI/DeepSeek-V4-Flash-speculator.dflash/resolve/e44fc94ceb1e7ed45550d15e782aeadd08050483/model.safetensors?download=true",
+    "status": "Name:\tcurl\nUmask:\t0022\nState:\tS (sleeping)\nTgid:\t36076\nNgid:\t0\nPid:\t36076\nPPid:\t36066\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t64\nGroups:\t1000 \nNStgid:\t36076\nNSpid:\t36076\nNSpgid:\t35998\nNSsid:\t35998\nVmPeak:\t  164936 kB\nVmSize:\t  101732 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t   14160 kB\nVmRSS:\t   14160 kB\nRssAnon:\t    3612 kB\nRssFile:\t   10548 kB\nRssShmem:\t       0 kB\nVmData:\t   11516 kB\nVmStk:\t     180 kB\nVmExe:\t      96 kB\nVmLib:\t    9888 kB\nVmPTE:\t     100 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t1\nSigQ:\t2/8254259\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t0000000100000000\nCapInh:\t00000000a88465fb\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t00000000a88465fb\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\t7fffffff,fffeffff,fffffffe,7fffffff,fffeffff,fffffffe\nCpus_allowed_list:\t1-47,49-94,97-143,145-190\nMems_allowed:\t00000000,00000003\nMems_allowed_list:\t0-1\nvoluntary_ctxt_switches:\t14851\nnonvoluntary_ctxt_switches:\t180\n",
+    "wchan": "0"
+  },
+  "current_strategy": "do not interrupt the active transfer; if it exits unsuccessfully, use an external bounded retry loop that re-invokes curl so --continue-at - recomputes the then-current partial size",
+  "fallback_checkpoint_enabled": false,
+  "heartbeat": {
+    "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+    "bytes_done": null,
+    "current_path": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/model.safetensors.partial",
+    "current_path_bytes": 164806656,
+    "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+    "keepalive_pid": 34059,
+    "schema_version": 1,
+    "stage": "nvme_download",
+    "updated_at_utc": "2026-07-28T22:38:19.703839Z",
+    "worker_id": "4099543"
+  },
+  "observation": "active model.safetensors.partial size reset after reaching approximately 3.40 GB; transfer continues in the same curl PID",
+  "partial_file": {
+    "ctime_ns": 1785278310585136490,
+    "ctime_utc": "2026-07-28T22:38:30.585136Z",
+    "device": 66309,
+    "inode": 154404175,
+    "link_count": 1,
+    "mtime_ns": 1785278310585136490,
+    "mtime_utc": "2026-07-28T22:38:30.585136Z",
+    "path": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z/model.safetensors.partial",
+    "size_bytes": 175775744
+  },
+  "root_cause_fingerprint": "curl-internal-retry-restarts-from-invocation-offset-zero",
+  "root_cause_status": "strong inference; active stderr is parent-captured",
+  "schema_version": 1
+}

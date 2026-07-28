@@ -1,0 +1,35 @@
+2026-07-28T21:35:37.225893Z D1A preflight started; no model process will be launched
+2026-07-28T21:35:37.506366Z preflight PASS worker=4099543 gpus=8 keepalive_pid=34059
+2026-07-28T21:35:38.803303Z provider identity PASS revision=e44fc94ceb1e7ed45550d15e782aeadd08050483 files=6 bytes=3607606957 manifest_sha256=86b023ba9be98bb8e5e003424b660da9bcf8cd085e7a33bb93942ce60a8cca02
+2026-07-28T21:35:39.320923Z capacity PASS nvme_free=3408225464320 hdfs_free=1124800395214848
+2026-07-28T21:35:39.321030Z created unique NVMe staging /tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z
+2026-07-28T21:35:39.321583Z download start path=.gitattributes expected_bytes=1519
+2026-07-28T21:35:43.349405Z download PASS path=.gitattributes bytes=1519
+2026-07-28T21:35:43.349936Z download start path=README.md expected_bytes=3109
+2026-07-28T21:35:45.352236Z download PASS path=README.md bytes=3109
+2026-07-28T21:35:45.352730Z download start path=config.json expected_bytes=1816
+2026-07-28T21:35:47.355142Z download PASS path=config.json bytes=1816
+2026-07-28T21:35:47.355650Z download start path=config.py expected_bytes=3368
+2026-07-28T21:35:49.358251Z download PASS path=config.py bytes=3368
+2026-07-28T21:35:49.358742Z download start path=model.safetensors expected_bytes=3607596760
+2026-07-28T23:39:12.200537Z download PASS path=model.safetensors bytes=3607596760
+2026-07-28T23:39:12.201023Z download start path=val_metrics.json expected_bytes=385
+2026-07-28T23:39:14.266342Z download PASS path=val_metrics.json bytes=385
+2026-07-28T23:39:14.269313Z NVMe validation PASS files=6 bytes=3607606957 tensors=62
+2026-07-28T23:39:14.905664Z created unique HDFS staging /mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/.staging-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z
+2026-07-28T23:39:14.914424Z HDFS copy start path=.gitattributes bytes=1519
+2026-07-28T23:39:15.063828Z HDFS copy complete path=.gitattributes bytes=1519
+2026-07-28T23:39:15.073429Z HDFS copy start path=README.md bytes=3109
+2026-07-28T23:39:15.184833Z HDFS copy complete path=README.md bytes=3109
+2026-07-28T23:39:15.193829Z HDFS copy start path=config.json bytes=1816
+2026-07-28T23:39:15.334528Z HDFS copy complete path=config.json bytes=1816
+2026-07-28T23:39:15.342917Z HDFS copy start path=config.py bytes=3368
+2026-07-28T23:39:15.493142Z HDFS copy complete path=config.py bytes=3368
+2026-07-28T23:39:15.501801Z HDFS copy start path=model.safetensors bytes=3607596760
+2026-07-28T23:39:20.292275Z HDFS copy complete path=model.safetensors bytes=3607596760
+2026-07-28T23:39:20.300927Z HDFS copy start path=val_metrics.json bytes=385
+2026-07-28T23:39:20.395371Z HDFS copy complete path=val_metrics.json bytes=385
+2026-07-28T23:39:20.791888Z HDFS staging validation PASS files=6 bytes=3607606957
+2026-07-28T23:39:21.294867Z atomic publication PASS formal=/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483 pointer=/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft_pointer.json
+2026-07-28T23:39:21.295507Z D1A PASS
+2026-07-28T23:39:23.317469Z evidence export PASS hdfs=/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/evidence/d1a/dflash-d1a-primary-20260728T213507Z repo=/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1a/dflash-d1a-primary-20260728T213507Z

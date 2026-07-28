@@ -1,0 +1,63 @@
+{
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "checked_at_utc": "2026-07-28T21:35:37.505707Z",
+  "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+  "keepalive_pid": 34059,
+  "keepalive_status": "HEALTHY",
+  "keepalive_was_paused_or_stopped": false,
+  "model_process_started": false,
+  "physical_gpus": [
+    {
+      "index": 0,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-0d0883e5-c11e-1017-a7a4-b0041d34e659"
+    },
+    {
+      "index": 1,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-bef18fe2-5b0e-dfa9-d0df-4bdc845813a8"
+    },
+    {
+      "index": 2,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-04a2d19d-0850-4a7a-7d0a-f76bedbba0c6"
+    },
+    {
+      "index": 3,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-2fe9a932-da80-a85e-05ed-7e7a4298ac9f"
+    },
+    {
+      "index": 4,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-1937f10f-d9a7-54d0-bf1f-c11c5e99252a"
+    },
+    {
+      "index": 5,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-5ad3743c-377e-722b-21ea-807cde0ab2e6"
+    },
+    {
+      "index": 6,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-0c263468-925e-2a59-de84-795c577bb97e"
+    },
+    {
+      "index": 7,
+      "name": "NVIDIA H20",
+      "uuid": "GPU-5d6fc8af-a3f9-2e26-5b6c-c2c673a667dc"
+    }
+  ],
+  "schema_version": 1,
+  "timebox": {
+    "clock": "wall_clock",
+    "hard_stop_utc": "2026-07-29T08:55:58Z",
+    "implementation_stop_if_b0_incomplete_utc": "2026-07-29T05:55:58Z",
+    "progress_interval_minutes": 30,
+    "schema_version": 1,
+    "session_id": "dflash-20260728T205558Z",
+    "t0_utc": "2026-07-28T20:55:58Z",
+    "timebox_includes_dependency_wait": true
+  },
+  "worker_id": "4099543"
+}

@@ -1,0 +1,91 @@
+{
+  "_id": "6a46590cefe6f65cf1f71c36",
+  "author": "RedHatAI",
+  "cardData": {
+    "base_model": [
+      "deepseek-ai/DeepSeek-V4-Flash"
+    ],
+    "library_name": "speculators",
+    "tags": [
+      "speculative-decoding",
+      "dflash",
+      "speculators"
+    ]
+  },
+  "config": {
+    "architectures": [
+      "DFlashDraftModel"
+    ],
+    "auto_map": {}
+  },
+  "createdAt": "2026-07-02T12:26:52.000Z",
+  "disabled": false,
+  "downloads": 271,
+  "gated": false,
+  "id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "lastModified": "2026-07-02T12:34:53.000Z",
+  "library_name": "speculators",
+  "likes": 2,
+  "model-index": null,
+  "modelId": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "private": false,
+  "safetensors": {
+    "parameters": {
+      "BF16": 1803602432,
+      "BOOL": 129280,
+      "I64": 32000
+    },
+    "total": 1803763712
+  },
+  "sha": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "siblings": [
+    {
+      "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+      "rfilename": ".gitattributes",
+      "size": 1519
+    },
+    {
+      "blobId": "0e68fd20764f3396594fe833b85fe9459eef9d9d",
+      "rfilename": "README.md",
+      "size": 3109
+    },
+    {
+      "blobId": "0ed924fea2c75464186568d0ae3caf7e2406f0c0",
+      "rfilename": "config.json",
+      "size": 1816
+    },
+    {
+      "blobId": "7521c1595b9763b8646888a5eb96d161a00d459b",
+      "rfilename": "config.py",
+      "size": 3368
+    },
+    {
+      "blobId": "7ad962eaf656325bfa91f1c4ad5d5a6857bbccab",
+      "lfs": {
+        "pointerSize": 135,
+        "sha256": "d686aef63ec7debf699b4534851c38451a3f2bc7a532e0d4f9ea0ed844d3d6ee",
+        "size": 3607596760
+      },
+      "rfilename": "model.safetensors",
+      "size": 3607596760
+    },
+    {
+      "blobId": "75569313b59f492979e621db4bc5ae4debdd8550",
+      "rfilename": "val_metrics.json",
+      "size": 385
+    }
+  ],
+  "spaces": [],
+  "tags": [
+    "speculators",
+    "safetensors",
+    "speculative-decoding",
+    "dflash",
+    "custom_code",
+    "arxiv:2602.06036",
+    "base_model:deepseek-ai/DeepSeek-V4-Flash",
+    "base_model:finetune:deepseek-ai/DeepSeek-V4-Flash",
+    "region:us"
+  ],
+  "usedStorage": 3607596760
+}

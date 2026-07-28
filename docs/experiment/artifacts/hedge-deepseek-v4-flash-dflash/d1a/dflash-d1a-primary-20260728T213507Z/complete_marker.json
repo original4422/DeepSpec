@@ -1,0 +1,21 @@
+{
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "config_summary_sha256": "c750e151f224cf9a8230474d38d6ba41aeb67372db3176b5f395d173c201e153",
+  "file_count": 6,
+  "formal_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "full_weight_sha256_recomputed": false,
+  "hdfs_validation_sha256": "6e58fce77ac4d1e6785b76282e7607ca0ea12a4faa0abf8ee2cf315cd9ee53b8",
+  "lane": "dflash",
+  "nvme_manifest_sha256": "4bd0079750f8431256989b432eef73385705098704285040d85ab85093204939",
+  "phase": "D1A",
+  "provider": "huggingface",
+  "provider_manifest_sha256": "86b023ba9be98bb8e5e003424b660da9bcf8cd085e7a33bb93942ce60a8cca02",
+  "publication_semantics": "marker written and read back in unique same-parent HDFS staging before atomic directory rename",
+  "published_at_utc": "2026-07-28T23:39:20.792615Z",
+  "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "safetensors_header_summary_sha256": "7f67679d4f9e9cd0a463c9cabd4e4593371cc43ee9dfe7681b98f9c0716d60f4",
+  "schema_version": 1,
+  "status": "COMPLETE",
+  "total_size_bytes": 3607606957
+}

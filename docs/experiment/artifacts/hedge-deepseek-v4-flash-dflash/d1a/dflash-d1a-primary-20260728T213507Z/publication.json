@@ -1,0 +1,22 @@
+{
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "complete_marker_present": true,
+  "complete_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483/.complete",
+  "draft_pointer_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft_pointer.json",
+  "formal_directory_present": true,
+  "formal_file_set": [
+    ".complete",
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "config.py",
+    "model.safetensors",
+    "val_metrics.json"
+  ],
+  "formal_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "pointer_present": true,
+  "published_at_utc": "2026-07-28T23:39:20.792615Z",
+  "schema_version": 1,
+  "staging_absent_after_atomic_rename": true,
+  "validated_at_utc": "2026-07-28T23:39:21.294448Z"
+}

@@ -1,0 +1,12 @@
+{
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "bytes_done": null,
+  "current_path": null,
+  "current_path_bytes": null,
+  "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+  "keepalive_pid": 34059,
+  "schema_version": 1,
+  "stage": "evidence_export",
+  "updated_at_utc": "2026-07-28T23:39:21.295543Z",
+  "worker_id": "4099543"
+}

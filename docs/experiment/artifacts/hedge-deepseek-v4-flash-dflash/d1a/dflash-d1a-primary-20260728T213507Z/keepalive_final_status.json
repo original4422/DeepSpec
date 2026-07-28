@@ -1,0 +1,92 @@
+{
+  "checked_at_utc": "2026-07-28T23:41:00.625341Z",
+  "gate": {
+    "expected_gpus": 8,
+    "healthy": true,
+    "minimum_mean_utilization_percent": 40.0,
+    "per_gpu_mean_utilization_percent": {
+      "0": 100.0,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 100.0,
+      "5": 100.0,
+      "6": 100.0,
+      "7": 100.0
+    },
+    "platform_reclamation_threshold_percent": 30.0,
+    "sample_count_per_gpu": 10,
+    "schema_version": 1
+  },
+  "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+  "keepalive_identity": {
+    "argv": [
+      "/tmp/deepspec-hedge-dflash/keepalive/venv/bin/python",
+      "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/keepalive_load.py",
+      "load",
+      "--expected-gpus",
+      "8",
+      "--matrix-size",
+      "8192"
+    ],
+    "cuda_visible_devices": "0,1,2,3,4,5,6,7",
+    "expected_gpu_count": 8,
+    "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+    "identity_recorded_at_utc": "2026-07-28T23:41:00.616012Z",
+    "lane": "dflash",
+    "pgid": 34059,
+    "physical_gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-0d0883e5-c11e-1017-a7a4-b0041d34e659"
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-bef18fe2-5b0e-dfa9-d0df-4bdc845813a8"
+      },
+      {
+        "index": 2,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-04a2d19d-0850-4a7a-7d0a-f76bedbba0c6"
+      },
+      {
+        "index": 3,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-2fe9a932-da80-a85e-05ed-7e7a4298ac9f"
+      },
+      {
+        "index": 4,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-1937f10f-d9a7-54d0-bf1f-c11c5e99252a"
+      },
+      {
+        "index": 5,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-5ad3743c-377e-722b-21ea-807cde0ab2e6"
+      },
+      {
+        "index": 6,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-0c263468-925e-2a59-de84-795c577bb97e"
+      },
+      {
+        "index": 7,
+        "name": "NVIDIA H20",
+        "uuid": "GPU-5d6fc8af-a3f9-2e26-5b6c-c2c673a667dc"
+      }
+    ],
+    "pid": 34059,
+    "schema_version": 1,
+    "sid": 34059,
+    "started_at_utc": "2026-07-28T21:07:54.570000Z",
+    "worker_id": "4099543"
+  },
+  "keepalive_was_paused_or_stopped": false,
+  "model_process_started": false,
+  "schema_version": 1,
+  "status_stderr": "",
+  "status_stdout": "HEALTHY worker=4099543 host=g340-cd51-4b00-4d69-9088-7ae6-6253 pid=34059\n{\"expected_gpus\": 8, \"healthy\": true, \"minimum_mean_utilization_percent\": 40.0, \"per_gpu_mean_utilization_percent\": {\"0\": 100.0, \"1\": 100.0, \"2\": 100.0, \"3\": 100.0, \"4\": 100.0, \"5\": 100.0, \"6\": 100.0, \"7\": 100.0}, \"platform_reclamation_threshold_percent\": 30.0, \"sample_count_per_gpu\": 10, \"schema_version\": 1}\n",
+  "worker_id": "4099543"
+}

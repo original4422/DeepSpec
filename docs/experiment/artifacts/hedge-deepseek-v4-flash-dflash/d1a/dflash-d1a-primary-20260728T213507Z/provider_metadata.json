@@ -1,0 +1,82 @@
+{
+  "api_url": "https://huggingface.co/api/models/RedHatAI/DeepSeek-V4-Flash-speculator.dflash/revision/e44fc94ceb1e7ed45550d15e782aeadd08050483?blobs=true",
+  "file_count": 6,
+  "files": [
+    {
+      "path": ".gitattributes",
+      "provider_oid": {
+        "git_blob_id": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 1519
+    },
+    {
+      "path": "README.md",
+      "provider_oid": {
+        "git_blob_id": "0e68fd20764f3396594fe833b85fe9459eef9d9d",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 3109
+    },
+    {
+      "path": "config.json",
+      "provider_oid": {
+        "git_blob_id": "0ed924fea2c75464186568d0ae3caf7e2406f0c0",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 1816
+    },
+    {
+      "path": "config.py",
+      "provider_oid": {
+        "git_blob_id": "7521c1595b9763b8646888a5eb96d161a00d459b",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 3368
+    },
+    {
+      "path": "model.safetensors",
+      "provider_oid": {
+        "git_blob_id": "7ad962eaf656325bfa91f1c4ad5d5a6857bbccab",
+        "lfs_pointer_size": 135,
+        "lfs_sha256": "d686aef63ec7debf699b4534851c38451a3f2bc7a532e0d4f9ea0ed844d3d6ee",
+        "lfs_size": 3607596760,
+        "xet_hash": null
+      },
+      "size_bytes": 3607596760
+    },
+    {
+      "path": "val_metrics.json",
+      "provider_oid": {
+        "git_blob_id": "75569313b59f492979e621db4bc5ae4debdd8550",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 385
+    }
+  ],
+  "full_payload_sha256_policy": "not recomputed: no corruption evidence; provider OID, exact file set/size, safetensors header, and copy validation used",
+  "manifest_sha256": "86b023ba9be98bb8e5e003424b660da9bcf8cd085e7a33bb93942ce60a8cca02",
+  "provider": "huggingface",
+  "provider_commit_verified": true,
+  "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "requested_revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "resolved_revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "retrieved_at_utc": "2026-07-28T21:35:38.802803Z",
+  "schema_version": 1,
+  "total_size_bytes": 3607606957
+}

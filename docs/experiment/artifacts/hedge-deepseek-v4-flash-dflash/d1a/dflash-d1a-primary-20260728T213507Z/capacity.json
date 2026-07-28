@@ -1,0 +1,20 @@
+{
+  "checked_at_utc": "2026-07-28T21:35:39.295161Z",
+  "hdfs": {
+    "free_bytes": 1124800395214848,
+    "passed": true,
+    "path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash",
+    "total_bytes": 1124800395214848,
+    "used_bytes": 0
+  },
+  "nvme": {
+    "free_bytes": 3408225464320,
+    "passed": true,
+    "path": "/tmp/deepspec-hedge-dflash/d1a",
+    "total_bytes": 3779301580800,
+    "used_bytes": 332651794432
+  },
+  "required_payload_bytes": 3607606957,
+  "required_reserve_bytes": 2147483648,
+  "schema_version": 1
+}

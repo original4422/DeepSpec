@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "phase": "D1A",
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "status": "ACTIVE_TRANSFER_CONTINUES",
+  "observations": [
+    {
+      "source": "attempt heartbeat",
+      "timestamp_utc": "2026-07-28T22:33:49.666909Z",
+      "partial_size_bytes": 3389566976
+    },
+    {
+      "source": "read-only dflash_d1a_status.sh stat",
+      "timestamp_utc": "2026-07-28T22:33:54Z",
+      "partial_size_bytes": 3395547136
+    },
+    {
+      "source": "attempt heartbeat",
+      "timestamp_utc": "2026-07-28T22:36:49.693407Z",
+      "partial_size_bytes": 76963840
+    },
+    {
+      "source": "read-only dflash_d1a_status.sh stat",
+      "timestamp_utc": "2026-07-28T22:36:55Z",
+      "partial_size_bytes": 83955712
+    },
+    {
+      "source": "read-only /proc and stat capture",
+      "timestamp_utc": "2026-07-28T22:38:31.205561Z",
+      "curl_pid": 36076,
+      "partial_device": 66309,
+      "partial_inode": 154404175,
+      "partial_size_bytes": 175775744,
+      "curl_wchar_bytes": 3657229911,
+      "curl_write_bytes": 3657232384
+    }
+  ],
+  "root_cause_fingerprint": "curl-internal-retry-restarts-from-invocation-offset-zero",
+  "root_cause_status": "strong inference",
+  "evidence": {
+    "same_curl_pid": true,
+    "same_open_partial_inode": true,
+    "curl_argv_contains_continue_at_auto": true,
+    "curl_argv_contains_retry_all_errors": true,
+    "cumulative_written_bytes_exceed_current_file_size": true,
+    "active_stderr_not_consumed": "captured by the acquisition parent; consuming the pipe would interfere with the active transfer",
+    "remote_diagnostic": "/tmp/deepspec-hedge-dflash/d1a/attempts/dflash-d1a-primary-20260728T213507Z/retry_reset_diagnostic.json"
+  },
+  "current_strategy": "Do not interrupt the active curl. If it exits unsuccessfully, replace in-process curl retries with an external bounded retry loop so every curl invocation recomputes the current partial size for --continue-at -.",
+  "fallback_checkpoint_enabled": false,
+  "model_process_started": false,
+  "keepalive_was_paused_or_stopped": false
+}

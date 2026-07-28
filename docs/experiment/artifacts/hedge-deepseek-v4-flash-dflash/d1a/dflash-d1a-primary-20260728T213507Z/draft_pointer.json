@@ -1,0 +1,16 @@
+{
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "complete_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483/.complete",
+  "file_count": 6,
+  "formal_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "lane": "dflash",
+  "phase": "D1A",
+  "provider": "huggingface",
+  "provider_manifest_sha256": "86b023ba9be98bb8e5e003424b660da9bcf8cd085e7a33bb93942ce60a8cca02",
+  "published_at_utc": "2026-07-28T23:39:20.792615Z",
+  "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "schema_version": 1,
+  "status": "COMPLETE",
+  "total_size_bytes": 3607606957
+}

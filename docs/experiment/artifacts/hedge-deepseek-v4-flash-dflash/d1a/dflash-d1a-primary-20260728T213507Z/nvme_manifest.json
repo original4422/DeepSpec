@@ -1,0 +1,132 @@
+{
+  "all_sizes_match_provider": true,
+  "attempt_id": "dflash-d1a-primary-20260728T213507Z",
+  "config_summary_sha256": "c750e151f224cf9a8230474d38d6ba41aeb67372db3176b5f395d173c201e153",
+  "contains_symlinks": false,
+  "file_count": 6,
+  "file_set_matches_provider": true,
+  "files": [
+    {
+      "device": 66309,
+      "inode": 154403785,
+      "is_regular_file": true,
+      "is_symlink": false,
+      "link_count": 1,
+      "local_git_blob_sha1": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+      "local_sha256": "11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361",
+      "path": ".gitattributes",
+      "provider_git_blob_match": true,
+      "provider_oid": {
+        "git_blob_id": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 1519
+    },
+    {
+      "device": 66309,
+      "inode": 154403779,
+      "is_regular_file": true,
+      "is_symlink": false,
+      "link_count": 1,
+      "local_git_blob_sha1": "0e68fd20764f3396594fe833b85fe9459eef9d9d",
+      "local_sha256": "6f3fc42e9b5f96e76f08155fc973fcb8994ce16f975172ec6172ca381602334d",
+      "path": "README.md",
+      "provider_git_blob_match": true,
+      "provider_oid": {
+        "git_blob_id": "0e68fd20764f3396594fe833b85fe9459eef9d9d",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 3109
+    },
+    {
+      "device": 66309,
+      "inode": 154403789,
+      "is_regular_file": true,
+      "is_symlink": false,
+      "link_count": 1,
+      "local_git_blob_sha1": "0ed924fea2c75464186568d0ae3caf7e2406f0c0",
+      "local_sha256": "2271198e97a0f443f6c530e5a1fc8c85ccc8f5b914293f08a3301551870522a5",
+      "path": "config.json",
+      "provider_git_blob_match": true,
+      "provider_oid": {
+        "git_blob_id": "0ed924fea2c75464186568d0ae3caf7e2406f0c0",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 1816
+    },
+    {
+      "device": 66309,
+      "inode": 154404174,
+      "is_regular_file": true,
+      "is_symlink": false,
+      "link_count": 1,
+      "local_git_blob_sha1": "7521c1595b9763b8646888a5eb96d161a00d459b",
+      "local_sha256": "b71d94e8ac2f7dc32c610046209d18cac058655df6092af0844f655805350a17",
+      "path": "config.py",
+      "provider_git_blob_match": true,
+      "provider_oid": {
+        "git_blob_id": "7521c1595b9763b8646888a5eb96d161a00d459b",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 3368
+    },
+    {
+      "device": 66309,
+      "full_sha256_omission_reason": "no corruption evidence; provider SHA-256/OID retained and exact size/header validated",
+      "inode": 154404175,
+      "is_regular_file": true,
+      "is_symlink": false,
+      "link_count": 1,
+      "local_full_sha256": null,
+      "path": "model.safetensors",
+      "provider_oid": {
+        "git_blob_id": "7ad962eaf656325bfa91f1c4ad5d5a6857bbccab",
+        "lfs_pointer_size": 135,
+        "lfs_sha256": "d686aef63ec7debf699b4534851c38451a3f2bc7a532e0d4f9ea0ed844d3d6ee",
+        "lfs_size": 3607596760,
+        "xet_hash": null
+      },
+      "size_bytes": 3607596760
+    },
+    {
+      "device": 66309,
+      "inode": 154404592,
+      "is_regular_file": true,
+      "is_symlink": false,
+      "link_count": 1,
+      "local_git_blob_sha1": "75569313b59f492979e621db4bc5ae4debdd8550",
+      "local_sha256": "ff4b43b2f7b7cd253786527699661ed88c419b3d99c304f9f717dc59552cda53",
+      "path": "val_metrics.json",
+      "provider_git_blob_match": true,
+      "provider_oid": {
+        "git_blob_id": "75569313b59f492979e621db4bc5ae4debdd8550",
+        "lfs_pointer_size": null,
+        "lfs_sha256": null,
+        "lfs_size": null,
+        "xet_hash": null
+      },
+      "size_bytes": 385
+    }
+  ],
+  "location": "nvme",
+  "path": "/tmp/deepspec-hedge-dflash/d1a/.staging-primary-e44fc94ceb1e7ed45550d15e782aeadd08050483-dflash-d1a-primary-20260728T213507Z",
+  "provider_manifest_sha256": "86b023ba9be98bb8e5e003424b660da9bcf8cd085e7a33bb93942ce60a8cca02",
+  "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+  "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+  "safetensors_header_summary_sha256": "7f67679d4f9e9cd0a463c9cabd4e4593371cc43ee9dfe7681b98f9c0716d60f4",
+  "schema_version": 1,
+  "total_size_bytes": 3607606957,
+  "validated_at_utc": "2026-07-28T23:39:14.267935Z"
+}

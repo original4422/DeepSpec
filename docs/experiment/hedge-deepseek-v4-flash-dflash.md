@@ -1,14 +1,14 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `IN_PROGRESS — D0/D1B/D1C/D2 ACCEPTED; D1A RETRYING; D3 WAITING FOR TARGET`
+Status / outcome label: `IN_PROGRESS — D0/D1A/D1B/D1C/D2 ACCEPTED; D3 READY`
 
 Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
 
 Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8
 
-Target repo@revision / HDFS `.complete`: `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1` / `WAIT`
+Target repo@revision / HDFS `.complete`: `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1` / `READY — immutable completion pointer published by Eagle at 2026-07-28T23:04:53Z`
 
-Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `RUNNING — first curl pass reset near completion; same primary transfer retrying`
+Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `READY — primary .complete published at 2026-07-28T23:39:20Z`
 
 SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / native D2 `7245c3d607a1eadc26582bb78ebd603a70c22fa7`; HEDGE-final pending D4
 
@@ -26,13 +26,13 @@ B+ result: `NOT_RUN`
 
 Canonical or exploratory: `UNDETERMINED`
 
-Primary blocker: Eagle target pointer 尚未发布；D1A primary 下载的首个 curl pass 接近完成时被内部 retry 从 invocation offset 0 截断重写，当前同一 primary attempt 继续传输，fallback disabled。
+Primary blocker: `NONE FOR D3`；target、primary draft、native source/env、dataset 与 worker/keepalive 前置均已 READY。
 
 Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/`
 
-Git commit: latest pushed progress `a08d969`; SGLang native D2 `7245c3d607a1eadc26582bb78ebd603a70c22fa7`; DeepSpec D2 key node is this commit
+Git commit: latest pushed progress `f167423`; DeepSpec D2 `37a881a`; SGLang native D2 `7245c3d607a1eadc26582bb78ebd603a70c22fa7`; D1A key node is this commit
 
-下一步：保持本 lane keepalive，完成并验收 D1A；继续只读等待 Eagle target。D3 仅在 target/draft `.complete`、source/env 和资源门禁全部满足后调度。
+下一步：调度独立 D3 executor；fresh inventory 后紧邻地定向暂停本 lane keepalive，确认八卡 CUDA context 清空，再执行 TP8 native DFlash short smoke。
 
 ## D0 会话与资源基线
 
@@ -49,6 +49,34 @@ Eagle target 与 DSpark pure-core canonical coordination pointer 当前均不存
 
 主 Agent 已直接复核 D0 的 6 份 JSON、80 行逐卡采样、脚本语法、跨 artifact identity、
 远端实时 keepalive 状态和原 DSpark worktree 状态；D0 退出门禁验收通过。
+
+## D1A primary draft 获取与发布
+
+固定 primary
+`RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483`
+已从 Hugging Face 下载到 worker NVMe，完成 provider identity/OID、6 文件
+`3,607,606,957` bytes、config、62-tensor safetensors header/shape 与 payload
+offset 核查后，独立复制到 HDFS staging 并原子发布。正式 `.complete` SHA-256 为
+`f26d58995a8f9ff3e387fb6e940e13521bc4ad82455bd51f548faa610e94338b`，lane pointer
+SHA-256 为 `d2b439945df143bff0873705b7f1aac37bf35e47b098eaaf3e1a6a408c2e1add`。
+
+首次 weight pass 接近 `3.40 GB` 时，同一
+`curl --retry --retry-all-errors --continue-at -` 进程从 invocation offset 重新开始。
+PID/inode、`/proc` I/O 与 byte trajectory 将根因固定为
+`curl-internal-retry-restarts-from-invocation-offset-zero`。未发送 signal、未切换
+checkpoint；同一进程的第二 pass 自然完成，fallback 始终关闭。
+
+主 Agent 独立复核 pointer/marker/formal file set、header、config、NVMe↔HDFS
+独立实体、small-file hash、原子 staging 消失与 21 份 repo/HDFS evidence 镜像；
+signed-URL 重扫无命中，7 个 Python AST、8 个 shell、19 个 JSON 和 2 个 JSONL
+语法/解析门禁均 PASS。keepalive PID/PGID/SID `34059` 全程未停，最终八卡
+10×1 秒均值均为 100%。权威 handoff 为
+`docs/plan/handoffs/dflash-phase-d1a-handoff.md`，主验收记录为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1a/dflash_d1a_main_acceptance.json`。
+
+Eagle 共享 target 也已由主 Agent 只读验收：固定 revision、provider commit/OID、
+manifest SHA、73 files / `159,630,041,626` bytes、官方 46-shard index referents、
+config/tokenizer、零 symlink/hardlink 及 immutable atomic publication 全部一致。
 
 ## D1C 数据与请求 harness
 
