@@ -1,0 +1,94 @@
+{
+  "cuda_toolkit": {
+    "compat_libcuda": "/home/tiger/toolchains/deepspec-cuda-compat-13.0-580.173.02/usr/local/cuda-13.0/compat/libcuda.so.580.173.02",
+    "compat_root": "/home/tiger/toolchains/deepspec-cuda-compat-13.0-580.173.02/usr/local/cuda-13.0/compat",
+    "cuda_home": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13",
+    "nvcc": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13/bin/nvcc",
+    "nvcc_version": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Aug_20_01:58:59_PM_PDT_2025\nCuda compilation tools, release 13.0, V13.0.88\nBuild cuda_13.0.r13.0/compiler.36424714_0"
+  },
+  "distributions": {
+    "flashinfer-python": {
+      "direct_url": null,
+      "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+      "name": "flashinfer-python",
+      "version": "0.6.14"
+    },
+    "nvidia-nccl-cu13": {
+      "direct_url": null,
+      "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+      "name": "nvidia-nccl-cu13",
+      "version": "2.28.9"
+    },
+    "sglang": {
+      "direct_url": {
+        "dir_info": {
+          "editable": true
+        },
+        "url": "file:///home/tiger/src/deepspec-sglang-hedge-dflash/python"
+      },
+      "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+      "name": "sglang",
+      "version": "0.5.16"
+    },
+    "sglang-kernel": {
+      "direct_url": null,
+      "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+      "name": "sglang-kernel",
+      "version": "0.4.5+cu130"
+    },
+    "torch": {
+      "direct_url": null,
+      "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+      "name": "torch",
+      "version": "2.11.0+cu130"
+    },
+    "triton": {
+      "direct_url": null,
+      "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+      "name": "triton",
+      "version": "3.6.0"
+    }
+  },
+  "modules": {
+    "flashinfer": {
+      "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/flashinfer/__init__.py",
+      "module": "flashinfer",
+      "version": "0.6.14"
+    },
+    "sgl_kernel": {
+      "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/sgl_kernel/__init__.py",
+      "module": "sgl_kernel",
+      "version": "0.4.5"
+    },
+    "sglang": {
+      "file": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/__init__.py",
+      "module": "sglang",
+      "version": "0.5.16"
+    },
+    "torch": {
+      "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/__init__.py",
+      "module": "torch",
+      "version": "2.11.0+cu130"
+    },
+    "triton": {
+      "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/triton/__init__.py",
+      "module": "triton",
+      "version": "3.6.0"
+    }
+  },
+  "python": {
+    "executable": "/usr/bin/python3.11",
+    "implementation": "CPython",
+    "prefix": "/home/tiger/venvs/deepspec-hedge-dflash",
+    "version": "3.11.2"
+  },
+  "torch": {
+    "compiled_cuda": "13.0",
+    "nccl_runtime": [
+      2,
+      28,
+      9
+    ],
+    "version": "2.11.0+cu130"
+  }
+}

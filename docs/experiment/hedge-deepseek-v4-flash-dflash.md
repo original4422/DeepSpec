@@ -1,6 +1,6 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `IN_PROGRESS — D0 ACCEPTED`
+Status / outcome label: `IN_PROGRESS — D0/D1B/D1C ACCEPTED; D1A RUNNING`
 
 Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
 
@@ -10,7 +10,7 @@ Target repo@revision / HDFS `.complete`: `deepseek-ai/DeepSeek-V4-Flash@60d8d707
 
 Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `NOT_STARTED`
 
-SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / `NOT_FROZEN`
+SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / `D1B clean base; D2 integration pending`
 
 HEDGE pure-core SHA: `WAIT`
 
@@ -26,11 +26,11 @@ B+ result: `NOT_RUN`
 
 Canonical or exploratory: `UNDETERMINED`
 
-Primary blocker: Eagle target pointer 与 DSpark pure-core pointer 尚未发布；D0 本身无资源 blocker。
+Primary blocker: Eagle target pointer 与 DSpark pure-core pointer 尚未发布；D1A primary draft 正常传输中，无 retry/error。
 
 Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d0/`
 
-Git commit: `D0 governance baseline — this commit; exact SHA will be recorded at the next progress checkpoint`
+Git commit: latest pushed progress `60d7e46`; D1B source/env/contract key node is this commit
 
 下一步：保持本 lane keepalive，完成 D1A/D1B 验收后调度独立 D2 executor。
 
@@ -62,3 +62,23 @@ byte-identical，SHA-256 为 `34db2fc76099b2725f51dfd6ceeb1410802ad54c9008b2ab3c
 正式请求不启用 `logprobs`；canonical output token IDs 严格来自
 `choices[0].meta_info.output_token_ids`，避免给正式 TPS 引入计划外开销。主 Agent
 复跑 13 个 mock tests，并复算 9 个 artifact hash、32/500 indices 与无重叠，均 PASS。
+
+## D1B 固定 source、正式环境与 DFlash contract
+
+独立 SGLang checkout 固定在 `v0.5.16` /
+`fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` 且 clean；formal uv env 为
+`/home/tiger/venvs/deepspec-hedge-dflash`。实测 Python `3.11.2`、PyTorch
+`2.11.0+cu130`、CUDA/nvcc `13.0`、NCCL `2.28.9`、FlashInfer `0.6.14`、
+Triton `3.6.0`、sglang-kernel `0.4.5+cu130`，`uv pip check` 验证 201 个包兼容。
+
+固定 primary config/header 与 5 个 CPU-only contract tests 证明：
+
+- aux 层顺序为 `[3,13,23,32,42]`，DeepSeek-V4 after-layer seam 使用原 ID、不加一；
+- 每层 mHC 必须由 `[N,4,4096]` 经 `flatten(1)` 得到 `[N,16384]`，五层 concat
+  为 `[N,81920]`，与 `fc.weight=[4096,81920]` 一致；
+- `completed.mean(dim=1)` 只会形成 `[N,20480]`，被 contract test 明确拒绝；
+- block size 8 中第 0 列是 current token，HEDGE proposal 固定为
+  `candidates[:,1:]` 的 7 个 draft token。
+
+因此 D2 的最小 production 范围已锁定为 config normalization、DeepSeek after-layer
+DFlash capture hook 与 81920-wide projection/loader；D1B 没有修改 SGLang。

@@ -1,0 +1,101 @@
+{
+  "compute_apps_after": [
+    {
+      "gpu_uuid": "GPU-04a2d19d-0850-4a7a-7d0a-f76bedbba0c6",
+      "host_pid": "4154013",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-0c263468-925e-2a59-de84-795c577bb97e",
+      "host_pid": "4154017",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-0d0883e5-c11e-1017-a7a4-b0041d34e659",
+      "host_pid": "4154008",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-1937f10f-d9a7-54d0-bf1f-c11c5e99252a",
+      "host_pid": "4154015",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-2fe9a932-da80-a85e-05ed-7e7a4298ac9f",
+      "host_pid": "4154014",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-5ad3743c-377e-722b-21ea-807cde0ab2e6",
+      "host_pid": "4154016",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-5d6fc8af-a3f9-2e26-5b6c-c2c673a667dc",
+      "host_pid": "4154018",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-bef18fe2-5b0e-dfa9-d0df-4bdc845813a8",
+      "host_pid": "4154009",
+      "process_name": "[Not Found]"
+    }
+  ],
+  "compute_apps_before": [
+    {
+      "gpu_uuid": "GPU-04a2d19d-0850-4a7a-7d0a-f76bedbba0c6",
+      "host_pid": "4154013",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-0c263468-925e-2a59-de84-795c577bb97e",
+      "host_pid": "4154017",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-0d0883e5-c11e-1017-a7a4-b0041d34e659",
+      "host_pid": "4154008",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-1937f10f-d9a7-54d0-bf1f-c11c5e99252a",
+      "host_pid": "4154015",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-2fe9a932-da80-a85e-05ed-7e7a4298ac9f",
+      "host_pid": "4154014",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-5ad3743c-377e-722b-21ea-807cde0ab2e6",
+      "host_pid": "4154016",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-5d6fc8af-a3f9-2e26-5b6c-c2c673a667dc",
+      "host_pid": "4154018",
+      "process_name": "[Not Found]"
+    },
+    {
+      "gpu_uuid": "GPU-bef18fe2-5b0e-dfa9-d0df-4bdc845813a8",
+      "host_pid": "4154009",
+      "process_name": "[Not Found]"
+    }
+  ],
+  "compute_inventory_unchanged": true,
+  "cuda_visible_devices_for_import_probe": "",
+  "keepalive_status_after": [
+    "HEALTHY worker=4099543 host=g340-cd51-4b00-4d69-9088-7ae6-6253 pid=34059",
+    "{\"expected_gpus\": 8, \"healthy\": true, \"minimum_mean_utilization_percent\": 40.0, \"per_gpu_mean_utilization_percent\": {\"0\": 100.0, \"1\": 100.0, \"2\": 100.0, \"3\": 100.0, \"4\": 100.0, \"5\": 100.0, \"6\": 100.0, \"7\": 100.0}, \"platform_reclamation_threshold_percent\": 30.0, \"sample_count_per_gpu\": 10, \"schema_version\": 1}"
+  ],
+  "keepalive_status_before": [
+    "HEALTHY worker=4099543 host=g340-cd51-4b00-4d69-9088-7ae6-6253 pid=34059",
+    "{\"expected_gpus\": 8, \"healthy\": true, \"minimum_mean_utilization_percent\": 40.0, \"per_gpu_mean_utilization_percent\": {\"0\": 100.0, \"1\": 100.0, \"2\": 100.0, \"3\": 100.0, \"4\": 100.0, \"5\": 100.0, \"6\": 100.0, \"7\": 100.0}, \"platform_reclamation_threshold_percent\": 30.0, \"sample_count_per_gpu\": 10, \"schema_version\": 1}"
+  ],
+  "pass": true,
+  "probe_scope": "Metadata imports and version queries only; no CUDA tensor, kernel, device-count, or model operation was requested.",
+  "recorded_at": "2026-07-28T21:48:59.430959Z",
+  "schema_version": 1,
+  "worker_id": "4099543"
+}

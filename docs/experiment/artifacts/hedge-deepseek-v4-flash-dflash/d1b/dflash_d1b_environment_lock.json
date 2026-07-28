@@ -1,0 +1,125 @@
+{
+  "build_rust_exts": "none",
+  "dependencies": {
+    "cuda_toolkit": {
+      "compat_libcuda": "/home/tiger/toolchains/deepspec-cuda-compat-13.0-580.173.02/usr/local/cuda-13.0/compat/libcuda.so.580.173.02",
+      "compat_root": "/home/tiger/toolchains/deepspec-cuda-compat-13.0-580.173.02/usr/local/cuda-13.0/compat",
+      "cuda_home": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13",
+      "nvcc": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13/bin/nvcc",
+      "nvcc_version": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Aug_20_01:58:59_PM_PDT_2025\nCuda compilation tools, release 13.0, V13.0.88\nBuild cuda_13.0.r13.0/compiler.36424714_0"
+    },
+    "distributions": {
+      "flashinfer-python": {
+        "direct_url": null,
+        "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+        "name": "flashinfer-python",
+        "version": "0.6.14"
+      },
+      "nvidia-nccl-cu13": {
+        "direct_url": null,
+        "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+        "name": "nvidia-nccl-cu13",
+        "version": "2.28.9"
+      },
+      "sglang": {
+        "direct_url": {
+          "dir_info": {
+            "editable": true
+          },
+          "url": "file:///home/tiger/src/deepspec-sglang-hedge-dflash/python"
+        },
+        "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+        "name": "sglang",
+        "version": "0.5.16"
+      },
+      "sglang-kernel": {
+        "direct_url": null,
+        "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+        "name": "sglang-kernel",
+        "version": "0.4.5+cu130"
+      },
+      "torch": {
+        "direct_url": null,
+        "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+        "name": "torch",
+        "version": "2.11.0+cu130"
+      },
+      "triton": {
+        "direct_url": null,
+        "location": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages",
+        "name": "triton",
+        "version": "3.6.0"
+      }
+    },
+    "modules": {
+      "flashinfer": {
+        "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/flashinfer/__init__.py",
+        "module": "flashinfer",
+        "version": "0.6.14"
+      },
+      "sgl_kernel": {
+        "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/sgl_kernel/__init__.py",
+        "module": "sgl_kernel",
+        "version": "0.4.5"
+      },
+      "sglang": {
+        "file": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/__init__.py",
+        "module": "sglang",
+        "version": "0.5.16"
+      },
+      "torch": {
+        "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/__init__.py",
+        "module": "torch",
+        "version": "2.11.0+cu130"
+      },
+      "triton": {
+        "file": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/triton/__init__.py",
+        "module": "triton",
+        "version": "3.6.0"
+      }
+    },
+    "python": {
+      "executable": "/usr/bin/python3.11",
+      "implementation": "CPython",
+      "prefix": "/home/tiger/venvs/deepspec-hedge-dflash",
+      "version": "3.11.2"
+    },
+    "torch": {
+      "compiled_cuda": "13.0",
+      "nccl_runtime": [
+        2,
+        28,
+        9
+      ],
+      "version": "2.11.0+cu130"
+    }
+  },
+  "formal_environment": "/home/tiger/venvs/deepspec-hedge-dflash",
+  "pass": true,
+  "pyproject": {
+    "path": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/pyproject.toml",
+    "sha256": "b5f96c3c709cb93a8d2b24ec965260f473fbcb494f124a8368462c9bba98759d"
+  },
+  "recorded_at": "2026-07-28T21:48:59.388464Z",
+  "schema_version": 1,
+  "source": {
+    "checkout": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+    "clone_origin": "/home/tiger/src/deepspec-sglang-fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "detached": true,
+    "exact_tag": "v0.5.16",
+    "expected_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "expected_tag": "v0.5.16",
+    "head": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "identity_pass": true,
+    "status_porcelain": "",
+    "upstream_origin": "https://github.com/sgl-project/sglang.git"
+  },
+  "source_overlay_command": "SGLANG_BUILD_RUST_EXTS=none uv pip install --python /home/tiger/venvs/deepspec-hedge-dflash/bin/python --no-deps --editable /home/tiger/src/deepspec-sglang-hedge-dflash/python",
+  "sync_command": "SGLANG_BUILD_RUST_EXTS=none UV_PROJECT_ENVIRONMENT=/home/tiger/venvs/deepspec-hedge-dflash uv sync --frozen --no-install-project --link-mode copy",
+  "uv_lock": {
+    "path": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/uv.lock",
+    "sha256": "cdb50b27e332bc6da1bef8ce39c7f46196f5c041738a395bc13d8f95dd2cddd7"
+  },
+  "uv_version": "uv 0.11.32 (x86_64-unknown-linux-gnu)",
+  "worker_id": "4099543"
+}

@@ -1,0 +1,471 @@
+{
+  "checks": {
+    "block_candidates": {
+      "candidates": [
+        [
+          9000,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107
+        ],
+        [
+          8000,
+          201,
+          202,
+          203,
+          204,
+          205,
+          206,
+          207
+        ]
+      ],
+      "current_token_column": [
+        9000,
+        8000
+      ],
+      "hedge_draft_candidate_shape": [
+        2,
+        7
+      ],
+      "hedge_draft_candidates": [
+        [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107
+        ],
+        [
+          201,
+          202,
+          203,
+          204,
+          205,
+          206,
+          207
+        ]
+      ],
+      "hedge_draft_candidates_expression": "candidates[:, 1:]",
+      "pass": true
+    },
+    "checkpoint": {
+      "aux_hidden_state_layer_ids_in_order": [
+        3,
+        13,
+        23,
+        32,
+        42
+      ],
+      "block_size": 8,
+      "checkpoint_fc_shape": [
+        4096,
+        81920
+      ],
+      "context_width_for_five_aux_layers": 81920,
+      "draft_candidates": 7,
+      "draft_hidden_size": 4096,
+      "effective_target_feature_width": 16384,
+      "fixed_sglang_base_formula_width": 20480,
+      "hc_mult": 4,
+      "pass": true,
+      "target_hidden_size_null_resolution": "Infer 4*4096=16384 from hc_mult/hidden_size, and require agreement with fc.weight[4096,81920]; do not fall back to 4096."
+    },
+    "layer_index_and_source": {
+      "checkpoint_semantics": "post-layer hidden state IDs",
+      "deepseek_rule": "The existing DeepSeek-V4 seam computes the layer, then captures completed; a DFlash hook at that seam must keep IDs unchanged.",
+      "deepseek_v4_after_layer_capture_indices": [
+        3,
+        13,
+        23,
+        32,
+        42
+      ],
+      "fixed_source_observations": {
+        "deepseek_existing_dspark_capture_averages_mhc": true,
+        "deepseek_existing_dspark_capture_is_after_layer": true,
+        "deepseek_has_dflash_hook": false,
+        "dflash_model_uses_generic_4096_per_context_feature": true,
+        "dflash_worker_excludes_candidate_column_zero": true,
+        "logits_processor_concatenates_aux_in_list_order": true
+      },
+      "generic_before_layer_capture_indices": [
+        4,
+        14,
+        24,
+        33,
+        43
+      ],
+      "known_incompatible_existing_operation": "completed.mean(dim=1)",
+      "pass": true,
+      "required_operation": "completed.flatten(1)",
+      "source_files": {
+        "deepseek_v4": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/models/deepseek_v4.py",
+        "dflash_model": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/models/dflash.py",
+        "dflash_utils": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/speculative/dflash_utils.py",
+        "dflash_worker": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/speculative/dflash_worker_v2.py",
+        "llama": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/models/llama.py",
+        "logits_processor": "/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/logits_processor.py"
+      }
+    },
+    "mhc_layout": {
+      "concatenated_shape": [
+        2,
+        81920
+      ],
+      "cross_layer_operation": "torch.cat(aux_hidden_states, dim=-1)",
+      "input_shapes_in_checkpoint_aux_order": [
+        [
+          2,
+          4,
+          4096
+        ],
+        [
+          2,
+          4,
+          4096
+        ],
+        [
+          2,
+          4,
+          4096
+        ],
+        [
+          2,
+          4,
+          4096
+        ],
+        [
+          2,
+          4,
+          4096
+        ]
+      ],
+      "mean_dim_1": {
+        "reason": "DFlash checkpoint fc input mismatch: expected [N, 81920], got [2, 20480]",
+        "rejected": true,
+        "shape": [
+          2,
+          20480
+        ]
+      },
+      "pass": true,
+      "per_layer_operation": "completed.flatten(1)",
+      "per_layer_width": 16384,
+      "sentinels": [
+        {
+          "aux_slot": 0,
+          "batch": 0,
+          "concat_offset": 0,
+          "encoded_value": 0,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 3
+        },
+        {
+          "aux_slot": 0,
+          "batch": 0,
+          "concat_offset": 4113,
+          "encoded_value": 10017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 3
+        },
+        {
+          "aux_slot": 0,
+          "batch": 0,
+          "concat_offset": 16383,
+          "encoded_value": 34095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 3
+        },
+        {
+          "aux_slot": 1,
+          "batch": 0,
+          "concat_offset": 16384,
+          "encoded_value": 1000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 13
+        },
+        {
+          "aux_slot": 1,
+          "batch": 0,
+          "concat_offset": 20497,
+          "encoded_value": 1010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 13
+        },
+        {
+          "aux_slot": 1,
+          "batch": 0,
+          "concat_offset": 32767,
+          "encoded_value": 1034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 13
+        },
+        {
+          "aux_slot": 2,
+          "batch": 0,
+          "concat_offset": 32768,
+          "encoded_value": 2000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 23
+        },
+        {
+          "aux_slot": 2,
+          "batch": 0,
+          "concat_offset": 36881,
+          "encoded_value": 2010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 23
+        },
+        {
+          "aux_slot": 2,
+          "batch": 0,
+          "concat_offset": 49151,
+          "encoded_value": 2034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 23
+        },
+        {
+          "aux_slot": 3,
+          "batch": 0,
+          "concat_offset": 49152,
+          "encoded_value": 3000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 32
+        },
+        {
+          "aux_slot": 3,
+          "batch": 0,
+          "concat_offset": 53265,
+          "encoded_value": 3010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 32
+        },
+        {
+          "aux_slot": 3,
+          "batch": 0,
+          "concat_offset": 65535,
+          "encoded_value": 3034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 32
+        },
+        {
+          "aux_slot": 4,
+          "batch": 0,
+          "concat_offset": 65536,
+          "encoded_value": 4000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 42
+        },
+        {
+          "aux_slot": 4,
+          "batch": 0,
+          "concat_offset": 69649,
+          "encoded_value": 4010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 42
+        },
+        {
+          "aux_slot": 4,
+          "batch": 0,
+          "concat_offset": 81919,
+          "encoded_value": 4034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 42
+        },
+        {
+          "aux_slot": 0,
+          "batch": 1,
+          "concat_offset": 0,
+          "encoded_value": 100000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 3
+        },
+        {
+          "aux_slot": 0,
+          "batch": 1,
+          "concat_offset": 4113,
+          "encoded_value": 100010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 3
+        },
+        {
+          "aux_slot": 0,
+          "batch": 1,
+          "concat_offset": 16383,
+          "encoded_value": 100034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 3
+        },
+        {
+          "aux_slot": 1,
+          "batch": 1,
+          "concat_offset": 16384,
+          "encoded_value": 101000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 13
+        },
+        {
+          "aux_slot": 1,
+          "batch": 1,
+          "concat_offset": 20497,
+          "encoded_value": 101010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 13
+        },
+        {
+          "aux_slot": 1,
+          "batch": 1,
+          "concat_offset": 32767,
+          "encoded_value": 101034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 13
+        },
+        {
+          "aux_slot": 2,
+          "batch": 1,
+          "concat_offset": 32768,
+          "encoded_value": 102000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 23
+        },
+        {
+          "aux_slot": 2,
+          "batch": 1,
+          "concat_offset": 36881,
+          "encoded_value": 102010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 23
+        },
+        {
+          "aux_slot": 2,
+          "batch": 1,
+          "concat_offset": 49151,
+          "encoded_value": 102034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 23
+        },
+        {
+          "aux_slot": 3,
+          "batch": 1,
+          "concat_offset": 49152,
+          "encoded_value": 103000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 32
+        },
+        {
+          "aux_slot": 3,
+          "batch": 1,
+          "concat_offset": 53265,
+          "encoded_value": 103010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 32
+        },
+        {
+          "aux_slot": 3,
+          "batch": 1,
+          "concat_offset": 65535,
+          "encoded_value": 103034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 32
+        },
+        {
+          "aux_slot": 4,
+          "batch": 1,
+          "concat_offset": 65536,
+          "encoded_value": 104000000,
+          "feature": 0,
+          "stream": 0,
+          "target_layer_id": 42
+        },
+        {
+          "aux_slot": 4,
+          "batch": 1,
+          "concat_offset": 69649,
+          "encoded_value": 104010017,
+          "feature": 17,
+          "stream": 1,
+          "target_layer_id": 42
+        },
+        {
+          "aux_slot": 4,
+          "batch": 1,
+          "concat_offset": 81919,
+          "encoded_value": 104034095,
+          "feature": 4095,
+          "stream": 3,
+          "target_layer_id": 42
+        }
+      ]
+    },
+    "parser": {
+      "audit_adapter_result": {
+        "block_size": 8,
+        "mask_token_id": 1,
+        "num_hidden_layers": 5,
+        "target_layer_ids": [
+          3,
+          13,
+          23,
+          32,
+          42
+        ]
+      },
+      "pass": true,
+      "production_requirement": "D2 must deliberately normalize transformer_layer_config and aux_hidden_state_layer_ids; D1B did not patch SGLang.",
+      "raw_primary_parser_result": {
+        "block_size": 8,
+        "mask_token_id": null,
+        "num_hidden_layers": null,
+        "require_num_layers_error": "DFLASH requires draft num_hidden_layers in config. Got config without num_hidden_layers.",
+        "target_layer_ids": null
+      }
+    }
+  },
+  "primary_config": {
+    "path": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1b/dflash_d1b_primary_config.json",
+    "sha256": "6b48c98c8291ca3153c37038ba3ff96ca07921b8e98932907f67b43625fb01b1"
+  },
+  "recorded_at": "2026-07-28T21:54:53.242727Z",
+  "safetensors_header_summary": {
+    "path": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1b/dflash_d1b_safetensors_header_summary.json",
+    "sha256": "dade9809070b5e87f3c414c521ff1f37fc5c7676c9d3b830773c563aede12224"
+  },
+  "schema_version": 1,
+  "scope": "D1B CPU-only contract audit; no model load and no D2 production integration.",
+  "source_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "status": "PASS",
+  "torch_device": "cpu"
+}

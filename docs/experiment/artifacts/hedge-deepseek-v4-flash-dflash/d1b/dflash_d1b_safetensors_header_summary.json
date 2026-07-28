@@ -1,0 +1,87 @@
+{
+  "body_bytes_from_data_offsets": 3607590144,
+  "header_json_bytes": 6608,
+  "header_json_sha256": "a920047d53810be3c990ba1a8765fcbbee2bedc8821853990d26042a1f14ef35",
+  "header_length_prefix_bytes": 8,
+  "lfs": {
+    "oid_sha256": "d686aef63ec7debf699b4534851c38451a3f2bc7a532e0d4f9ea0ed844d3d6ee",
+    "size": 3607596760
+  },
+  "metadata": {
+    "format": "pt"
+  },
+  "provider": {
+    "repo": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+    "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+    "safetensors_file": "model.safetensors"
+  },
+  "range_probe": {
+    "bytes_requested": "0-6615",
+    "full_payload_downloaded": false,
+    "size_equation": "8 + 6608 + 3607590144 = 3607596760"
+  },
+  "selected_tensors": {
+    "d2t": {
+      "dtype": "I64",
+      "shape": [
+        32000
+      ]
+    },
+    "embed_tokens.weight": {
+      "dtype": "BF16",
+      "shape": [
+        129280,
+        4096
+      ]
+    },
+    "fc.weight": {
+      "dtype": "BF16",
+      "shape": [
+        4096,
+        81920
+      ]
+    },
+    "layers.0.self_attn.k_proj.weight": {
+      "dtype": "BF16",
+      "shape": [
+        256,
+        4096
+      ]
+    },
+    "layers.0.self_attn.o_proj.weight": {
+      "dtype": "BF16",
+      "shape": [
+        4096,
+        16384
+      ]
+    },
+    "layers.0.self_attn.q_proj.weight": {
+      "dtype": "BF16",
+      "shape": [
+        16384,
+        4096
+      ]
+    },
+    "layers.0.self_attn.v_proj.weight": {
+      "dtype": "BF16",
+      "shape": [
+        256,
+        4096
+      ]
+    },
+    "lm_head.weight": {
+      "dtype": "BF16",
+      "shape": [
+        32000,
+        4096
+      ]
+    },
+    "t2d": {
+      "dtype": "BOOL",
+      "shape": [
+        129280
+      ]
+    }
+  },
+  "tensor_count_excluding_metadata": 62
+}
