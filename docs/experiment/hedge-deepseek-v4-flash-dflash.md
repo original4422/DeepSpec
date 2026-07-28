@@ -1,6 +1,6 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `IN_PROGRESS — D0/D1B/D1C ACCEPTED; D1A RUNNING`
+Status / outcome label: `IN_PROGRESS — D0/D1B/D1C/D2 ACCEPTED; D1A RETRYING; D3 WAITING FOR TARGET`
 
 Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
 
@@ -8,11 +8,11 @@ Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8
 
 Target repo@revision / HDFS `.complete`: `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1` / `WAIT`
 
-Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `NOT_STARTED`
+Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `RUNNING — first curl pass reset near completion; same primary transfer retrying`
 
-SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / `D1B clean base; D2 integration pending`
+SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / native D2 `7245c3d607a1eadc26582bb78ebd603a70c22fa7`; HEDGE-final pending D4
 
-HEDGE pure-core SHA: `WAIT`
+HEDGE pure-core SHA: `4d96f44065c07030ede67484a262006ec149626a` (`READY`, verified; not yet cherry-picked)
 
 Dataset revision / seed / fingerprint: `openai/gsm8k@740312add88f781978c0658806c59bc2815b9866` / `980406` / HF `59ec1b7f9357c7a2`, content `32f83c6b…b41c4`
 
@@ -26,13 +26,13 @@ B+ result: `NOT_RUN`
 
 Canonical or exploratory: `UNDETERMINED`
 
-Primary blocker: Eagle target pointer 与 DSpark pure-core pointer 尚未发布；D1A primary draft 正常传输中，无 retry/error。
+Primary blocker: Eagle target pointer 尚未发布；D1A primary 下载的首个 curl pass 接近完成时被内部 retry 从 invocation offset 0 截断重写，当前同一 primary attempt 继续传输，fallback disabled。
 
-Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d0/`
+Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/`
 
-Git commit: latest pushed progress `60d7e46`; D1B source/env/contract key node is this commit
+Git commit: latest pushed progress `a08d969`; SGLang native D2 `7245c3d607a1eadc26582bb78ebd603a70c22fa7`; DeepSpec D2 key node is this commit
 
-下一步：保持本 lane keepalive，完成 D1A/D1B 验收后调度独立 D2 executor。
+下一步：保持本 lane keepalive，完成并验收 D1A；继续只读等待 Eagle target。D3 仅在 target/draft `.complete`、source/env 和资源门禁全部满足后调度。
 
 ## D0 会话与资源基线
 
@@ -82,3 +82,25 @@ Triton `3.6.0`、sglang-kernel `0.4.5+cu130`，`uv pip check` 验证 201 个包�
 
 因此 D2 的最小 production 范围已锁定为 config normalization、DeepSeek after-layer
 DFlash capture hook 与 81920-wide projection/loader；D1B 没有修改 SGLang。
+
+## D2 native DFlash 接入
+
+固定 SGLang base 上的 native 接入已由独立 executor 完成，并由主 Agent 直接复验后
+固化为本 lane 的 SGLang commit
+`7245c3d607a1eadc26582bb78ebd603a70c22fa7`，其唯一 parent 是固定 base
+`fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`。该 commit 没有 push 到共享
+SGLang origin；完整可复现 patch 和文件 hash 保存在 D2 artifact。
+
+接入范围包括 nested Speculators config normalization、DeepSeek-V4 after-layer mHC
+flatten capture、`fc.weight=[4096,81920]` 与 checkpoint 自带
+embedding/LM head/`t2d`/`d2t` loader、block 8 中七个 draft-vocab token 到 target
+token space 的映射，以及请求显式开启 `return_meta_info` 时的
+`choices[0].meta_info.output_token_ids`。
+
+executor 与主 Agent 分别复跑相同 CPU/meta 门禁，均得到 `186 PASS / 1 CUDA-only
+SKIP`；artifact manifest、逐文件 hash、JSON、patch reverse-apply 和零 HEDGE source
+scan 均 PASS。主 Agent staged 审核曾发现新增 config 文件 EOF 多一行空白；原 executor
+只删除该空白、重生成证据并重跑全套测试后，`git diff --cached --check` 通过。D2
+没有启动 GPU、大模型或 HEDGE，也没有暂停 keepalive。权威 handoff 为
+`docs/plan/handoffs/dflash-phase-d2-handoff.md`，主验收记录为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d2/dflash_d2_main_acceptance.json`。

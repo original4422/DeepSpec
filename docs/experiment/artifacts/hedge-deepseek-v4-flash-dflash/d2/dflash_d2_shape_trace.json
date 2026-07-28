@@ -1,0 +1,102 @@
+{
+  "candidate_alignment": {
+    "block_size": 8,
+    "candidate_rows_target_vocab": [
+      [
+        9000,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107
+      ],
+      [
+        8000,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207
+      ]
+    ],
+    "current_token_column": 0,
+    "draft_candidate_count": 7,
+    "draft_candidate_shape": [
+      2,
+      7
+    ],
+    "draft_candidate_slice": "candidates[:, 1:]"
+  },
+  "config": {
+    "aux_hidden_state_layer_ids": [
+      3,
+      13,
+      23,
+      32,
+      42
+    ],
+    "draft_hidden_size": 4096,
+    "draft_num_hidden_layers": 5,
+    "draft_vocab_size": 32000,
+    "mask_token_id": 1,
+    "sliding_window": 2048,
+    "sliding_window_non_causal": false,
+    "target_vocab_size": 129280
+  },
+  "layer_capture": {
+    "capture_semantics": "completed output after DeepSeek-V4 layer i",
+    "checkpoint_layer_ids": [
+      3,
+      13,
+      23,
+      32,
+      42
+    ],
+    "plus_one_applied": false,
+    "production_capture_layer_ids": [
+      3,
+      13,
+      23,
+      32,
+      42
+    ]
+  },
+  "mhc": {
+    "concatenated_shape": [
+      2,
+      81920
+    ],
+    "flatten_operation": "completed.flatten(1)",
+    "input_shape_per_layer": [
+      2,
+      4,
+      4096
+    ],
+    "per_layer_flattened_shape": [
+      2,
+      16384
+    ],
+    "per_stream_first_values_row_0": [
+      0,
+      4096,
+      8192,
+      12288
+    ],
+    "per_stream_last_values_row_0": [
+      4095,
+      8191,
+      12287,
+      16383
+    ],
+    "projection_weight_shape": [
+      4096,
+      81920
+    ],
+    "stream_order_preserved": true
+  },
+  "status": "PASS"
+}

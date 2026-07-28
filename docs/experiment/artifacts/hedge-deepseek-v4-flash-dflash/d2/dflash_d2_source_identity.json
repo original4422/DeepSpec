@@ -1,0 +1,107 @@
+{
+  "base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "native_integration_parent_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "native_integration_sha": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+  "native_integration_tree_sha": "ed4dd52d628036ba83718d6c2a895b6581770660",
+  "changed_file_hashes": {
+    "python/sglang/srt/configs/dflash.py": {
+      "bytes": 3508,
+      "sha256": "6734575cad9f3663077504df0f5a6e77e93bcbd66dd9363aac02cc2a9356c1f2"
+    },
+    "python/sglang/srt/entrypoints/openai/serving_chat.py": {
+      "bytes": 95981,
+      "sha256": "1b83beb52b6d51c9f855f2ffbf7938bc51fadf2b2cc49984c5b849483b8e3f7a"
+    },
+    "python/sglang/srt/models/deepseek_v4.py": {
+      "bytes": 126601,
+      "sha256": "031164f7d016510751f0f34b5b1a8cbbf3c85145a3cf88f67f9c2b037c9397a0"
+    },
+    "python/sglang/srt/models/dflash.py": {
+      "bytes": 27059,
+      "sha256": "83325d25a8bdb7c0e13d796082cda8d17b12e71caad6be518406011a9a5298f1"
+    },
+    "python/sglang/srt/speculative/dflash_utils.py": {
+      "bytes": 30289,
+      "sha256": "e980e9f85441abba77976039ac0fc767165ec4f17da096124a83cdb51884297d"
+    },
+    "python/sglang/srt/speculative/dflash_worker_v2.py": {
+      "bytes": 81110,
+      "sha256": "f6de9e4ba1cf0353411c3a9a26bd05cbe8f2a2c00a62846b6d958a9da31ece2b"
+    },
+    "python/sglang/srt/utils/hf_transformers/config.py": {
+      "bytes": 9927,
+      "sha256": "5edcd1906def546b7b31da950843601a18f581ff755030b0f774118e5f6b0ecc"
+    },
+    "test/registered/unit/entrypoints/openai/test_serving_chat.py": {
+      "bytes": 101084,
+      "sha256": "783fc108ae050969e8cd86cc7c3d1682c378579c4b7fe8b520886d71b69d1ed6"
+    },
+    "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py": {
+      "bytes": 14497,
+      "sha256": "88a4e327794a0c57df9fa223559ee339451c9a801717a0487e9142f8fb11eb56"
+    }
+  },
+  "changed_files": [
+    "python/sglang/srt/entrypoints/openai/serving_chat.py",
+    "python/sglang/srt/models/deepseek_v4.py",
+    "python/sglang/srt/models/dflash.py",
+    "python/sglang/srt/speculative/dflash_utils.py",
+    "python/sglang/srt/speculative/dflash_worker_v2.py",
+    "python/sglang/srt/utils/hf_transformers/config.py",
+    "test/registered/unit/entrypoints/openai/test_serving_chat.py",
+    "python/sglang/srt/configs/dflash.py",
+    "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py"
+  ],
+  "collected_at": "2026-07-28T22:38:19.931936Z",
+  "deepseek_v4_capture_modes": {
+    "dflash": "flatten(1)",
+    "dspark": "mean(dim=1), unchanged",
+    "mutually_exclusive_guard": true
+  },
+  "head_is_fixed_base": false,
+  "head_is_native_integration_commit": true,
+  "hedge_code_scan": {
+    "changed_source_hits": {},
+    "production_hedge_integration_present": false,
+    "status": "PASS"
+  },
+  "inherited_d1b_source_identity": {
+    "path": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1b/dflash_d1b_source_identity.json",
+    "sha256": "99d4d9d29a4d63d7bca644373dd6910eaf0435c96412eb52a8e564a15f03b180",
+    "upstream_origin": "https://github.com/sgl-project/sglang.git"
+  },
+  "origin": "/home/tiger/src/deepspec-sglang-fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "patch_artifact": {
+    "added_file_whitespace_check": "PASS",
+    "blank_context_encoding": "empty context lines omit the optional single-space prefix",
+    "fixed_base_apply_check": "PASS",
+    "generation": [
+      "git show --format= --binary --unified=3 7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+      "normalize only lines exactly equal to one context-prefix space into empty lines"
+    ],
+    "native_integration_reverse_apply_check": "PASS",
+    "fixed_base_apply_tree_sha": "ed4dd52d628036ba83718d6c2a895b6581770660",
+    "fixed_base_apply_tree_matches_native_commit": true,
+    "patch_sha256": "1cb80d832a751952e6a1430ce94e0331f39b44fa2dc94167478e15e5120599cf",
+    "repacked_at": "2026-07-28T22:45:11Z",
+    "semantic_source": "commit 7245c3d607a1eadc26582bb78ebd603a70c22fa7 relative to its fixed-base parent",
+    "whitespace_mode": "error-all"
+  },
+  "patch_reverse_apply_check": "PASS",
+  "patch_whitespace_error_all_check": "PASS",
+  "source_checkout": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+  "source_worktree_clean": true,
+  "status": "PASS",
+  "worktree_status_for_changed_files_at_initial_collection": [
+    "AM python/sglang/srt/configs/dflash.py",
+    "M  python/sglang/srt/entrypoints/openai/serving_chat.py",
+    "M  python/sglang/srt/models/deepseek_v4.py",
+    "M  python/sglang/srt/models/dflash.py",
+    "M  python/sglang/srt/speculative/dflash_utils.py",
+    "M  python/sglang/srt/speculative/dflash_worker_v2.py",
+    "M  python/sglang/srt/utils/hf_transformers/config.py",
+    "M  test/registered/unit/entrypoints/openai/test_serving_chat.py",
+    "A  test/registered/unit/spec/test_dflash_deepseek_v4_primary.py"
+  ],
+  "worktree_status_for_changed_files": []
+}

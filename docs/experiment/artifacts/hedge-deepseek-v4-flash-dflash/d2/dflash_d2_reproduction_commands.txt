@@ -1,0 +1,7 @@
+/home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+/home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_overlap_hostsync.py
+/home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/entrypoints/openai/test_serving_chat.py
+/home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/configs/test_model_config_parser_registry.py
+/home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/configs/test_model_config.py
+/home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_spec_registry.py
+/home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/utils/test_hf_transformers.py

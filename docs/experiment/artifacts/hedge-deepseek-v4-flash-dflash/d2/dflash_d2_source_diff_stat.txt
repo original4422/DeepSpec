@@ -1,0 +1,12 @@
+ .../sglang/srt/entrypoints/openai/serving_chat.py  |  19 ++-
+ python/sglang/srt/models/deepseek_v4.py            |  77 +++++++--
+ python/sglang/srt/models/dflash.py                 | 181 ++++++++++++++++-----
+ python/sglang/srt/speculative/dflash_utils.py      |  14 +-
+ python/sglang/srt/speculative/dflash_worker_v2.py  |  84 ++++++++--
+ python/sglang/srt/utils/hf_transformers/config.py  |  20 ++-
+ .../unit/entrypoints/openai/test_serving_chat.py   |  10 +-
+ 7 files changed, 338 insertions(+), 67 deletions(-)
+ /dev/null => python/sglang/srt/configs/dflash.py | 95 ++++++++++++++++++++++++
+ 1 file changed, 95 insertions(+)
+ .../unit/spec/test_dflash_deepseek_v4_primary.py   | 411 +++++++++++++++++++++
+ 1 file changed, 411 insertions(+)

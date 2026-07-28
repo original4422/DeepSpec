@@ -1,0 +1,305 @@
+===== production_primary_contract =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+test_deepseek_v4_capture_keeps_layer_ids_and_flattens_mhc (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_deepseek_v4_capture_keeps_layer_ids_and_flattens_mhc) ... /home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+W0729 06:37:17.662000 1938280 torch/utils/cpp_extension.py:140] No CUDA runtime is found, using CUDA_HOME='/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13'
+ok
+test_draft_model_uses_mhc_projection_and_primary_vocab_weights (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_draft_model_uses_mhc_projection_and_primary_vocab_weights) ... Ignore import error when loading sglang.srt.models.bailing_moe_linear: No module named 'vllm'
+Ignore import error when loading sglang.srt.models.bailing_moe_nextn: No module named 'vllm'
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:1640: DeprecationWarning: `torch.jit.interface` is deprecated. Please use `torch.compile` instead.
+  warnings.warn(
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+ok
+test_primary_attention_header_shapes_map_to_fused_state (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_primary_attention_header_shapes_map_to_fused_state) ... ok
+test_primary_projection_and_vocab_header_shapes_on_meta (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_primary_projection_and_vocab_header_shapes_on_meta) ... ok
+test_production_loader_normalizes_primary_schema (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_production_loader_normalizes_primary_schema) ... Failed to load generation config for /tmp/tmpe3_9xdnd: /tmp/tmpe3_9xdnd does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co//tmp/tmpe3_9xdnd/tree/main' for available files.. Proceeding without generation config.
+ok
+test_worker_maps_seven_draft_vocab_tokens_after_current_token (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_worker_maps_seven_draft_vocab_tokens_after_current_token) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 7.326s
+
+OK
+
+===== existing_dflash_cpu =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_overlap_hostsync.py
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+[CI Test Method] TestCompactSeqLensHostBound.test_sawtooth_counterexample
+W0729 06:37:27.892000 1939866 torch/utils/cpp_extension.py:140] No CUDA runtime is found, using CUDA_HOME='/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13'
+.[CI Test Method] TestCompactSeqLensHostBound.test_upper_bound_of_exact
+.[CI Test Method] TestDflashDraftSamplerVocabParallel.test_matches_full_vocab_argmax
+.[CI Test Method] TestDflashDraftSamplerVocabParallel.test_shard_boundary_tie_resolves_to_first_global_index
+.[CI Test Method] TestFilterBatchHostIndices.test_host_keep_list_matches_gpu_indices
+.[CI Test Method] TestHybridNeedsCpuSeqLens.test_delegation
+.s
+----------------------------------------------------------------------
+Ran 7 tests in 0.723s
+
+OK (skipped=1)
+
+===== openai_serving_chat =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/entrypoints/openai/test_serving_chat.py
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+W0729 06:37:37.700000 1940178 torch/utils/cpp_extension.py:140] No CUDA runtime is found, using CUDA_HOME='/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13'
+test_continue_final_message_leaves_tool_call_turns_closed (__main__.InklingReasoningEffortTest.test_continue_final_message_leaves_tool_call_turns_closed)
+A trailing assistant message with tool_calls cannot be continued — ... ok
+test_continue_final_message_resumes_open_model_text_block (__main__.InklingReasoningEffortTest.test_continue_final_message_resumes_open_model_text_block)
+Bug regression: continue_final_message was silently ignored on the ... ok
+test_env_default (__main__.InklingReasoningEffortTest.test_env_default) ... ok
+test_invalid_and_none (__main__.InklingReasoningEffortTest.test_invalid_and_none) ... ok
+test_named_levels (__main__.InklingReasoningEffortTest.test_named_levels) ... ok
+test_scalar_range_is_validated (__main__.InklingReasoningEffortTest.test_scalar_range_is_validated) ... ok
+test_serving_does_not_prefill_model_message (__main__.InklingReasoningEffortTest.test_serving_does_not_prefill_model_message) ... ok
+test_attach_task_to_last_user_message (__main__.ServingChatTestCase.test_attach_task_to_last_user_message)
+Helper attaches task to the nearest user/developer message. ... ok
+test_build_chat_response_qwen3_thinking_forces_reasoning (__main__.ServingChatTestCase.test_build_chat_response_qwen3_thinking_forces_reasoning) ... ok
+test_continuous_usage_omits_cached_tokens_when_report_disabled (__main__.ServingChatTestCase.test_continuous_usage_omits_cached_tokens_when_report_disabled)
+With cache reporting off, continuous_usage_stats must not leak cached tokens. ... ok
+test_continuous_usage_reports_cached_tokens (__main__.ServingChatTestCase.test_continuous_usage_reports_cached_tokens)
+continuous_usage_stats chunks include cached tokens when cache reporting is on. ... ok
+test_convert_to_internal_request_input_ids_bypasses_template (__main__.ServingChatTestCase.test_convert_to_internal_request_input_ids_bypasses_template) ... /home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/entrypoints/openai/protocol.py:980: DeprecationWarning: max_tokens is deprecated in favor of the max_completion_tokens field
+  "max_new_tokens": self.max_completion_tokens or self.max_tokens,
+ok
+test_convert_to_internal_request_rejects_stream_return_meta_info (__main__.ServingChatTestCase.test_convert_to_internal_request_rejects_stream_return_meta_info) ... ok
+test_convert_to_internal_request_rejects_stream_return_prompt_token_ids (__main__.ServingChatTestCase.test_convert_to_internal_request_rejects_stream_return_prompt_token_ids) ... ok
+test_convert_to_internal_request_single (__main__.ServingChatTestCase.test_convert_to_internal_request_single) ... ok
+test_decode_response_returns_text (__main__.ServingChatTestCase.test_decode_response_returns_text)
+Default _decode_response returns ret_item['text']. ... ok
+test_default_chat_template_kwargs_applied_when_request_unset (__main__.ServingChatTestCase.test_default_chat_template_kwargs_applied_when_request_unset) ... ok
+test_default_chat_template_kwargs_mirrors_reasoning_effort (__main__.ServingChatTestCase.test_default_chat_template_kwargs_mirrors_reasoning_effort) ... ok
+test_default_chat_template_kwargs_overridden_per_request (__main__.ServingChatTestCase.test_default_chat_template_kwargs_overridden_per_request) ... ok
+test_dpsk_v32_encoding_path (__main__.ServingChatTestCase.test_dpsk_v32_encoding_path)
+Test DeepSeek V3.2 encoding path detection and application. ... /usr/lib/python3.11/asyncio/base_events.py:692: ResourceWarning: unclosed event loop <_UnixSelectorEventLoop running=False closed=False debug=False>
+  _warn(f"unclosed event loop {self!r}", ResourceWarning, source=self)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_dsv4_content_parts_list_normalized (__main__.ServingChatTestCase.test_dsv4_content_parts_list_normalized)
+OpenAI list-of-parts content flattens to text before reaching the encoder. ... ok
+test_dsv4_task_and_reminder_encode_end_to_end (__main__.ServingChatTestCase.test_dsv4_task_and_reminder_encode_end_to_end)
+Task + latest_reminder plumb through to the dsv4 encoder correctly. ... ok
+test_dsv4_task_field_schema (__main__.ServingChatTestCase.test_dsv4_task_field_schema)
+Top-level `task` accepts the 6 DS task tokens and rejects others. ... ok
+test_dsv_encoders_accept_object_tool_call_arguments_string (__main__.ServingChatTestCase.test_dsv_encoders_accept_object_tool_call_arguments_string)
+DeepSeek encoders accept object-shaped OpenAI JSON string arguments. ... ok
+test_dsv_encoders_reject_non_object_tool_call_arguments (__main__.ServingChatTestCase.test_dsv_encoders_reject_non_object_tool_call_arguments)
+DeepSeek encoders should reject history tool call scalars as BadRequest. ... ok
+test_encode_messages_returns_none_by_default (__main__.ServingChatTestCase.test_encode_messages_returns_none_by_default)
+Default _encode_messages returns None (use standard encoding). ... ok
+test_extract_routed_dp_rank_from_header_invalid (__main__.ServingChatTestCase.test_extract_routed_dp_rank_from_header_invalid)
+Test that invalid header value raises HTTPException. ... ok
+test_extract_routed_dp_rank_from_header_no_header (__main__.ServingChatTestCase.test_extract_routed_dp_rank_from_header_no_header)
+Test that None is returned when no header is present. ... ok
+test_extract_routed_dp_rank_header_overrides_body (__main__.ServingChatTestCase.test_extract_routed_dp_rank_header_overrides_body)
+Test that header value has higher priority than body. ... ok
+test_fallback_always_mode (__main__.ServingChatTestCase.test_fallback_always_mode) ... ok
+test_fallback_enable_thinking_mode_default_on (__main__.ServingChatTestCase.test_fallback_enable_thinking_mode_default_on) ... ok
+test_fallback_explicit_enable_thinking_mode_default_off (__main__.ServingChatTestCase.test_fallback_explicit_enable_thinking_mode_default_off) ... ok
+test_fallback_explicit_thinking_mode_default_off (__main__.ServingChatTestCase.test_fallback_explicit_thinking_mode_default_off) ... ok
+test_fallback_mistral_mode (__main__.ServingChatTestCase.test_fallback_mistral_mode) ... ok
+test_fallback_no_detector_returns_false (__main__.ServingChatTestCase.test_fallback_no_detector_returns_false) ... ok
+test_get_parsed_response_fields_passthrough (__main__.ServingChatTestCase.test_get_parsed_response_fields_passthrough)
+Default _get_parsed_response_fields passes through values. ... ok
+test_get_reasoning_from_request_default_false_toggle (__main__.ServingChatTestCase.test_get_reasoning_from_request_default_false_toggle) ... ok
+test_get_reasoning_from_request_default_true_toggle (__main__.ServingChatTestCase.test_get_reasoning_from_request_default_true_toggle) ... ok
+test_get_reasoning_from_request_special_cases (__main__.ServingChatTestCase.test_get_reasoning_from_request_special_cases) ... ok
+test_hunyuan_reasoning_effort_dispatch (__main__.ServingChatTestCase.test_hunyuan_reasoning_effort_dispatch) ... ok
+test_incremental_streaming_output_delta (__main__.ServingChatTestCase.test_incremental_streaming_output_delta)
+Test that streaming with incremental_streaming_output produces correct deltas. ... ok
+test_jinja_accepts_object_tool_call_arguments_string (__main__.ServingChatTestCase.test_jinja_accepts_object_tool_call_arguments_string)
+OpenAI JSON string arguments are converted to dicts for templates. ... ok
+test_jinja_rejects_non_object_tool_call_arguments (__main__.ServingChatTestCase.test_jinja_rejects_non_object_tool_call_arguments)
+History tool call arguments must parse to a JSON object. ... ok
+test_jinja_tool_schema_fallback_to_flat_function (__main__.ServingChatTestCase.test_jinja_tool_schema_fallback_to_flat_function)
+Fallback to function-only schema when template rejects OpenAI wrapper. ... ok
+test_jinja_uses_openai_tool_schema_first (__main__.ServingChatTestCase.test_jinja_uses_openai_tool_schema_first)
+Ensure Jinja chat templates receive OpenAI-shaped tools by default. ... ok
+test_kimi_k2_non_streaming_tool_call_id_with_history (__main__.ServingChatTestCase.test_kimi_k2_non_streaming_tool_call_id_with_history)
+Ensure non-streaming tool_call.id increase with tool calls history for kimi_k2 parser. ... ok
+test_kimi_k2_streaming_tool_call_id_with_history (__main__.ServingChatTestCase.test_kimi_k2_streaming_tool_call_id_with_history)
+Ensure streaming first chunk tool_call.id increase with tool calls history for kimi_k2 parser. ... ok
+test_kimi_tool_call_keeps_default_reasoning (__main__.ServingChatTestCase.test_kimi_tool_call_keeps_default_reasoning) ... ok
+test_kimi_tool_call_keeps_explicit_template_thinking (__main__.ServingChatTestCase.test_kimi_tool_call_keeps_explicit_template_thinking) ... ok
+test_kimi_tool_call_keeps_explicit_template_thinking_false (__main__.ServingChatTestCase.test_kimi_tool_call_keeps_explicit_template_thinking_false) ... ok
+test_kimi_tool_call_keeps_template_default_thinking (__main__.ServingChatTestCase.test_kimi_tool_call_keeps_template_default_thinking) ... ok
+test_kimi_tool_call_respects_explicit_reasoning_disable (__main__.ServingChatTestCase.test_kimi_tool_call_respects_explicit_reasoning_disable) ... ok
+test_nemotron_nano_no_effort_kwarg (__main__.ServingChatTestCase.test_nemotron_nano_no_effort_kwarg) ... ok
+test_nemotron_super_high_effort_warns_without_kwarg (__main__.ServingChatTestCase.test_nemotron_super_high_effort_warns_without_kwarg) ... ok
+test_nemotron_super_low_effort_mapped_to_kwarg (__main__.ServingChatTestCase.test_nemotron_super_low_effort_mapped_to_kwarg) ... ok
+test_non_stream_reasoning_response_preserves_payload_whitespace (__main__.ServingChatTestCase.test_non_stream_reasoning_response_preserves_payload_whitespace) ... ok
+test_non_streaming_cached_tokens_details_emits_sglext (__main__.ServingChatTestCase.test_non_streaming_cached_tokens_details_emits_sglext)
+Test that non-streaming chat responses emit cached token details in sglext. ... ok
+test_non_streaming_chat_response_returns_requested_prompt_ids_and_meta_info (__main__.ServingChatTestCase.test_non_streaming_chat_response_returns_requested_prompt_ids_and_meta_info) ... ok
+test_poolside_v1_does_not_double_prepend_think (__main__.ServingChatTestCase.test_poolside_v1_does_not_double_prepend_think)
+When `enable_thinking=True` for poolside_v1, the HF chat template ... ok
+test_poolside_v1_enable_thinking_dispatch (__main__.ServingChatTestCase.test_poolside_v1_enable_thinking_dispatch)
+Laguna chat template defaults `enable_thinking=false`. Parser must ... ok
+test_stop_str_isolation_between_requests (__main__.ServingChatTestCase.test_stop_str_isolation_between_requests)
+Test that stop strings from one request don't affect subsequent requests. ... ok
+test_streaming_abort_yields_error (__main__.ServingChatTestCase.test_streaming_abort_yields_error)
+Test that an abort finish reason during streaming correctly yields an error and stops. ... ok
+test_streaming_cached_tokens_details_emits_sglext (__main__.ServingChatTestCase.test_streaming_cached_tokens_details_emits_sglext)
+Test that streaming chat responses emit cached token details in sglext. ... ok
+test_streaming_logprobs_attached_with_reasoning_parser (__main__.ServingChatTestCase.test_streaming_logprobs_attached_with_reasoning_parser)
+Logprobs must ride on the reasoning chunk when a reasoning parser is active. ... ok
+test_streaming_logprobs_flushed_when_tool_parser_buffers_delta (__main__.ServingChatTestCase.test_streaming_logprobs_flushed_when_tool_parser_buffers_delta)
+Logprobs must be flushed on a standalone chunk when the tool parser emits no content delta. ... ok
+test_streaming_logprobs_not_flushed_on_empty_delta_step_without_parser (__main__.ServingChatTestCase.test_streaming_logprobs_not_flushed_on_empty_delta_step_without_parser)
+With no parser active, an empty-delta step must not emit a standalone ... ok
+test_unstreamed_tool_args_completion (__main__.ServingChatTestCase.test_unstreamed_tool_args_completion)
+Test that remaining tool call arguments are sent when generation finishes. ... ok
+test_unstreamed_tool_args_no_completion_needed (__main__.ServingChatTestCase.test_unstreamed_tool_args_no_completion_needed)
+Test that no completion chunk is sent when all arguments were already streamed. ... ok
+test_unstreamed_tool_args_no_parser_data (__main__.ServingChatTestCase.test_unstreamed_tool_args_no_parser_data)
+Test that no completion chunk is sent when parser has no tool call data. ... ok
+test_unstreamed_tool_args_raw_string_completion (__main__.ServingChatTestCase.test_unstreamed_tool_args_raw_string_completion)
+Test remaining raw JSON string arguments are sent at finish. ... ok
+test_unstreamed_tool_args_raw_string_no_completion_needed (__main__.ServingChatTestCase.test_unstreamed_tool_args_raw_string_no_completion_needed)
+Test raw JSON string arguments are not JSON-encoded again at finish. ... ok
+test_xgrammar_tag_omits_reasoning_when_parser_owns_it (__main__.ServingChatTestCase.test_xgrammar_tag_omits_reasoning_when_parser_owns_it)
+ReasonerGrammarBackend owns the thinking prefix when a parser is set. ... ok
+test_empty_list_returns_empty_string (__main__.TestNormalizeToolContent.test_empty_list_returns_empty_string) ... ok
+test_mixed_str_and_dict_parts (__main__.TestNormalizeToolContent.test_mixed_str_and_dict_parts) ... ok
+test_multiple_text_parts_joined (__main__.TestNormalizeToolContent.test_multiple_text_parts_joined) ... ok
+test_non_text_part_list_preserved (__main__.TestNormalizeToolContent.test_non_text_part_list_preserved) ... ok
+test_non_tool_role_unchanged (__main__.TestNormalizeToolContent.test_non_tool_role_unchanged) ... ok
+test_string_content_unchanged (__main__.TestNormalizeToolContent.test_string_content_unchanged) ... ok
+test_empty_parser_result_is_not_reported_as_tool_call (__main__.TestProcessToolCallsWithRequiredToolChoice.test_empty_parser_result_is_not_reported_as_tool_call) ... ok
+test_required_with_parser_uses_function_call_parser (__main__.TestProcessToolCallsWithRequiredToolChoice.test_required_with_parser_uses_function_call_parser)
+tool_choice='required' should use FunctionCallParser when tool_call_parser is set. ... ok
+test_required_without_parser_falls_back_to_json (__main__.TestProcessToolCallsWithRequiredToolChoice.test_required_without_parser_falls_back_to_json)
+tool_choice='required' without parser should parse as JSON array. ... ok
+test_required_without_parser_invalid_json_returns_none (__main__.TestProcessToolCallsWithRequiredToolChoice.test_required_without_parser_invalid_json_returns_none)
+tool_choice='required' without parser and invalid JSON returns tool_calls=None. ... Tool call parsing error: unexpected character: line 1 column 1 (char 0)
+ok
+
+----------------------------------------------------------------------
+Ran 82 tests in 0.165s
+
+OK
+
+===== model_config_parser_registry =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/configs/test_model_config_parser_registry.py
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+
+===== model_config =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/configs/test_model_config.py
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+[CI Test Method] TestHybridLayerIds.test_layer_type_architectures
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK
+
+===== spec_registry =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_spec_registry.py
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+test_base_custom_spec_algo_conforms (__main__.TestConformanceGuard.test_base_custom_spec_algo_conforms) ... ok
+test_conforming_subclass_passes (__main__.TestConformanceGuard.test_conforming_subclass_passes) ... ok
+test_enum_interface_subset_of_custom_spec_algo (__main__.TestConformanceGuard.test_enum_interface_subset_of_custom_spec_algo) ... ok
+test_missing_predicate_raises (__main__.TestConformanceGuard.test_missing_predicate_raises) ... ok
+test_register_rejects_nonconforming_spec_class (__main__.TestConformanceGuard.test_register_rejects_nonconforming_spec_class) ... ok
+test_plugin_not_equal_to_builtin (__main__.TestCrossTypeIdentity.test_plugin_not_equal_to_builtin) ... ok
+test_create_worker_calls_factory (__main__.TestCustomSpecAlgoInterface.test_create_worker_calls_factory) ... Speculative algorithm MY_FOO is registered with supports_overlap=False, which is deprecated: the spec V1 worker path has been removed, and the algorithm now runs on the V2 scheduler schema with overlap disabled (synchronous). Migrate the plugin worker to support overlap scheduling.
+ok
+test_create_worker_raises_on_overlap_mismatch (__main__.TestCustomSpecAlgoInterface.test_create_worker_raises_on_overlap_mismatch) ... ok
+test_is_predicates_all_false_except_speculative (__main__.TestCustomSpecAlgoInterface.test_is_predicates_all_false_except_speculative) ... ok
+test_is_some_matches_enum_semantics (__main__.TestCustomSpecAlgoInterface.test_is_some_matches_enum_semantics) ... ok
+test_supports_overlap_false_warns_deprecation (__main__.TestCustomSpecAlgoInterface.test_supports_overlap_false_warns_deprecation) ... ok
+test_builtin_name_is_case_insensitive (__main__.TestFromString.test_builtin_name_is_case_insensitive) ... ok
+test_builtin_name_returns_enum (__main__.TestFromString.test_builtin_name_returns_enum) ... ok
+test_none_input_returns_none_member (__main__.TestFromString.test_none_input_returns_none_member) ... ok
+test_registered_plugin_lookup_is_case_insensitive (__main__.TestFromString.test_registered_plugin_lookup_is_case_insensitive) ... ok
+test_registered_plugin_returns_custom_spec (__main__.TestFromString.test_registered_plugin_returns_custom_spec) ... ok
+test_unknown_name_raises (__main__.TestFromString.test_unknown_name_raises) ... ok
+test_duplicate_name_raises (__main__.TestRegister.test_duplicate_name_raises) ... ok
+test_register_is_case_insensitive_on_collision (__main__.TestRegister.test_register_is_case_insensitive_on_collision) ... ok
+test_register_returns_factory_unchanged (__main__.TestRegister.test_register_returns_factory_unchanged) ... ok
+test_reserved_name_is_case_insensitive (__main__.TestRegister.test_reserved_name_is_case_insensitive) ... ok
+test_reserved_name_raises (__main__.TestRegister.test_reserved_name_raises) ... ok
+test_reserved_names_cover_all_enum_members (__main__.TestRegister.test_reserved_names_cover_all_enum_members) ... ok
+test_two_distinct_registrations_are_independent (__main__.TestRegister.test_two_distinct_registrations_are_independent) ... ok
+test_handle_speculative_decoding_invokes_custom_handle_server_args (__main__.TestServerArgsHook.test_handle_speculative_decoding_invokes_custom_handle_server_args) ... ok
+test_subclass_overrides_create_worker (__main__.TestSubclassOverride.test_subclass_overrides_create_worker) ... ok
+test_subclass_overrides_is_eagle (__main__.TestSubclassOverride.test_subclass_overrides_is_eagle) ... ok
+test_validator_invocation_is_caller_driven (__main__.TestValidatorHook.test_validator_invocation_is_caller_driven) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 0.006s
+
+OK
+
+===== hf_transformers =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/utils/test_hf_transformers.py
+................................[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+.....Image processor StrictImageProcessor.preprocess() does not accept ['device']; filtering them before preprocessing. Update the model's image processor to accept **kwargs.
+...........Overriding v_head_dim from 0 to 64 to avoid potential issues.
+.Overriding v_head_dim from 0 to 128 to avoid potential issues.
+...Overriding v_head_dim from 0 to 128 to avoid potential issues.
+.../home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/transformers/utils/import_utils.py:1055: FutureWarning: `is_flash_attn_greater_or_equal_2_10` is deprecated and will be removed in v5.8. Please use `is_flash_attn_greater_or_equal(library_version='2.1.0')` instead if needed.
+  warnings.warn(
+.....
+----------------------------------------------------------------------
+Ran 60 tests in 0.012s
+
+OK
+
+===== static_audit_remediation =====
+prior fingerprint: python/sglang/srt/configs/dflash.py:96: new blank line at EOF
+fix: removed the extra blank line while preserving one terminating newline
+scope: working tree only; this phase executor did not update the staged index
+
+===== compileall =====
+command: /home/tiger/venvs/deepspec-hedge-dflash/bin/python -m compileall -q python/sglang/srt/configs/dflash.py python/sglang/srt/utils/hf_transformers/config.py python/sglang/srt/speculative/dflash_utils.py python/sglang/srt/models/deepseek_v4.py python/sglang/srt/models/dflash.py python/sglang/srt/speculative/dflash_worker_v2.py python/sglang/srt/entrypoints/openai/serving_chat.py test/registered/unit/spec/test_dflash_deepseek_v4_primary.py test/registered/unit/entrypoints/openai/test_serving_chat.py
+
+
+===== git_diff_check =====
+command: git diff --check HEAD -- python/sglang/srt/entrypoints/openai/serving_chat.py python/sglang/srt/models/deepseek_v4.py python/sglang/srt/models/dflash.py python/sglang/srt/speculative/dflash_utils.py python/sglang/srt/speculative/dflash_worker_v2.py python/sglang/srt/utils/hf_transformers/config.py test/registered/unit/entrypoints/openai/test_serving_chat.py python/sglang/srt/configs/dflash.py test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+
+
+===== new_file_whitespace_check:python/sglang/srt/configs/dflash.py =====
+command: git diff --no-index --check /dev/null python/sglang/srt/configs/dflash.py
+output: <empty>; exit 1 is expected for --no-index differences
+
+===== new_file_whitespace_check:test/registered/unit/spec/test_dflash_deepseek_v4_primary.py =====
+command: git diff --no-index --check /dev/null test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+output: <empty>; exit 1 is expected for --no-index differences

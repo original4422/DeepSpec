@@ -1,0 +1,134 @@
+{
+  "architecture_resolution": {
+    "config_class": "DFlashConfig",
+    "declared_architectures": [
+      "DFlashDraftModel"
+    ],
+    "registry_architecture": "DFlashDraftModel",
+    "registry_class": "DFlashDraftModel",
+    "status": "PASS"
+  },
+  "checkpoint": {
+    "repo": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+    "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+    "safetensors_file": "model.safetensors"
+  },
+  "checkpoint_header_json_sha256": "a920047d53810be3c990ba1a8765fcbbee2bedc8821853990d26042a1f14ef35",
+  "direct_mappings": [
+    {
+      "checkpoint_dtype": "BF16",
+      "checkpoint_name": "fc.weight",
+      "checkpoint_shape": [
+        4096,
+        81920
+      ],
+      "model_name": "fc.weight",
+      "model_shape_tp1_meta": [
+        4096,
+        81920
+      ],
+      "shape_match": true
+    },
+    {
+      "checkpoint_dtype": "BF16",
+      "checkpoint_name": "embed_tokens.weight",
+      "checkpoint_shape": [
+        129280,
+        4096
+      ],
+      "model_name": "embed_tokens.weight",
+      "model_shape_tp1_meta": [
+        129280,
+        4096
+      ],
+      "shape_match": true
+    },
+    {
+      "checkpoint_dtype": "BF16",
+      "checkpoint_name": "lm_head.weight",
+      "checkpoint_shape": [
+        32000,
+        4096
+      ],
+      "model_name": "lm_head.weight",
+      "model_shape_tp1_meta": [
+        32000,
+        4096
+      ],
+      "shape_match": true
+    },
+    {
+      "checkpoint_dtype": "BOOL",
+      "checkpoint_name": "t2d",
+      "checkpoint_shape": [
+        129280
+      ],
+      "model_name": "t2d",
+      "model_shape_tp1_meta": [
+        129280
+      ],
+      "shape_match": true
+    },
+    {
+      "checkpoint_dtype": "I64",
+      "checkpoint_name": "d2t",
+      "checkpoint_shape": [
+        32000
+      ],
+      "model_name": "d2t",
+      "model_shape_tp1_meta": [
+        32000
+      ],
+      "shape_match": true
+    },
+    {
+      "checkpoint_dtype": "BF16",
+      "checkpoint_name": "layers.0.self_attn.o_proj.weight",
+      "checkpoint_shape": [
+        4096,
+        16384
+      ],
+      "model_name": "layers.0.self_attn.o_proj.weight",
+      "model_shape_tp1_meta": [
+        4096,
+        16384
+      ],
+      "shape_match": true
+    }
+  ],
+  "load_weights_meta_probe": "PASS",
+  "qkv_stacked_mapping": {
+    "checkpoint_names_in_loader_order": [
+      "layers.0.self_attn.q_proj.weight",
+      "layers.0.self_attn.k_proj.weight",
+      "layers.0.self_attn.v_proj.weight"
+    ],
+    "checkpoint_shapes": [
+      [
+        16384,
+        4096
+      ],
+      [
+        256,
+        4096
+      ],
+      [
+        256,
+        4096
+      ]
+    ],
+    "loader_shard_ids": [
+      "q",
+      "k",
+      "v"
+    ],
+    "model_name": "layers.0.self_attn.qkv_proj.weight",
+    "model_shape_tp1_meta": [
+      16896,
+      4096
+    ],
+    "shape_match": true
+  },
+  "status": "PASS",
+  "tensor_count_excluding_metadata": 62
+}

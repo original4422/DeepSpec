@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "phase": "D2",
+  "accepted_at_utc": "2026-07-28T22:40:04Z",
+  "sglang": {
+    "checkout": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+    "branch": "exp/hedge-v4-dflash",
+    "base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "native_integration_sha": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+    "native_integration_parent_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "native_integration_tree_sha": "ed4dd52d628036ba83718d6c2a895b6581770660",
+    "worktree_clean_after_commit": true,
+    "pushed_to_shared_origin": false
+  },
+  "executor_evidence": {
+    "artifact_manifest_sha256": "6405dfbaefe3b4d708a87e4c45d12dbc888e85f73fbc07115c7380d82a7b235c",
+    "patch_sha256": "1cb80d832a751952e6a1430ce94e0331f39b44fa2dc94167478e15e5120599cf",
+    "handoff_sha256": "1604d8e3d49d94741c00d5ac6b5299ff8c172f9ef9582413a4433e4e0ca29154",
+    "collector_sha256": "990549bb5353b032b2365e1b35113e006ccb9a23b7d65980a7fe6c8368913ccf"
+  },
+  "main_agent_revalidation": {
+    "tests_passed": 186,
+    "tests_skipped": 1,
+    "primary_contract_passed": 6,
+    "existing_dflash_passed": 6,
+    "existing_dflash_cuda_only_skipped": 1,
+    "serving_chat_passed": 82,
+    "config_and_registry_passed": 92,
+    "artifact_manifest": "PASS",
+    "json_parse": "PASS",
+    "changed_file_hashes": "PASS",
+    "patch_reverse_apply_with_whitespace_error_all": "PASS",
+    "staged_diff_check": "PASS",
+    "hedge_integration_absent": "PASS"
+  },
+  "review_correction": {
+    "fingerprint": "new blank line at EOF in the newly added DFlash config adapter",
+    "why_executor_check_missed_it": "the initial unstaged git diff check did not include an untracked file",
+    "correction": "removed only the extra blank line, retained one terminating LF, regenerated evidence, and reran 186 tests",
+    "post_correction_status": "PASS"
+  },
+  "patch_artifact_correction": {
+    "fingerprint": "blank unified-diff context lines became trailing whitespace when the patch artifact itself was staged as an added file",
+    "correction": "normalized only exact blank context-prefix lines; production source and native integration commit were unchanged",
+    "fixed_base_apply_with_whitespace_error_all": "PASS",
+    "fixed_base_applied_tree_matches_native_commit": "PASS",
+    "native_commit_reverse_apply_with_whitespace_error_all": "PASS",
+    "added_file_whitespace_check": "PASS",
+    "tests_rerun": false
+  },
+  "scope": {
+    "gpu_used": false,
+    "model_started": false,
+    "keepalive_paused": false,
+    "hedge_integrated": false,
+    "next_phase": "D3"
+  }
+}

@@ -1,0 +1,208 @@
+{
+  "collected_at": "2026-07-28T22:38:11.455080Z",
+  "cpu_tests_passed": 186,
+  "cpu_tests_skipped": 1,
+  "orchestration_only_failed_attempt": {
+    "classification": "test command module-path error; product code was not imported or exercised",
+    "command_pattern": "/home/tiger/venvs/deepspec-hedge-dflash/bin/python -m unittest -v test.registered.unit.<module>",
+    "fingerprint": "ModuleNotFoundError: No module named 'test.registered'",
+    "replacement": "the same four files were rerun directly and PASS"
+  },
+  "post_test_checks": [
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "python/sglang/srt/configs/dflash.py",
+        "python/sglang/srt/utils/hf_transformers/config.py",
+        "python/sglang/srt/speculative/dflash_utils.py",
+        "python/sglang/srt/models/deepseek_v4.py",
+        "python/sglang/srt/models/dflash.py",
+        "python/sglang/srt/speculative/dflash_worker_v2.py",
+        "python/sglang/srt/entrypoints/openai/serving_chat.py",
+        "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py",
+        "test/registered/unit/entrypoints/openai/test_serving_chat.py"
+      ],
+      "exit_code": 0,
+      "name": "compileall",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD",
+        "--",
+        "python/sglang/srt/entrypoints/openai/serving_chat.py",
+        "python/sglang/srt/models/deepseek_v4.py",
+        "python/sglang/srt/models/dflash.py",
+        "python/sglang/srt/speculative/dflash_utils.py",
+        "python/sglang/srt/speculative/dflash_worker_v2.py",
+        "python/sglang/srt/utils/hf_transformers/config.py",
+        "test/registered/unit/entrypoints/openai/test_serving_chat.py",
+        "python/sglang/srt/configs/dflash.py",
+        "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py"
+      ],
+      "exit_code": 0,
+      "name": "git_diff_check",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/dev/null",
+        "python/sglang/srt/configs/dflash.py"
+      ],
+      "exit_code": 1,
+      "expected_exit_code_note": "git diff --no-index returns 1 when files differ",
+      "name": "new_file_whitespace_check:python/sglang/srt/configs/dflash.py",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/dev/null",
+        "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py"
+      ],
+      "exit_code": 1,
+      "expected_exit_code_note": "git diff --no-index returns 1 when files differ",
+      "name": "new_file_whitespace_check:test/registered/unit/spec/test_dflash_deepseek_v4_primary.py",
+      "status": "PASS"
+    }
+  ],
+  "static_audit_remediation": {
+    "detected_by": "parent git diff --cached --check",
+    "fingerprint": "python/sglang/srt/configs/dflash.py:96: new blank line at EOF",
+    "fix": "removed the extra EOF blank line; retained one terminating newline",
+    "index_note": "executor did not stage; parent subsequently restaged the corrected file, passed cached checks, and created native integration commit 7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+    "new_file_coverage": [
+      "git diff --check HEAD -- <all nine changed files>",
+      "git diff --no-index --check /dev/null <each new file>; empty output",
+      "git apply --check --reverse --whitespace=error-all dflash_d2_sglang.patch"
+    ],
+    "status": "PASS"
+  },
+  "patch_artifact_remediation": {
+    "detected_by": "parent git diff --cached --check on the added patch artifact",
+    "fingerprint": "valid empty unified-diff context lines were encoded as one literal space and appeared as trailing whitespace in the outer staged diff",
+    "fix": "re-emitted commit 7245c3d607a1eadc26582bb78ebd603a70c22fa7 and normalized only exact blank-context lines from one optional prefix space to an empty line",
+    "patch_sha256": "1cb80d832a751952e6a1430ce94e0331f39b44fa2dc94167478e15e5120599cf",
+    "production_source_changed": false,
+    "tests_rerun": false,
+    "validation": {
+      "added_file_git_diff_no_index_check": "PASS (expected rc=1, empty output)",
+      "fixed_base_apply_with_whitespace_error_all": "PASS",
+      "fixed_base_applied_tree_matches_native_commit_tree_ed4dd52d628036ba83718d6c2a895b6581770660": "PASS",
+      "native_commit_reverse_apply_with_whitespace_error_all": "PASS"
+    },
+    "zero_context_probe": {
+      "command": "git show --format= --binary --unified=0 7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+      "result": "not selected",
+      "reason": "zero-context apply requires --unidiff-zero, while error-all classifies legitimate added blank lines at zero-context hunk boundaries as blank-at-EOF"
+    },
+    "status": "PASS"
+  },
+  "status": "PASS",
+  "test_runs": [
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-07-28T22:37:20.543261Z",
+      "name": "production_primary_contract",
+      "ran": 6,
+      "skipped": 0,
+      "started_at": "2026-07-28T22:37:10.397371Z",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/spec/test_dflash_overlap_hostsync.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-07-28T22:37:30.054630Z",
+      "name": "existing_dflash_cpu",
+      "ran": 7,
+      "skipped": 1,
+      "started_at": "2026-07-28T22:37:20.543483Z",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/entrypoints/openai/test_serving_chat.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-07-28T22:37:39.354478Z",
+      "name": "openai_serving_chat",
+      "ran": 82,
+      "skipped": 0,
+      "started_at": "2026-07-28T22:37:30.054676Z",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/configs/test_model_config_parser_registry.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-07-28T22:37:48.427113Z",
+      "name": "model_config_parser_registry",
+      "ran": 3,
+      "skipped": 0,
+      "started_at": "2026-07-28T22:37:39.354549Z",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/configs/test_model_config.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-07-28T22:37:57.231663Z",
+      "name": "model_config",
+      "ran": 1,
+      "skipped": 0,
+      "started_at": "2026-07-28T22:37:48.427158Z",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/spec/test_spec_registry.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-07-28T22:38:05.901728Z",
+      "name": "spec_registry",
+      "ran": 28,
+      "skipped": 0,
+      "started_at": "2026-07-28T22:37:57.231709Z",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/utils/test_hf_transformers.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-07-28T22:38:11.408228Z",
+      "name": "hf_transformers",
+      "ran": 60,
+      "skipped": 0,
+      "started_at": "2026-07-28T22:38:05.901779Z",
+      "status": "PASS"
+    }
+  ]
+}
