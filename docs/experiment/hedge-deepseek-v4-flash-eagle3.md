@@ -1,19 +1,27 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_01_IN_PROGRESS`。** Phase 00 已验收；Phase 01C 的一手兼容性研究
-> 与无 GPU aux contract 已验收。固定 SGLang 的顺序 blocker 已缩小为：
-> DeepSeek-V4 guard 首先拒绝 `EAGLE3`，放开后缺少独立
-> `set_eagle3_layers_to_capture` 与 V4 mHC aux capture。Phase 01A acquisition 和
-> Phase 01B 环境/runner 仍在进行，尚无模型或正式结果。分配的 worker
-> `4099544` 是准确的 8×NVIDIA H20，采集时没有 compute PID、既有 keepalive 或
-> CUDA context。按 Phase 00 授权，本阶段没有启动 keepalive、GPU workload、模型、
-> 下载或正式环境安装，也没有发送 signal。后续结果仍全部 pending。
+> **状态：`PHASE_01_IN_PROGRESS`。** Phase 00、Phase 01A 与 Phase 01C 已验收；
+> Phase 01B 正完成 runner/process fixtures，尚无模型或正式结果。固定 target 与 draft
+> 均已发布为独立 HDFS 实体；共享 target complete marker 可供 DFlash 只读复核。
+> worker `4099544` 上的项目专用
+> 8 卡 operational keepalive 已于 `2026-07-28T22:39:34Z` 建立：8 张
+> NVIDIA H20 各有 10 个一秒样本且 mean utilization 均为 `100%`，owner
+> `PID/PGID/SID=277607/277607/277607`，精确 UUID、进程归属和 CUDA 13
+> forward-compat 链接顺序均已由主 Agent 复核。target/draft acquisition 已自然结束，
+> 发布后的 NVMe snapshot、owner、manifest 和日志证据仍保留。
+> DSpark pure HEDGE core marker 已只读验收为 READY，但本路线尚未 cherry-pick。
+> 固定 SGLang 的顺序 blocker 已缩小为 DeepSeek-V4 guard 首先拒绝 `EAGLE3`，
+> 放开后缺少独立 `set_eagle3_layers_to_capture` 与 V4 mHC aux capture。
+> 本会话没有发送 signal，也没有启动模型服务或正式实验；后续结果仍全部 pending。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
 >
 > **权威 Phase 00 artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T205627Z-phase-00-bootstrap-01`
+>
+> **权威 Phase 01A artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T211500Z-phase-01a-acquisition-01`
 
 ## 快速结果
 
@@ -37,14 +45,14 @@
 | Dataset seed | 980406 |
 | Formal samples | 500 |
 | DeepSpec source | branch `exp/hedge-v4-eagle3`; Phase 00 base `cac6c78d88df97d395406fe831f573df3016e7f7` |
-| SGLang source | planned base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; independent source path reserved for Phase 01B, not yet created |
-| Target | `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1`; not acquired |
-| Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; not acquired |
-| HEDGE core | pending DSpark pure-core marker |
+| SGLang source | `/home/tiger/src/sglang-hedge-v4-eagle3`; clean base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; full uv/source import gate pending |
+| Target | `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1`; 73 regular files，`159630041626` bytes，manifest `af6f274af9b0b257a6b910ae9b8ac4d0e1dd0a0bbcd96898fc6772c7e158facd`，published |
+| Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; 7 regular files，`1858538499` bytes，manifest `dfa6b2de48c46f4fda0cf7070466d35e6bd3df44b84ba0363616cc0f1f6020a0`，published |
+| HEDGE core | READY marker audited：pure-core commit `4d96f44065c07030ede67484a262006ec149626a`，33 tests PASS；not cherry-picked |
 | Formal artifacts | pending |
 | Phase 01C contract | logical `[1,21,40]` → hook `[2,22,41]` → 4-stream mean → `[N,3,4096]` → runner `[N,12288]`; 3 CPU tests PASS |
 | Phase 01C research | `docs/research/hedge_eagle3_phase01c/eagle3_compatibility_research.md` |
-| Key commits | Phase 00 bootstrap `9369479acb6cbd88ae98a6e04446c6d50134feae`（已 push）；Phase 01C contract 待本次主 Agent 提交后回填 |
+| Key commits | Phase 00 bootstrap `9369479acb6cbd88ae98a6e04446c6d50134feae`；Phase 01C contract `a8d913e8f200f02519a446ea77fcb235f2c76681`（均已 push） |
 
 ## Phase 00：bootstrap 与 operational ownership
 
@@ -101,10 +109,13 @@ NVIDIA H20、每卡 `97871 MiB`、compute capability `9.0`。完整 UUID 和拓�
 | --- | --- | --- | --- | --- | --- |
 | `20260728T205627Z-phase-00-bootstrap-01` | Phase 00 / CPU-only bootstrap | 新建 Eagle3 独立身份并只读 inventory | PASS，主 Agent 已验收 | 4099544 准确 8×H20 且两次 inventory 均无 compute PID/keepalive；未发 signal | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T205627Z-phase-00-bootstrap-01` |
 | `phase-01c-contract` | Phase 01C / CPU-only research + fixture | 固定 checkpoint、SGLang 与一手实现上建立 aux interface | PASS，主 Agent 复跑 3 tests | blocker 顺序缩小为 guard → V4 capture；TP ownership 明确保留到 Phase 02 live assertion | `docs/research/hedge_eagle3_phase01c/` |
+| `20260728T223200Z-phase-01b-keepalive-05` | Phase 01B / operational keepalive | 首次用 lane-local torch/CUDA 闭包启动 8 卡 keepalive | FAIL，前后均为 0 context | `LD_LIBRARY_PATH` 误用 `/usr/local/cuda/compat`，CUDA 13 runtime 只看到宿主 driver 12.6；未叠加进程 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T223200Z-phase-01b-keepalive-05` |
+| `20260728T223600Z-phase-01b-keepalive-06` | Phase 01B / operational keepalive | 唯一变化为已验证私有 CUDA 13 compat prefix | PASS，active | 8×10 样本逐卡 mean=100%；精确 owner/descendants、UUID、环境与设备用户证据通过 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T223600Z-phase-01b-keepalive-06` |
+| `20260728T211500Z-phase-01a-acquisition-01` | Phase 01A / pinned acquisition | 双 keepalive gate 后启动唯一 target/draft 下载 | PASS，主 Agent 已验收 | 两个 provider commit/OID、manifest、size、index/config/tokenizer 和 HDFS entity 均通过；target marker 最后发布；0 symlink/hardlink | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T211500Z-phase-01a-acquisition-01` |
 
 ## 下一步
 
-继续完成 Phase 01A/01B：先解决独立 uv transport blocker并建立通过 10×1 秒门禁的
-项目专用 8 卡 operational keepalive，再启动 pinned target/draft acquisition。
-Phase 02 只能在 01A/01B 同时通过后，按 01C 已证据化的 guard → capture → loader →
-runner 顺序进入 native bring-up。本记录不声称任何模型实验已开始。
+保持已验收的 8 卡 operational keepalive，完成 Phase 01B 的 runner/q25/cleanup
+fixtures 与最终 handoff。Phase 02 只能在 01B 通过后，按 01C 已证据化的
+guard → capture → loader → runner 顺序进入 native bring-up。本记录不声称任何模型
+实验已开始。
