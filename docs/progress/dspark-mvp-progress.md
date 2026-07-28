@@ -14,7 +14,7 @@
 
 | 项目 | 状态 | 说明 |
 | --- | --- | --- |
-| 4×H20 worker | 保活正常 | Worker `4105641`；无 SGLang/CUDA context；keepalive PID `29335`，10×1 秒四卡均为 100% |
+| 4×H20 worker | 保活正常 | Worker `4105641`；无 SGLang 进程或模型 CUDA context，仅有登记的 keepalive context；PID `29335`，10×1 秒四卡均为 100% |
 | Phase 01：环境 preflight | PASS | 4×H20、CUDA、拓扑、存储和源 checkpoint 基线已确认 |
 | Phase 02：正式 checkpoint | PASS | ModelScope checkpoint 已发布到 DeepSpec-owned HDFS 路径 |
 | Phase 03：uv/SGLang 环境 | PASS | uv 环境和 SGLang `v0.5.16` 固定 commit 已验证，PyTorch 可见 4 卡 |
