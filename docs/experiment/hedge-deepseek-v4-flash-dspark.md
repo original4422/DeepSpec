@@ -3,12 +3,12 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-28T23:01:56Z`
+- 记录更新时间：`2026-07-28T23:27:21Z`（首个合并 patch 上下文失配后拆分落盘，较 `23:24:41Z` 晚 2 分 40 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：`NOT_RUN`
-- 结论/首要 blocker：P00–P03 均已 PASS 并 commit/push；P03 zero-context
-  patch、clean replay、locked wheel 与 22/33/13 回归由主 Agent 独立复验
-  PASS。当前没有未闭合 blocker；P04 GPU smoke 尚未启动。
+- 结论/首要事项：P00–P03 均已 PASS 并 commit/push；P04 静态 tooling
+  `IN_PROGRESS`，尚未验收。模型/server、native/B0 attempts 均未启动；
+  当前是调度/工具门禁，不是实验 blocker。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / 模型参与 `NOT_RUN`；keepalive 8/8 gate `PASS`
@@ -27,13 +27,16 @@
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；
-  integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；config / result 尚未创建
+  integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P03 identity/progress
+  `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3`；config / result 尚未创建
 - DeepSpec worktree / branch / accepted integration commit：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
-- 下一步：派发独立 P04 executor；紧邻模型 attempt 暂停 keepalive，确认 8 卡
-  context 清空后依次完成 native 与 B=0 integration smoke
+- current DeepSpec HEAD/pushed：
+  `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3`
+- 下一步：完成并验收 P04 静态 lifecycle/client/sampler/validator/tests 门禁，
+  之后才允许 native attempt
 
 ## 当前阶段
 
@@ -42,8 +45,8 @@
 | P00 | `PASS_COMMITTED` | canonical session 全部 checks true；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3` | — |
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
-| P03 | `PASS_COMMITTED` | zero-context patch/replay、locked07 wheel、22/33/13 regressions、non-CWD 9/9、主 Agent独立复验均 PASS；commit/push `3d2c6cc` | — |
-| P04 | `NOT_STARTED_ELIGIBLE` | P03 已满足退出门禁 | 八卡 native 与 B=0 integration smoke |
+| P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
+| P04 | `IN_PROGRESS` | read-only preflight PASS；静态 tooling 已开始，三个离线契约 red→green | engine identity 复跑、其余 lifecycle/client/sampler/validator tests、主验收、native/B0 smoke |
 | P05–P08 | `NOT_STARTED` | — | P04 门禁 |
 
 ## 固定实验协议
@@ -94,6 +97,24 @@
 | `20260728T205701Z-p02-core` | 复制并收窄纯 HEDGE core | P02 PASS；正式 venv 33/33；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | handoff 与 HDFS `hedge-core.json` |
 | `20260728T220619Z-p03-cpu-build` | 单一 deep adapter 的 CPU/source integration | `IN_PROGRESS`；review guard 已修复，首轮 20/20 tests PASS；新增 fixture 总回归及 patch/identity/wheel pending | operational heartbeat 与 fixed external source dirty state |
 | `20260728T224800Z-p03-locked-rebuild` | exact uv build lock 后 clean rebuild | PASS：zero-context artifact clean gate、tree/hash parity 与总回归均通过；commit/push `3d2c6cc` | final manifests/log、handoff、主 Agent replay 与 22:48 heartbeat |
+| `20260728T230700Z-p04-preflight` | P04 read-only lane/keepalive preflight | PASS：exact 8×H20、无未知任务、PID 4730、8×10×1s 100%；无 server | HDFS `worker_inventory.json` |
+| `20260728T230647Z-p04-native-smoke-r1` / B0 | 原计划 live attempts | `NOT_RUN`；首次 executor 被中断/重分配，未 pause keepalive、未动 GPU | 调度记录；无实验 artifact |
+
+## P04 integration smoke 当前状态
+
+- 状态：`IN_PROGRESS`；B0 `NOT_RUN`；模型/server 从未启动。
+- 首次 read-only preflight artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T230700Z-p04-preflight/worker_inventory.json`。
+  worker `4106666` 精确 8×H20、无未知任务、keepalive `4730/4730/4730`、
+  8 卡 10×1 秒均 100%。
+- 首次 executor 在 preflight 后两 turn 无落盘而被主 Agent 中断/重分配；未暂停
+  keepalive、未操作 GPU。该事件是调度问题，不是实验 blocker。
+- 当前 `p04_tooling` 仅新增未提交
+  `scripts/hedge_dspark_p04_prepare.py` 与
+  `tests/hedge_dspark_p04/test_tooling.py`，且不登录 worker。
+- native fixed flags/env/no-config、B0 exact config path/bytes、exact 8×H20 inventory
+  离线契约已 red→green；engine identity 实现刚完成、待复跑，其余静态门禁与
+  主 Agent验收 pending。验收前不得启动 native attempt。
 
 ## P03 integration 当前证据
 
@@ -151,6 +172,9 @@
   remote keepalive status：worker `4106666` 仍精确 8×H20；PID/PGID/SID
   `4730/4730/4730`；8 卡 10×1 秒 mean/min/max 均为 100%，各占 815 MiB；
   无模型 server。该 keepalive 是 operational load，不计作正式实验负载或结果。
+- P04 preflight 与主 Agent `23:06Z` 复核均确认 worker `4106666` 精确 8×H20、
+  PID/PGID/SID `4730/4730/4730`、8 卡 10×1 秒均 100%、无 server。首次漏传
+  worker-id 被脚本 fail-closed 拒绝且无状态变化；随后正确 status PASS。
 - `22:48Z` operational heartbeat 位于
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/operational-heartbeats/20260728T224800Z-p03-locked-rebuild/`；
   worker `4106666` 精确 8×H20，PID/PGID/SID `4730/4730/4730`，
