@@ -14,8 +14,8 @@
     "injection_manifest": "integrations/sglang_dspark_hedge/core_injection_manifest.json"
   },
   "dspark_integration": {
-    "deepspec_commit": null,
-    "commit_state": "pending main-agent acceptance and commit",
+    "deepspec_commit": "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
+    "commit_state": "accepted, committed, and pushed by main agent",
     "patch_sha256": "8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170",
     "patch_path": "integrations/sglang_dspark_hedge/integration.patch"
   },

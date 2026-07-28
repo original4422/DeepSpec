@@ -6,8 +6,8 @@
     "branch": "exp/hedge-v4-dspark",
     "head_during_p03": "7c2ac5a6f52c109c9a7a75c4146b872d3f27083f",
     "pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
-    "integration_commit": null,
-    "integration_commit_owner": "main agent after P03 acceptance"
+    "integration_commit": "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
+    "integration_commit_owner": "main agent; accepted and pushed 2026-07-28T23:01:56Z"
   },
   "sglang": {
     "version": "0.5.16",

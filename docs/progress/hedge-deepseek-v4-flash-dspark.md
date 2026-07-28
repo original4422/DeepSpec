@@ -3,26 +3,26 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-28T22:27:14Z`（纳入主 Agent 最新 operational 复核后，较计划 checkpoint 晚 2 分 33 秒）
+- 快照时间：`2026-07-28T23:01:56Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`01:32:33` / `2026-07-29T08:54:41Z`
-- 当前 phase：P00/P01/P02 均已 PASS；P03 DSpark integration `IN_PROGRESS`
+- elapsed / deadline：`02:07:15` / `2026-07-29T08:54:41Z`
+- 当前 phase：P00–P03 均已 PASS；P04 `NOT_STARTED_ELIGIBLE`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
   - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
   - P02：主 Agent 验收 `PASS`；新正式 venv 33/33 tests PASS，commit/push `4d96f44065c07030ede67484a262006ec149626a`，READY marker 已发布
-  - P03：唯一 deep adapter seam 已草拟；主审 guard 修复已完成，首轮 20/20 CPU tests PASS；新增 fixture 后总回归及 patch/identity/wheel 尚未验收
+  - P03：executor handoff与主 Agent独立复验均 `PASS`；integration commit/push `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：主 Agent 于 `22:26:35Z–22:27:14Z` 只读复核 PID/PGID/SID `4730/4730/4730`、8 卡 10×1 秒 mean/min/max 均 100%、各 815 MiB；模型 server `NOT_STARTED`
-- 最新 attempt：`20260728T220619Z-p03-cpu-build`，CPU/source integration 尚未验收
+- keepalive / server / PID：`22:48Z` heartbeat 记录 worker `4106666` 精确 8×H20、PID/PGID/SID `4730/4730/4730`、8 卡 10×1 秒均 100%；模型 server `NOT_STARTED`
+- 最新 attempt：`20260728T224800Z-p03-locked-rebuild`
 - HDFS artifact：`/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap`
-- Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；branch `exp/hedge-v4-dspark`；support HEAD `ebe196608893bd9972e771644ed25d019444d0f3`
-- commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration / config / result 尚未创建
-- 首要 blocker：P03 尚须完成新增 native executor direct-call fixture 后的总回归，
-  并完成可重放 patch、identity 与唯一 wheel 验收
-- 下一检查点：`2026-07-28T22:54:41Z`
-- 下一 30 分钟动作：P03 executor 完成新增 fixture 后总回归、可复现
-  patch/identity 与 wheel；验收前不启动模型/server
+- Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；branch `exp/hedge-v4-dspark`；integration HEAD/pushed `3d2c6cc`
+- commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；config / result 尚未创建
+- 首要 blocker：无；下一阶段风险是首次 TP=8 模型加载与 native/B=0 live smoke，
+  尚未产生 GPU 实验结论
+- 下一检查点：`2026-07-28T23:24:41Z`
+- 下一 30 分钟动作：派发独立 P04 executor；复核 lane 后紧邻 attempt 暂停
+  keepalive，确认 CUDA context 清空，再执行 native 与 B=0 integration smoke
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -166,3 +166,48 @@
   keepalive status：worker `4106666` 仍精确 8×H20，PID/PGID/SID
   `4730/4730/4730`，8 卡 10×1 秒 mean/min/max 均为 100%，各占 815 MiB，
   无模型 server。该 keepalive 是 operational load，不是正式实验负载或结果。
+
+### 2026-07-28T22:54:41Z — 120 分钟 checkpoint
+
+- 实际落盘时间：`2026-07-28T22:56:06Z`。两次 patch 均因主线程并发更新导致
+  context mismatch，均未产生部分修改；重新对齐当前基线后较计划晚 1 分 25 秒。
+- 当前 HEAD 已 push：`7c2ac5a`。P00/P01/P02 保持 PASS；P03 仍为
+  `IN_PROGRESS`，尚未验收或 commit/push。
+- P03 executor handoff 于 `2026-07-28T22:51:58Z` 标记 PASS。第一版
+  22/22 + 33/33 + 13/13、clean replay patch `58174e…` / tree `996fbf…`、
+  wheel `2f267…` 后续因 trace overflow 与 Python build deps 未入 uv lock 被修正；
+  旧 wheel 已标为 `PASS_SUPERSEDED`。
+- exact `p03-build` group 已由 uv 写入 `pyproject.toml` / `uv.lock`，固定
+  `build==1.5.0`、`setuptools==81.0.0`、`setuptools-rust==1.13.0`、
+  `setuptools-scm==10.2.1`、`wheel==0.47.0`。pyproject SHA 前缀
+  `2ef3e7…`、uv.lock `0524523…`、build script `5553c8…`；lock check、
+  frozen group sync/check PASS。
+- locked07 formal wheel 已 clean replay 构建并通过 uv 安装，SHA-256
+  `f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262`，
+  14,646,094 bytes；raw log SHA 前缀 `133da0…`。22/22 integration、
+  33/33 pure core、13/13 protocol、非 DeepSpec CWD import、9/9 hashes 与
+  manifest cross-check 均 PASS；六个规定 manifests/log 和 handoff 已更新。
+- 主 Agent clean replay、22 tests、lock dry-run、wheel RECORD 独立复验均 PASS，
+  但 staged `git diff --check` 对 `integration.patch` 中 14 个 unified-diff 空
+  context 行报 trailing whitespace。P03 已 followup 重生 artifact-only
+  zero-context/full-index patch 并 clean replay；源码 tree、9 files 和 formal
+  wheel 预计不变。最终 artifact clean gate 尚未返回，因此不得写为验收 PASS。
+- `22:48Z` operational heartbeat 位于
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/operational-heartbeats/20260728T224800Z-p03-locked-rebuild/`；
+  记录 worker `4106666` 精确 8×H20、PID/PGID/SID `4730/4730/4730`、
+  8 卡 10×1 秒均为 100%，无模型 server。这是 operational load，不是正式实验
+  负载或结果。
+
+### 2026-07-28T23:01:56Z — P03 主验收
+
+- artifact-only followup 完成：zero-context patch SHA-256 `8e8cc840...`，
+  applicator SHA-256 `e884d57a...`；clean replay manifest `57328fd1...`，
+  patched tree 保持 `996fbfd6...`，9 个 source/core 文件与 formal wheel build
+  source 逐字节一致，因此无需重建 wheel。
+- 主 Agent 在 `/tmp/deepspec-p03-main-verify.hok7bb` 独立重放 patch，manifest
+  hash/tree 均一致，并重跑 22/22 integration、33/33 core、13/13 protocol；
+  `uv lock --check`、JSON/shell/Python syntax、真实 staged whitespace gate
+  均 PASS。
+- P03 验收为 `PASS`；integration commit
+  `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc` 已 push。P04 八卡
+  integration smoke 具备进入条件。
