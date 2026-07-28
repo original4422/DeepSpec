@@ -1,32 +1,33 @@
 # DeepSeek V4 Flash DSpark MVP 进展
 
-> 最后更新：2026-07-29 02:23 CST
+> 最后更新：2026-07-29 02:50 CST
 >
-> 总体状态：Phase 05 attempt 01 启动失败，blocker 已定位
+> 总体状态：Phase R 恢复 attempt 正在加载，原 linker blocker 已修复
 >
-> 下一步：修复 CUDA JIT linker 搜索路径后，以新 attempt 完整重试
+> 下一步：完成 packed MXFP4 JIT，等待 API ready 后顺序执行 smoke
 >
-> 阻塞：FlashInfer JIT link 找不到 `-lcudart` 和 `-lnvrtc`
+> 阻塞：无新 blocker；正式 JIT 路径验证中
 >
-> 下一次记录：不晚于 2026-07-29 02:52 CST
+> 下一次记录：不晚于 2026-07-29 03:20 CST
 
 ## 当前状态
 
 | 项目 | 状态 | 说明 |
 | --- | --- | --- |
-| 4×H20 worker | 保活正常 | Worker `4105641`；模型 CUDA context 已全部退出；keepalive PID `23339`，10×1 秒四卡均为 100% |
+| 4×H20 worker | 正式加载中 | Worker `4105641`；keepalive 已按 lifecycle 暂停；TP0–TP3 context 均存在 |
 | Phase 01：环境 preflight | PASS | 4×H20、CUDA、拓扑、存储和源 checkpoint 基线已确认 |
 | Phase 02：正式 checkpoint | PASS | ModelScope checkpoint 已发布到 DeepSpec-owned HDFS 路径 |
 | Phase 03：uv/SGLang 环境 | PASS | uv 环境和 SGLang `v0.5.16` 固定 commit 已验证，PyTorch 可见 4 卡 |
 | Phase 04：离线运行工具链 | PASS | attempt `20260728T174820Z-phase04-tooling` 门禁通过；提交 `230c1bd` 已推送 |
-| Phase 05：端到端 smoke | 启动失败 | attempt `20260728T175852Z-phase05-dspark-01`；MXFP4 JIT link blocker 已定位 |
+| Phase 05 attempt 01 | 启动失败 | JIT link blocker 已定位；失败证据与 reproducer 提交 `bc64012` |
+| Phase R：CUDA link 恢复 | 进行中 | attempt `20260728T184242Z-phase05-dspark-r1`；target 和 draft 均完成 48/48 shards |
+| Phase 06 验收工具 | 已准备 | 离线验收器及 fixture 已通过；提交 `c018d13`，尚未执行最终验收 |
 | HF 备用 checkpoint | PASS | fixed revision 已发布为独立 HDFS 实体副本；提交 `66ec629` 已推送 |
 
-本次日志已确认 `speculative_algorithm='DSPARK'`、bundled draft、`TP=4`，
-以及 target/draft 的 `flashinfer_mxfp4` 配置。四个 TP rank 和 NCCL 初始化成功，
-target 48/48 shards 完成，四卡峰值显存约 41.4–41.6 GiB。随后 FlashInfer
-`fused_moe_90` 首次 JIT 在最终链接时因 `/usr/bin/ld` 找不到 `-lcudart` 和
-`-lnvrtc` 退出；不是 OOM，也没有进入 API 或 GSM8K。
+Phase R 仅在 CUDA 13 `lib64` 下补充 `libcudart.so` 和 `libnvrtc.so` 相对 symlink；
+RED→fix→GREEN probe 通过且修复幂等。恢复 attempt 保持原模型配置，当前四个 rank
+均已加载 target 和 `DeepseekV4ForCausalLMDSpark` draft architecture，四卡显存约
+43.9–44.1 GiB，正在准备 packed MXFP4/JIT；尚未出现 linker、OOM 或 NCCL error。
 
 ## 已固定的 Phase 05 首轮配置
 
@@ -40,9 +41,9 @@ target 48/48 shards 完成，四卡峰值显存约 41.4–41.6 GiB。随后 Flas
 
 ## 下一步
 
-1. 核对 CUDA 13.0 runtime/JIT library 搜索路径，针对 linker blocker 做单变量最小修复；
-2. 使用新 attempt 重跑完整 Phase 05，保留本次失败 artifacts 供前后对比；
-3. 服务 ready 后继续 OpenAI-compatible API 和 GSM8K 前 10 条顺序 smoke。
+1. 确认 packed MXFP4 JIT 正式完成并等待服务 ready；
+2. 执行 OpenAI-compatible API smoke；
+3. 顺序完成 GSM8K test split 前 10 条并生成汇总，随后执行最终验收。
 
 ## 历史记录
 
@@ -58,3 +59,6 @@ target 48/48 shards 完成，四卡峰值显存约 41.4–41.6 GiB。随后 Flas
 | 2026-07-29 01:59 | Phase 05 preflight PASS；启动正式 attempt `20260728T175852Z-phase05-dspark-01` |
 | 2026-07-29 02:20 | TP0–TP3、NCCL 和四卡 context 已就绪；target 48/48 shards 完成，MXFP4 首次 JIT 收尾中 |
 | 2026-07-29 02:21 | JIT 最终链接缺少 CUDA runtime/NVRTC libraries，服务退出；CUDA context 已清退并恢复 keepalive |
+| 2026-07-29 02:34 | Phase 05 失败证据与 linker reproducer 提交 `bc64012`；离线验收工具提交 `c018d13` |
+| 2026-07-29 02:42 | Phase R linker layout 单变量修复通过 RED→GREEN 与幂等 probe |
+| 2026-07-29 02:50 | 恢复 attempt target/draft 48/48 shards 完成；四个 rank 均加载 DSpark draft architecture |
