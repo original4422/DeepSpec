@@ -3,10 +3,12 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-28T22:01:31Z`
+- 记录更新时间：`2026-07-28T22:27:14Z`（纳入最新 operational 复核后，较 `22:24:41Z` 晚 2 分 33 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：`NOT_RUN`
-- 结论/首要 blocker：P00–P02 均已 PASS；P03 integration 尚未开始。
+- 结论/首要 blocker：P00–P02 均已 PASS；P03 integration 已落实
+  arm/static/native-direct guard，首轮 20/20 CPU tests PASS；新增 direct-call
+  fixture 后的总回归、patch/identity/wheel 尚未验收。
   SGLang server/model 尚未启动。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
@@ -24,22 +26,25 @@
 - native GSM match / HEDGE GSM match：`NOT_RUN` / `NOT_RUN`
 - artifact root：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap`
-- commits：P01 protocol `77053dd`；pure core
-  `4d96f44065c07030ede67484a262006ec149626a`；integration / config / result 尚未创建
+- commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
+  `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；
+  integration / config / result 尚未创建
 - DeepSpec worktree / branch / HEAD：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
-  `4d96f44065c07030ede67484a262006ec149626a`
-- 下一步：执行 P03 DSpark integration、固定 wheel build 与 CPU/fixture 验证
+  `ebe196608893bd9972e771644ed25d019444d0f3`
+- 下一步：完成 P03 新增 fixture 后的总回归、可复现 patch/identity 与 wheel 验收；
+  验收前不启动模型/server
 
 ## 当前阶段
 
 | Phase | 状态 | 当前证据 | 尚缺 |
 | --- | --- | --- | --- |
-| P00 | `PASS` | canonical session 全部 checks true；8×H20、checkpoint、独立 env/source、CUDA link probe、最终 keepalive 与无 model server 均已复核 | — |
+| P00 | `PASS_COMMITTED` | canonical session 全部 checks true；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3` | — |
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
-| P03–P08 | `NOT_STARTED` | — | 前置阶段门禁 |
+| P03 | `IN_PROGRESS` | 唯一 `DSparkHedgeAdapter` seam 已草拟；core byte-identical 注入；review guard 已修复；首轮 20/20 CPU tests PASS | 新增 fixture 后总回归、patch/identity/wheel 验收 |
+| P04–P08 | `NOT_STARTED` | — | P03 门禁 |
 
 ## 固定实验协议
 
@@ -87,6 +92,7 @@
 | CUDA link probe | guarded 创建并二次核对固定 `lib64` links | PASS：`cc` return code 0，二次 pass 均为 `verified` | HDFS `cuda_link_probe.json` |
 | P00 finalizer | 汇总最终 worker/process/identity 状态 | PASS：全部 session checks true；无 model server；下一 eligible phase=P03 | HDFS `session.json` 与 P00 handoff |
 | `20260728T205701Z-p02-core` | 复制并收窄纯 HEDGE core | P02 PASS；正式 venv 33/33；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | handoff 与 HDFS `hedge-core.json` |
+| `20260728T220619Z-p03-cpu-build` | 单一 deep adapter 的 CPU/source integration | `IN_PROGRESS`；review guard 已修复，首轮 20/20 tests PASS；新增 fixture 总回归及 patch/identity/wheel pending | operational heartbeat 与 fixed external source dirty state |
 
 ## HEDGE core 当前证据
 
@@ -114,13 +120,22 @@
   `4730/4730/4730` 启动，最终 8 张卡 10×1 秒门禁 `PASS`。
 - P00 final inventory 记录八张卡各有且仅有登记 keepalive context，没有
   SGLang/model server；canonical `session.json` 全部 checks 为 true。
+- `22:06:19Z` operational heartbeat 的 worker-list SHA-256 为
+  `bda700d189777343cbf7183fecb0b72884b418bd19365f96c99be7ee99516e8e`，
+  keepalive JSON SHA-256 为
+  `ef2f0f0417f714adbe63eb6726781fbe2b934cf08e527e8a57a34df1878ed87e`；
+  worker `4106666` 仍为精确 8×H20，PID/PGID/SID `4730/4730/4730`，
+  8 卡 10×1 秒均为 100%。
+- 主 Agent 于 `22:26:35Z–22:27:14Z` 再次只读复核 `mlx worker list` 与
+  remote keepalive status：worker `4106666` 仍精确 8×H20；PID/PGID/SID
+  `4730/4730/4730`；8 卡 10×1 秒 mean/min/max 均为 100%，各占 815 MiB；
+  无模型 server。该 keepalive 是 operational load，不计作正式实验负载或结果。
 - 尚未启动 SGLang model server，尚无 TP rank 0–7 初始化、模型显存或请求期间八卡
   参与证据。
 
 ## 限制与复现状态
 
-- P00/P01/P02 已完成主 Agent PASS 验收；P01/P02 已 commit/push，P00
-  可复现脚本与 handoff 正在本节点提交。
+- P00/P01/P02 已完成主 Agent PASS 验收并 commit/push；P03 尚未验收。
 - B0、q25 calibration、native 500 与 HEDGE B>0 500 均未运行。
 - 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
 - 尚未发生模型 shutdown；env setup 失败属于依赖获取路径，不是 CUDA/NCCL/worker
