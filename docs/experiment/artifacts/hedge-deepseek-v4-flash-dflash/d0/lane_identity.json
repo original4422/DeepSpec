@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "session_id": "dflash-20260728T205558Z",
+  "lane": "dflash",
+  "branch": "exp/hedge-v4-dflash",
+  "base_commit": "cac6c78d88df97d395406fe831f573df3016e7f7",
+  "worktree": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash",
+  "worker_id": "4099543",
+  "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+  "expected_gpu_count": 8,
+  "cuda_visible_devices": "0,1,2,3,4,5,6,7",
+  "tensor_parallel_size": 8,
+  "uv_venv": "/home/tiger/venvs/deepspec-hedge-dflash",
+  "sglang_checkout": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+  "api_port": 31457,
+  "worker_scratch": "/tmp/deepspec-hedge-dflash",
+  "keepalive_state": "/tmp/deepspec-hedge-dflash/keepalive",
+  "hdfs_lane_root": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash",
+  "coordination_root": "/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4",
+  "progress_doc": "docs/progress/hedge-deepseek-v4-flash-dflash.md",
+  "experiment_doc": "docs/experiment/hedge-deepseek-v4-flash-dflash.md",
+  "identity_conflicts": []
+}

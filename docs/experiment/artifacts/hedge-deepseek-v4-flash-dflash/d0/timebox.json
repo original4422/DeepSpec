@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "session_id": "dflash-20260728T205558Z",
+  "t0_utc": "2026-07-28T20:55:58Z",
+  "implementation_stop_if_b0_incomplete_utc": "2026-07-29T05:55:58Z",
+  "hard_stop_utc": "2026-07-29T08:55:58Z",
+  "progress_interval_minutes": 30,
+  "clock": "wall_clock",
+  "timebox_includes_dependency_wait": true
+}

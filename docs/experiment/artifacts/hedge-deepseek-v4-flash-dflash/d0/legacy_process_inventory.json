@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "worker_id": "4099543",
+  "policy": "observe and wait for natural exit; never signal or mutate legacy tasks",
+  "observations": [
+    {
+      "captured_at_utc": "2026-07-28T21:02:24.673990Z",
+      "compute_applications": [],
+      "gpu_memory_used_mib": [0, 0, 0, 0, 0, 0, 0, 0],
+      "gpu_utilization_percent": [0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "captured_at_utc": "2026-07-28T21:06:55.046751Z",
+      "compute_applications": [],
+      "gpu_memory_used_mib": [0, 0, 0, 0, 0, 0, 0, 0],
+      "gpu_utilization_percent": [0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  ],
+  "legacy_task_status": "NONE_OBSERVED",
+  "signals_sent_to_legacy_processes": false,
+  "processes_terminated_by_phase_d0": []
+}

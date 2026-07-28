@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "session_id": "dflash-20260728T205558Z",
+  "phase": "D0",
+  "captured_at_utc": "2026-07-28T21:06:55.046751Z",
+  "worker_list_verified": true,
+  "worker_id": "4099543",
+  "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+  "driver_version": "535.261.03",
+  "nvidia_smi_cuda_version": "12.6",
+  "kernel": "Linux 5.15.152.bsk.10-amd64 x86_64",
+  "gpu_identity_ok": true,
+  "gpus": [
+    {"index": 0, "uuid": "GPU-0d0883e5-c11e-1017-a7a4-b0041d34e659", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"},
+    {"index": 1, "uuid": "GPU-bef18fe2-5b0e-dfa9-d0df-4bdc845813a8", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"},
+    {"index": 2, "uuid": "GPU-04a2d19d-0850-4a7a-7d0a-f76bedbba0c6", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"},
+    {"index": 3, "uuid": "GPU-2fe9a932-da80-a85e-05ed-7e7a4298ac9f", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"},
+    {"index": 4, "uuid": "GPU-1937f10f-d9a7-54d0-bf1f-c11c5e99252a", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"},
+    {"index": 5, "uuid": "GPU-5ad3743c-377e-722b-21ea-807cde0ab2e6", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"},
+    {"index": 6, "uuid": "GPU-0c263468-925e-2a59-de84-795c577bb97e", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"},
+    {"index": 7, "uuid": "GPU-5d6fc8af-a3f9-2e26-5b6c-c2c673a667dc", "name": "NVIDIA H20", "memory_total_mib": 97871, "memory_used_mib": 0, "utilization_percent": 0, "compute_capability": "9.0"}
+  ],
+  "gpu_topology": {
+    "gpu_to_gpu": "all GPU pairs report NV18",
+    "numa_0_gpus": [0, 1, 2, 3],
+    "numa_1_gpus": [4, 5, 6, 7]
+  },
+  "compute_applications": [],
+  "api_port": {"port": 31457, "available": true, "listeners": []},
+  "capacity_bytes": {
+    "shared_root": {"size": 262092619776, "used": 141116309504, "available": 120959533056, "use_percent": 54},
+    "worker_tmp": {"size": 3779301580800, "used": 332377792512, "available": 3408499466240, "use_percent": 9},
+    "hdfs_mount": {"size": 1124800395214848, "used": 0, "available": 1124800395214848, "use_percent": 0}
+  },
+  "coordination": {
+    "eagle_target_pointer": {"path": "/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle_target_pointer.json", "present": false},
+    "dspark_pure_core_pointer": {"path": "/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/dspark_pure_core_pointer.json", "present": false}
+  },
+  "formal_dflash_venv_present": false,
+  "safe_to_start_keepalive_at_capture": true
+}

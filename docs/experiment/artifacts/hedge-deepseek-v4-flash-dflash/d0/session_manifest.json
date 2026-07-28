@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "session_id": "dflash-20260728T205558Z",
+  "phase": "D0",
+  "phase_status": "PASS",
+  "t0_utc": "2026-07-28T20:55:58Z",
+  "worker_id": "4099543",
+  "keepalive_status": "HEALTHY",
+  "legacy_task_status": "NONE_OBSERVED",
+  "dependencies": {
+    "eagle_target_pointer": "WAIT",
+    "dspark_pure_core_pointer": "WAIT"
+  },
+  "attempts": [
+    {
+      "id": "d0-runtime-probe-01",
+      "outcome": "BOUNDED_FAIL",
+      "root_cause": "torch import plus CUDA count exceeded the original 15 second read-only probe timeout",
+      "next_strategy": "metadata-only probe followed by a separately bounded lane-local runtime check"
+    },
+    {
+      "id": "d0-keepalive-start-01",
+      "outcome": "FAIL_BEFORE_GPU_LOAD",
+      "root_cause": "mawk rejected assignment to built-in name index",
+      "next_strategy": "rename the awk variable only"
+    },
+    {
+      "id": "d0-keepalive-start-02",
+      "outcome": "PASS",
+      "evidence": "keepalive_identity.json and keepalive_gpu_samples.csv"
+    }
+  ],
+  "next_phase_preconditions": {
+    "lane_identity_fixed": true,
+    "keepalive_healthy": true,
+    "target_pointer_ready": false,
+    "pure_core_pointer_ready": false,
+    "formal_uv_environment_ready": false
+  }
+}
