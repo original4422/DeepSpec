@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_04_COMPLETE_PASS`。**
+> **状态：`PHASE_05_NATIVE_FORMAL_READY`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -49,7 +49,15 @@
 > 带来 22 个相对 strict 的额外 accepted drafts。三条 request 分别消费
 > `6.75/6.75/6.375` risk budget，结束余额为 `0/0/0.375`，budget continuity、
 > accounting、非负约束与 `m<=1` 均无违例。Phase 04 判定 COMPLETE/PASS；
-> 正式 500 条仍 pending，由 Phase 05/06 分别执行。
+> Phase 05 one-shot native formal 工具已完成根线程离线审计：
+> 10 条固定 calibration warmup 后严格顺序 500 条 formal、最多 3 次总 attempt、
+> 从首个 formal HTTP request 发出到第 500 条终态的单调时钟边界、完整 response /
+> token IDs / proposal trace、可重算 TPS/acceptance，以及 HDFS 防覆盖和 accepted
+> marker 防重均已固定。14-file tooling freeze 03 manifest SHA-256 为
+> `625bc7f550bff9d02b004ac50f02a25e3f880db3422a465d6f9235a0eb66642d`，
+> 自校验无差异；Phase 04 native server command/environment/source identity
+> 逐字一致。正式 native 仍 pending，完整 500 条只先形成 candidate，待根线程验收
+> 8 卡/rank/crash/hash/cleanup/keepalive 后才发布唯一 accepted marker。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -95,6 +103,9 @@
 >
 > **权威 Phase 04 B+ bounded smoke artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T052500Z-phase-04-bplus-smoke-01`
+>
+> **权威 Phase 05 tooling freeze 03：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T055500Z-phase-05-tooling-freeze-03`
 
 ## 快速结果
 
