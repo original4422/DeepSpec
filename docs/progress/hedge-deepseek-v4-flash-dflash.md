@@ -5,18 +5,21 @@
 
 - Continuation timebox：`T1=2026-07-29T07:31:39Z`；
   `T+9=2026-07-29T16:31:39Z`；`T+12=2026-07-29T19:31:39Z`。
-- 当前 phase：continuation C3 native formal `RUNNING`；a01 live attempt
-  `1/3`，10/10 warmup 已在计时前完成，正式请求进度 422/500。
+- 当前 phase：continuation C3 native formal `PASS`；a01 live attempt
+  `1/3` 首次成功，a02/a03 未启动。
 - 校准：32/32 terminal success、0 retry；4991 条 positive ratio、dropped=0；
   linear `q25=12.5`，冻结 `B=g=12.5,m=1,value_scheme=normalized_suffix,
   block_size=7`，config SHA `ef9003cd…7746`。
 - Protocol B0：32/32 terminal success、0 retry；逐样本 identity/order 与完整
   output token IDs 均为 32/32 相同；zero relaxation/regret/leak，`B0 PASS`。
-- Worker：`4099543` / 8×H20 / TP=8；C3 owned server 正在执行唯一 native
-  formal arm，尚无 retry、fatal 或 worker crash。
-- 当前 blocker：无；正式 arm 尚未完成，中途完成度不是正式性能结论。
-- 下一步：完成 500/500、定向 cleanup、seal 与 keepalive gate 后立即提交 native
-  结果，并按用户最新要求马上启动独立 C4/HEDGE B+ executor。
+- Native formal：500/500 success、0 retry；74802 completion tokens、
+  9897.839411616 秒、E2E output TPS `7.55740691369605`；484 match /
+  16 mismatch / 0 parse failure。
+- Worker：`4099543` / 8×H20 / TP=8；C3 owned server 已定向清理且模型 context
+  为 `none`。fresh keepalive PID/PGID/SID `239449`，8×10×1 秒 gate 最低
+  逐卡均值 `40.0%`。
+- 当前 blocker：无；HEDGE B+ formal 尚未运行。
+- 下一步：主 Agent 最小验收 C3 后立即启动独立 C4/HEDGE B+ executor。
 
 ## Prior-window final snapshot
 
@@ -66,3 +69,4 @@
 | 2026-07-29T11:03:20Z | continuation C3 heartbeat | 唯一 native formal arm 持续顺序计时 | `RUNNING`，live `1/3`；241/500 success、35038 completion tokens、237 match / 4 mismatch、0 retry、fatal scan 0；不发布中途 TPS | scratch `dflash-d6-native-20260729T093000Z-a01` | 不中断 native；完成、seal、cleanup 后立即启动已就绪 B+ preflight |
 | 2026-07-29T11:33:55Z | continuation C3 heartbeat | 唯一 native formal arm 持续顺序计时 | `RUNNING`，live `1/3`；331/500 success、48749 completion tokens、323 match / 8 mismatch、0 parse failure、0 retry、fatal scan 0；不发布中途 TPS | scratch `dflash-d6-native-20260729T093000Z-a01` | 不中断 native；完成、seal、cleanup 后立即移交已就绪 C4/B+ |
 | 2026-07-29T12:04:15Z | continuation C3 heartbeat | 唯一 native formal arm 持续顺序计时 | `RUNNING`，live `1/3`；422/500 success、62712 completion tokens、411 match / 11 mismatch、0 parse failure、0 retry、fatal scan 0；不发布中途 TPS | scratch `dflash-d6-native-20260729T093000Z-a01` | 不中断 native；完成、seal、cleanup 后立即移交已就绪 C4/B+ |
+| 2026-07-29T12:31:49Z | continuation C3 final | 唯一 native formal arm 完成 10 warmup（不计时）+ 500 formal；定向 cleanup、context-clear、keepalive resume/gate 与 HDFS seal | `PASS`，live `1/3`；500/500、74802 tokens、9897.839s、7.5574 output tok/s、484/16/0、retry0、fatal0；46/46 manifest PASS | HDFS `dflash-d6-native-20260729T093000Z-a01`；manifest `a1c1a1e…eef4`；keepalive `239449` | 主 Agent 最小验收并立即调度独立 C4/HEDGE B+ |

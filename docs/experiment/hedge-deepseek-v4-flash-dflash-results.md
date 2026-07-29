@@ -4,7 +4,7 @@
 > [权威实验日志](./hedge-deepseek-v4-flash-dflash.md)；本页只展示参数来源、
 > 协议结论和正式指标。任何尚未完成的项目都明确标为 `NOT_RUN` 或 `RUNNING`。
 
-最后更新：`2026-07-29T09:06:30Z`
+最后更新：`2026-07-29T12:34:16Z`
 
 ## 一句话结论
 
@@ -12,8 +12,9 @@
 `q25=12.5`，因此正式 HEDGE 参数为
 `B=12.5, g=12.5, m=1, value_scheme=normalized_suffix`。
 32 条 protocol `B=0` 已与 native 达成 32/32 完整 output token-ID 一致，
-结论为 `B0 PASS`。native 与 HEDGE 各 500 条正式实验尚未运行，所以目前仍没有
-正式 TPS、acceptance 或两 arm 差值结论。
+结论为 `B0 PASS`。native 500 条正式 arm 已完成：500/500 success、0 retry、
+74,802 completion tokens、9897.839411616 秒、E2E output TPS
+`7.55740691369605`；HEDGE `B>0` 500 条尚未运行，因此路线内差值仍待 C4。
 
 ## 当前结果总览
 
@@ -21,7 +22,7 @@
 | --- | ---: | --- | --- |
 | native calibration | 32 | `PASS` | 32/32 成功；`q25=12.5` |
 | protocol `B=0` | 32 | `PASS` | 32/32 完整 output token IDs 相同 |
-| native formal | 500 | `NOT_RUN` | 尚无正式指标 |
+| native formal | 500 | `PASS` | 500/500 success；74,802 tokens；9897.839 s；7.5574 output tok/s；484/16/0 |
 | HEDGE `B>0` formal | 500 | `NOT_RUN` | 尚无正式指标 |
 
 ## 固定实验身份
@@ -114,19 +115,35 @@ accepted drafts 只统计 0–7 个 draft candidates，不含 bonus/current toke
 
 | Arm | HEDGE | B / g / m | Samples | Success / Fail | Mean accepted drafts / proposal | Acceptance length / position stats | Completion tokens | Timed wall sec | E2E output TPS | Match / Mismatch / Parse fail | Retries | Result class |
 | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | --- |
-| native | off | — | 500 | — | — | — | — | — | — | — | — | `NOT_RUN` |
+| native | off | — | 500 | 500 / 0 | 0.0 | histogram `[74302,0,0,0,0,0,0,0]`；position 1–7 rates 全 0；含 current 的 mean length `1.0067292939624775` | 74802 | 9897.839411616 | 7.55740691369605 | 484 / 16 / 0 | 0 | `CANONICAL PASS` |
 | HEDGE B+ | on | 12.5 / 12.5 / 1 | 500 | — | — | — | — | — | — | — | — | `NOT_RUN` |
+
+native arm 共记录 74,302 个 proposal、520,114 个 proposed draft tokens；
+accepted draft tokens 为 0，逐位置 accepted draft tokens 均为 0。TP0–7 均完成
+初始化；八张 H20 在 formal 期间各有 14,405 个采样点、峰值利用率均为 99%，
+最低模型显存为 92,905–93,145 MiB。日志在 owned shutdown 前未发现未处理的
+CUDA、NCCL、Python traceback 或 worker crash。
+
+native formal artifact：
+
+- [C3 acceptance](./artifacts/hedge-deepseek-v4-flash-dflash/continuation-c3/continuation_c3_acceptance.json)
+- HDFS run：
+  `/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d6-native-20260729T093000Z-a01`
+- HDFS manifest：46/46 PASS；SHA-256
+  `a1c1a1e44ec66e21cb0ab5455aa42f011768c096bea25c81cf59c34b8b26eef4`
+- cleanup/context-clear `PASS`；fresh keepalive PID/PGID/SID `239449`，
+  8×10×1 秒 gate 最低逐卡均值 `40.0%`
 
 ## 路线内差值
 
 | 指标 | Native | HEDGE B+ | B+ − Native | 相对变化 |
 | --- | ---: | ---: | ---: | ---: |
-| Mean accepted drafts / proposal | — | — | — | — |
-| Completion tokens | — | — | — | — |
-| Timed wall sec | — | — | — | — |
-| E2E output TPS | — | — | — | — |
-| Answer matches | — | — | — | — |
-| Retries | — | — | — | — |
+| Mean accepted drafts / proposal | 0.0 | — | — | — |
+| Completion tokens | 74802 | — | — | — |
+| Timed wall sec | 9897.839411616 | — | — | — |
+| E2E output TPS | 7.55740691369605 | — | — | — |
+| Answer matches | 484 | — | — | — |
+| Retries | 0 | — | — | — |
 
 在两个 500 条 arm 都封存并通过可复算验收前，本表不填推测值，也不做跨路线绝对
 TPS 排名。
