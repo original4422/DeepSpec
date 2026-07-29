@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T07:54:18Z`
+- 记录更新时间：`2026-07-29T08:23:59Z`
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；原截止
   `2026-07-29T08:54:41Z` 已由用户于 `2026-07-29T07:47:18Z` 明确解除，
   当前无截止时间
@@ -58,8 +58,9 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `ada66253e719cd021cdec369914245b51ff46b61`
-- 下一步：P07 static tooling 已补齐 prepare/client/validator/attempt/tests，
-  正在完成 fail-closed 与全回归；主审通过前不登录 worker
+- 下一步：P07 static 首轮 149/149 后，主审要求修复 marker 环境泄漏、
+  retry-aware lifecycle、完整 snapshot identity 与物理 counter 不变量；
+  原 executor 正在逐项 TDD，主审通过前不登录 worker
 
 ## 当前阶段
 
@@ -72,7 +73,7 @@
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
 | P06 | `PASS` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS | — |
-| P07 | `IN_PROGRESS` | P06 有效、P05 config frozen；static tooling 已齐并完成两轮 RED→GREEN，lane 仍为 keepalive | fail-closed/全回归、主审、唯一 HEDGE B>0 500 |
+| P07 | `IN_PROGRESS` | static 首轮 149/149；主审 marker finding 已 RED→GREEN，retry 501 fixture 已 RED，其他 snapshot/counter finding 修正中；lane 仍为 keepalive | 修正回归、主审、唯一 HEDGE B>0 500 |
 | P08 | `NOT_STARTED` | — | P07 门禁 |
 
 ## 固定实验协议
@@ -89,6 +90,39 @@
   达到终态后；HTTP、生成、排队、retry/backoff 均计入
 - arms：native speculative baseline、calibration 上 HEDGE B=0、自动校准后的唯一
   HEDGE B>0；三个 arm 保持相同 TP=8、proposal width=5 和 decode-affecting 配置
+
+## P06 native 正式 500 结果
+
+| 指标 | 结果 |
+| --- | --- |
+| 状态 / attempt | `PASS` / `20260729T062241Z-p06-native-formal-r1` |
+| warmup / formal | 10 条排除计时 / 500 条单次顺序运行 |
+| 成功 / 失败 / retry | 500 / 0 / 0 |
+| completion tokens | 74594 |
+| timed wall seconds | 2348.31919839 |
+| end-to-end output TPS | 31.76484698125425 |
+| proposals / proposed drafts / accepted drafts | 16045 / 80225 / 58473 |
+| accepted drafts / proposal | 3.644312870052976 |
+| acceptance length（含 bonus） | 4.64904954814584 |
+| 逐位置 accepted drafts | `[14904, 13227, 11688, 10119, 8535]` |
+| GSM8K match / mismatch / parse failure | 478 / 11 / 11 |
+| HEDGE | disabled；config `null`；proposal/active/leak counters 均 0 |
+| TP / GPU | target/draft/TP ranks 0–7；八卡 formal window 各 1982 samples |
+| GPU memory / max util | 每卡最低 79619–80099 MiB / 99–100% |
+| crash / cleanup / keepalive | 无 crash；contexts none；8×10 全卡 100% |
+
+- immutable artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1`
+- 完整逐请求响应与 token IDs：上述目录的 `formal_outputs.jsonl`，
+  SHA-256
+  `ecd9952536a860836babc3451e066b4ea164b0e520e263bfc5c200f46e902607`
+- 汇总：`answer_summary.json`；acceptance：`acceptance_summary.json`；
+  计时：`formal_timing.json`；HEDGE-off counter：`hedge_counters.json`；
+  八卡采样：`gpu_samples.csv`
+- archive manifest：39/39 文件集合、size 与 SHA 主 Agent独立重算匹配；
+  manifest SHA-256
+  `f0014a88b05761b47a85b841d052a13a2e6d6d4baa21bf4f3640b4e7c96beca7`
+- 结果提交：`9134825`；660 分钟进展/授权扩展提交：`b1bced1`
 
 ## P01 acquisition evidence
 

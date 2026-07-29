@@ -3,7 +3,7 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T07:54:18Z`（660 分钟 checkpoint 提前 23 秒）
+- 快照时间：`2026-07-29T08:23:59Z`（690 分钟 checkpoint 提前 42 秒）
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
   `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
 - elapsed / deadline：持续执行 / `NONE`
@@ -22,8 +22,9 @@
   - P06：formal tooling 138/138 与主 Agent复验 PASS，commit/push `6a74186`；
     唯一 native formal 500/500、0 retry、74594 tokens、31.76484698125425 TPS；
     主 Agent独立重算与 TP8/GPU/HEDGE-off/cleanup/archive 全 PASS
-  - P07：static prepare/client/validator/attempt/tests 已齐；两轮 RED→GREEN；
-    fail-closed 与全回归进行中，尚未登录 worker/live
+  - P07：static 首轮 targeted 11/11、总回归 149/149；主审追加四项
+    fail-closed 修正，marker 已 RED→GREEN，retry 501 fixture 已 RED，
+    summary-bound/schema/counter 修正进行中；尚未登录 worker/live
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
 - keepalive / server / PID：P06 server/sampler 已定向退出、contexts none；
   dedicated keepalive `107326/107326/107326` 已恢复，8×10 全卡 100%
@@ -41,10 +42,11 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`
-- 首要事项：完成 P07 static 主审；PASS 后才启动唯一 HEDGE B>0 executor
-- 下一检查点：`2026-07-29T08:24:41Z`
-- 下一 30 分钟动作：完成 P07 fail-closed/全回归、主审和 tooling commit；若
-  PASS，执行 lane preflight、pause/contexts-none 与唯一 B>0 冷加载
+- 首要事项：完成 P07 主审四项 static 修正与全回归；PASS 后才启动唯一
+  HEDGE B>0 executor
+- 下一检查点：`2026-07-29T08:54:41Z`
+- 下一 30 分钟动作：完成 retry-aware lifecycle、snapshot identity、物理 counter
+  forged gates、回归/主审/tooling commit；随后执行唯一 B>0 preflight
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -753,3 +755,18 @@
   checkpoint 与 decode contract 仍为硬门禁。
 - lane 保持 P06 收尾后 dedicated keepalive `107326`；本 checkpoint 不宣称
   P07 tooling PASS，也没有 P07 attempt ID。
+
+### 2026-07-29T08:24:41Z — 690 分钟 checkpoint
+
+- 实际快照于 `08:23:59Z` 提前 42 秒落盘。P07 static 首轮 targeted 11/11；
+  P07/P06/P05/P04/protocol/integration/core 合计 149/149，syntax/contract/
+  uv lock/diff 及 P06 immutable formal artifact replay 均 PASS。
+- 主 Agent未直接放行 live，追加四项实际 finding：wrapper marker 不得继承进
+  server；正式 counter 必须兼容协议允许的 retry；snapshot 必须固定
+  counter schema/candidate alignment/score seam；逐位置/lifecycle/budget 等
+  counter 必须满足物理不变量。
+- marker 泄漏已 RED→GREEN；带一次 retry 的 500-record fixture 证明旧
+  exact-500 门禁误拒 initialized=501，summary-bound 修正进行中；其余两类
+  forged fixture 尚待 RED→GREEN。executor 仍 static-only，lane 保持 keepalive。
+- 用户指出 P06 500 结果在 docs 中不醒目；`docs/experiment/` 已新增
+  `P06 native 正式 500 结果` 专节，列出完整指标、hash、文件名与 HDFS 路径。
