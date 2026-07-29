@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "phase": "D5",
+  "status": "EARLY_STOPPED",
+  "attempt_id": "dflash-d5-native-20260729T053735Z-a01",
+  "worker_id": "4099543",
+  "worker_gpu_identity": "8x NVIDIA H20",
+  "source_sha": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+  "captured_at_utc": "2026-07-29T05:42:45Z",
+  "implementation_stop_utc": "2026-07-29T05:55:58Z",
+  "decision": "Do not start a model with insufficient time to complete and safely seal the native calibration arm before the DFlash T+9 boundary.",
+  "preflight": {
+    "result": "BLOCKED_BEFORE_PASS",
+    "last_confirmed_step": "fixed CUDA view, worker identity, repo inputs, fixed SGLang SHA/parent/base and clean source all passed; isolated SGLang import did not return through the mlx PTY wrapper",
+    "scratch_path": "/tmp/deepspec-hedge-dflash/runs/dflash-d5-native-20260729T053735Z-a01",
+    "scratch_files": [
+      "cuda_view_ensure.json",
+      "cuda_view_verify.json"
+    ],
+    "keepalive_pause_reached": false,
+    "server_launch_reached": false,
+    "api_reached": false,
+    "hdfs_run_published": false,
+    "original_wrapper_returncode_recoverable": false
+  },
+  "protocol_results": {
+    "native_calibration": "NOT_RUN",
+    "positive_ratio_distribution": "NOT_RUN",
+    "q25": null,
+    "frozen_config": null,
+    "b0": "NOT_RUN",
+    "b_plus": "NOT_RUN"
+  },
+  "tooling": {
+    "launcher": "scripts/dflash_d5_attempt.sh",
+    "api": "scripts/dflash_d5_api.py",
+    "tests": "tests/hedge_dflash_integration/test_dflash_d5_tooling.py",
+    "focused_plus_d4_regression_tests": "7/7 PASS",
+    "bash_syntax": "PASS",
+    "api_py_compile": "PASS",
+    "embedded_python_ast": "PASS",
+    "git_diff_check": "PASS",
+    "d4_launcher_identity_unchanged": true
+  },
+  "operational_final_state": {
+    "keepalive_pid": 123914,
+    "keepalive_gate_observed_at_utc": "2026-07-29T05:42:45Z",
+    "keepalive_samples": "8 GPUs x 10 one-second samples",
+    "per_gpu_mean_utilization_percent": {
+      "0": 100.0,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 100.0,
+      "5": 100.0,
+      "6": 100.0,
+      "7": 100.0
+    },
+    "keepalive_paused": false,
+    "model_server_running": false,
+    "model_cuda_contexts": 0
+  },
+  "limitations": [
+    "The mlx PTY wrapper did not preserve the original preflight return code or complete stdout.",
+    "Read-only diagnostic PTY wrappers were left to exit naturally and were never signaled.",
+    "No calibration output, trace, q25 or protocol-level B0 result exists; this artifact must not be interpreted as a successful D5 experiment."
+  ]
+}
