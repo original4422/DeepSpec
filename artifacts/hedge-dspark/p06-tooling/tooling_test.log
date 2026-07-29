@@ -1,0 +1,73 @@
+P06 OFFLINE TOOLING GATE
+generated_at_utc=2026-07-29T06:16:11Z
+gpu_touched=false
+keepalive_paused=false
+server_started=false
+
+P06 public-seam tests
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest -v tests.hedge_dspark_p06.test_formal
+result=PASS
+tests=16
+
+P04 lifecycle/identity regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest -v tests.hedge_dspark_p04.test_tooling
+result=PASS
+tests=29
+
+P05 calibration regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_dspark_p05/test_calibration.py && /home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_dspark_p05/test_trace_scope.py
+result=PASS
+tests=24
+
+Frozen protocol regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_protocol/test_protocol.py
+result=PASS
+tests=13
+
+Pure HEDGE core regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_spec/test_budget.py && /home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_spec/test_config.py && /home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_spec/test_public_surface.py && /home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_spec/test_torch_rule.py
+result=PASS
+tests=33
+
+DSpark integration regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python tests/hedge_dspark_integration/test_dspark_hedge_integration.py
+result=PASS
+tests=23
+
+Fresh-process test total
+result=PASS
+tests=138
+failures=0
+
+Real SGLang spec_* replay
+source=/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4/native_calibration_outputs.jsonl
+result=PASS
+rows=32
+proposal_count=1097
+draft_tokens_proposed=5485
+accepted_draft_tokens=4081
+bonus_tokens=1102
+completion_tokens=5183
+
+Read-only prepare/identity probe
+result=PASS
+engine_identity=PASS
+checkpoint_identity=PASS
+resolved_contract=PASS
+p05_freeze_commit=c2446512713c2db2986cb5c1af88b72073b6be48
+formal_sha256=33554b90f751252ced2cfd16333d749f427c84cf025dccef4c7934144e9d5108
+wheel_sha256=a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9
+
+Static gates
+bash_n=PASS
+py_compile=PASS
+uv_lock_check=PASS
+launcher_contract_json=PASS
+git_diff_check=PASS
+exact_worker=4106666
+exact_arms=native
+tp_size=8
+proposal_width=5
+warmup_count=10
+formal_count=500
+canonical_counter_artifact=hedge_counters.json
