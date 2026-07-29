@@ -3,15 +3,15 @@
 当前标签：`IN_PROGRESS`
 
 - Timebox：`2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；若 B0 未完成，`2026-07-29T05:55:58Z` 停止实现。
-- 已用/剩余：约 `6h39m`；距 9 小时实现停止点约 `2h21m`，距 12 小时硬停止约 `5h21m`。
-- 当前 phase：D3 native TP8 short smoke。a04 已把 JIT blocker 推进到确定性的 draft TP weight-loader guard；CPU RED/GREEN、主 Agent 独立复验、SGLang `1ac1f38` 与 launcher pin `be0fbfe` 均已完成。唯一 source-only a05 已通过 fresh preflight，准备进入 `pause→context-clear→launch`；D0–D2 均已通过主 Agent 验收。
+- 已用/剩余：约 `7h09m`；距 9 小时实现停止点约 `1h51m`，距 12 小时硬停止约 `4h51m`。
+- 当前 phase：D4 pure HEDGE core 接入。D3 a05 已通过主 Agent 独立验收并以 `197c041` 推送：TP0–7 target/draft 全量加载、API HTTP 200、八卡请求窗口参与、定向清理与 sealed manifest 均 PASS。独立 D4 executor 正在只读复核 coordination pointer、canonical hashes/tests、cherry-pick 可应用性和 DFlash greedy verify seam。
 - Worker：`4099543`，`g340-cd51-4b00-4d69-9088-7ae6-6253`，8×H20。
-- Keepalive：a04 cleanup/context-clear 后恢复为 PID/PGID/SID `94182`；a05 03:33Z fresh preflight 的 10×1 秒门禁逐卡平均利用率均为 100%。下一步仍由唯一 D3 executor 紧邻暂停、清空 contexts 并启动；attempt 终态后必须定向 cleanup、恢复 keepalive 并重过门禁。
+- Keepalive：a05 cleanup/context-clear 后恢复为 PID/PGID/SID `110847`；主 Agent 03:58:56Z 独立远端复核为 `HEALTHY`，8 张 GPU 当前利用率均为 100%。下一次 GPU attempt 前仍须紧邻暂停、确认八卡 CUDA contexts 全部退出，attempt 终态后定向清理、恢复并重过逐卡门禁。
 - Eagle target marker：`READY`；23:04:53Z 发布的 immutable marker、provider commit/OID、manifest SHA、formal entity、46-shard index、config/tokenizer、73 files/159,630,041,626 bytes 与零 symlink/hardlink 已由主 Agent 只读复核 PASS。
 - Draft：`READY`；primary D1A attempt `dflash-d1a-primary-20260728T213507Z` 的同一 curl second pass 自然完成，6 files / 3,607,606,957 bytes 经 NVMe/HDFS 独立实体核查与原子发布 PASS；`.complete` SHA `f26d5899…338b`、pointer SHA `d2b43994…1add`。首次约 3.40 GB 后的 reset 已归因为 `curl-internal-retry-restarts-from-invocation-offset-zero`，fallback 未启用。
 - DSpark pure-core pointer：`READY`；主 Agent 已验证 `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/hedge-core.json`、commit `4d96f44065c07030ede67484a262006ec149626a`、parent `77053dd3ea84bb1c8dde7971f5f12759c1375e1f`、HEDGE source `9fb903d676254ea5f5d171051fb15c54f331111c`、10 个逐文件 hash 与 33 tests PASS。按计划尚未 cherry-pick，须等 D3 后由 D4 executor 消费。
-- 当前 blocker：a04 的 loader 前置等形检查已由最小 source fix覆盖，但尚未用未缩减 TP8 模型证明 draft 全量加载、ready/API 与请求期间八卡参与，因此 D3 仍为 `IN_PROGRESS`。
-- 下一检查点：a05 必须先越过 a04 的 `(4096,2048)→(4096,256)` fingerprint，再证明 primary draft/aux 3/13/23/32/42、block 8/7 candidates、实际 backend、ready/API 与逐卡 request samples；无论成功失败都须封存 manifest并恢复 keepalive。
+- 当前 blocker：无 D4 入口 blocker；D3 native short smoke 已 `ACCEPTED`。D4 尚未完成 pure-core cherry-pick、可复现 SGLang 注入、request-scoped state/counter fixtures 与最终 source freeze，因此不得进入 B0。
+- 下一检查点：D4 executor 完成 pure core identity/readiness handoff后，由主 Agent落下 exact pure-core cherry-pick关键节点；随后只在 DFlash greedy verify seam 做最小接入并完成 pure-core、DFlash、并发 request-state isolation 测试，冻结 native/B0/B>0 共用最终 source。
 
 | UTC | Phase | 动作 | 结论 | Artifact | 下一步 |
 | --- | --- | --- | --- | --- | --- |
@@ -34,3 +34,4 @@
 | 2026-07-29T02:35:00Z | D3 | 5.7 小时 checkpoint：修正 `nvidia-smi` host PID 与 container supervisor PID namespace 证据模型；运行 isolated JIT prebuild a02 | a01 在 JIT 前 fail-fast且无污染；a02 使用 CUDA 13.0 view、空 CVD、独立 DFlash workspace 从零编译到 `[153/183]`，log 7.14 MB、`FAILED:` 0；keepalive PID `75280` 八卡 fresh gate 100%；最终 link 尚未发生，blocker 保持 OPEN | `/tmp/deepspec-hedge-dflash/jit-prebuild/dflash-d3-jit-prebuild-20260729T021412Z-a02`；repo-hosted view/prebuild helpers | 继续同一 a02 到 finalize；独立验收 link、`.so`、path/cache/context postflight 后再决定 a04 |
 | 2026-07-29T03:05:00Z | D3 | 6.2 小时 checkpoint：主验 isolated JIT prebuild/link 与 source patch，提交恢复节点；派回 D3 executor 执行单变量 a04 | `[183/183]`、109,245,264-byte `.so`、readelf/ldd、shared-cache unchanged、keepalive/context postflight 和 main read-only audit 均 PASS，`c54eed8` 已 push；a04 preflight PASS，03:01:48Z pause 后 contexts=`none`，模型 PGID `85918` 已启动且尚无新 error | `c54eed8`；`dflash-d3-jit-prebuild-20260729T021412Z-a02`；`dflash-d3-native-20260729T025617Z-a04` | 等待 TP0–7、target/draft load、ready/API；随后定向 cleanup、HDFS seal、keepalive resume/gate 与主 Agent独立验收 |
 | 2026-07-29T03:35:00Z | D3 | 6.7 小时 checkpoint：验收 a04 sealed failure，完成 TP loader RED/GREEN、source commit、可复现 patch与 a05 launcher pin；派发唯一 source-only a05 | a04 在八 rank target/MHC load 后由 draft global-vs-local shape guard FAIL，非OOM；manifest 33/33、cleanup/context-clear/keepalive gate PASS。primary 10/10、overlap 6 PASS/1 skip，source `1ac1f38`、DeepSpec `6c929a8`/`be0fbfe` 已固定；a05 fresh preflight PASS | HDFS `dflash-d3-native-20260729T025617Z-a04`；`1ac1f38`；`6c929a8`；`be0fbfe`；attempt `dflash-d3-native-20260729T033321Z-a05` | a05 执行 pause→clear→TP8；先证明 draft loader fingerprint 不再出现，再验 ready/API、八卡请求采样、cleanup/seal/resume |
+| 2026-07-29T04:04:31Z | D3/D4 | 7.1 小时 checkpoint：主验 a05 TP8 native success、sealed evidence、cleanup 与 keepalive恢复，提交 D3关键节点并派发独立 D4 executor | D3 `ACCEPTED`，`197c041` 已 push；38/38 manifest、八 rank target/draft、API 200、短请求八卡采样证据和限制均已固定；keepalive PID `110847`，03:58:56Z 八卡100%；D4-A readiness进行中 | `197c041`；HDFS `dflash-d3-native-20260729T033321Z-a05`；`d3/dflash_d3_main_acceptance.json` | 复核 pure core identity/clean applicability；主 Agent落下 exact cherry-pick后继续 D4最小接入与 tests，力争在 T+9 前完成 B0 |
