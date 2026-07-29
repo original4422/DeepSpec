@@ -3,26 +3,37 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-28T23:27:21Z`（首个合并 patch 上下文失配后拆分落盘，较计划晚 2 分 40 秒）
+- 快照时间：`2026-07-29T02:24:11Z`（330 分钟 checkpoint 前 30 秒；长模型命令仍在前台）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`02:32:40` / `2026-07-29T08:54:41Z`
-- 当前 phase：P00–P03 均已 PASS；P04 `IN_PROGRESS`
+- elapsed / deadline：`05:29:30` / `2026-07-29T08:54:41Z`
+- 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
   - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
   - P02：主 Agent 验收 `PASS`；新正式 venv 33/33 tests PASS，commit/push `4d96f44065c07030ede67484a262006ec149626a`，READY marker 已发布
   - P03：主验收 `PASS`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc` 与 identity/progress `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3` 均已 push
-  - P04：静态 tooling executor `IN_PROGRESS`；模型/server 从未启动，native/B0 attempts 均未运行
+  - P04：主 Agent 验收 `PASS`；结果 commit/push `3e10b780264557e84a3cab5c1a196dc7c2a00496`
+  - P05：离线 tooling commit/push `ce5d67216953f3fceaec38ce2469ba47582d4e8d`；
+    唯一 native-trace attempt 已 ready，32 条顺序 calibration 正在收尾，尚未验收或运行 B0
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：P04 read-only preflight 与主 Agent `23:06Z` 复核均记录 worker `4106666` 精确 8×H20、PID/PGID/SID `4730/4730/4730`、8 卡 10×1 秒均 100%；模型 server `NOT_STARTED`
-- 最新 attempt：`20260728T230700Z-p04-preflight`；计划 native/B0 attempts 尚未运行
-- HDFS artifact：`/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap`
-- Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；branch `exp/hedge-v4-dspark`；HEAD/pushed `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3`
-- commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P03 identity/progress `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3`；config / result 尚未创建
-- 首要事项：先完成并由主 Agent验收静态 8 卡 lifecycle/client/sampler/validator/tests 门禁，之后才允许 native attempt；这不是实验 blocker
-- 下一检查点：`2026-07-28T23:54:41Z`
-- 下一 30 分钟动作：完成 P04 tooling engine-identity test 复跑及其余静态门禁；
-  主审通过前不暂停 keepalive、不启动 native/B0 attempt
+- keepalive / server / PID：attempt 前 keepalive `32894/32894/32894`、8×10 全卡
+  100%；`02:02:34Z` 按协议暂停，contexts none 后启动唯一 TP=8 server
+  `34445/34445/34445` 与 sampler `34452/34452/34452`；当前服务仍在运行
+- 最新 attempt：`20260729T020144Z-p05-native-calibration-r1`；`02:20:24Z`
+  ready，`02:20:31Z` 开始 32 条顺序请求，最近只读快照为 31/32
+- HDFS artifact：attempt 尚在 worker NVMe 活动目录，未归档、未形成 P05 PASS
+- Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
+  branch `exp/hedge-v4-dspark`；运行前 HEAD/pushed
+  `ce5d67216953f3fceaec38ce2469ba47582d4e8d`
+- commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
+  `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
+  `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
+  P05 tooling `ce5d672`；calibration config / result 尚未创建
+- 首要事项：完成第 32 条、validator、定向清理、keepalive 恢复与 immutable archive；
+  主 Agent独立验收 native trace 后才允许唯一 P05 B0 attempt
+- 下一检查点：`2026-07-29T02:54:41Z`
+- 下一 30 分钟动作：验收 native trace；若 PASS，再动态创建并运行 32 条 B0，
+  最后由 immutable native trace 自动计算并冻结 `g=B=q25,m=1`
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -417,3 +428,26 @@
 - 主 Agent `01:51Z` 远端独立核查 worker `4106666` keepalive
   `32894/32894/32894`，8×10 全卡 mean/min/max 100%，每卡 815 MiB；P05 GPU
   preflight 仍未放行。
+
+### 2026-07-29T02:24:41Z — 330 分钟 checkpoint
+
+- 本快照于 `02:24:11Z` 提前 30 秒落盘，避免唯一 P05 native-trace 长命令跨过
+  checkpoint 而没有过程心跳；进行中状态不构成 P05 PASS。
+- P05 离线 tooling 已由 executor 和主 Agent分别得到 106/106 fresh-process tests
+  PASS，shell/Python/contract/whitespace gates 均 PASS；7 个小文件已由
+  `ce5d67216953f3fceaec38ce2469ba47582d4e8d` commit/push，运行前 worktree
+  clean 且 upstream 同步。
+- 唯一 native-trace attempt 为
+  `20260729T020144Z-p05-native-calibration-r1`。preflight 确认 worker
+  `4106666` 精确 8×H20、NVMe/HDFS 目标均不存在，keepalive
+  `32894/32894/32894` 的 8×10 gate 全卡 100%。
+- keepalive 于 `02:02:34Z` 暂停，`02:02:36.889676Z` 证明 contexts none 后
+  紧邻启动 server `34445/34445/34445` 与 sampler `34452/34452/34452`。
+  TP0–TP7 全部初始化；target 48/48 shards、八 rank
+  `flashinfer_mxfp4 / Mxfp4FlashinferCutlassMoEMethod` 均有日志证据。
+- server 于 `02:20:24Z` ready，32 条固定 calibration 于 `02:20:31Z` 开始
+  顺序请求；最近 executor 只读快照为 31/32。sampler 已超过 1064 个 ordinal，
+  每组仍为 8 个固定 UUID；无 Traceback、CUDA OOM、NCCL ERROR 或 worker crash
+  marker。
+- attempt 尚未完成 validator、定向 cleanup、contexts-none、keepalive 恢复或
+  immutable HDFS archive，故 native trace 尚未由主 Agent验收；B0 未启动。
