@@ -1,0 +1,175 @@
+===== canonical_core =====
+test_invalid_width_fails_loudly (test_budget.NormalizedSuffixTests.test_invalid_width_fails_loudly) ... ok
+test_width_five_values_are_frozen (test_budget.NormalizedSuffixTests.test_width_five_values_are_frozen) ... ok
+test_B_zero_is_the_strict_leading_argmax_prefix (test_budget.ReferencePrefixTests.test_B_zero_is_the_strict_leading_argmax_prefix) ... ok
+test_block_size_mismatch_fails_loudly (test_budget.ReferencePrefixTests.test_block_size_mismatch_fails_loudly) ... ok
+test_budget_exhaustion_inside_a_block_blocks_a_later_tie (test_budget.ReferencePrefixTests.test_budget_exhaustion_inside_a_block_blocks_a_later_tie) ... ok
+test_budget_persists_across_blocks_and_exhaustion_is_strict (test_budget.ReferencePrefixTests.test_budget_persists_across_blocks_and_exhaustion_is_strict) ... ok
+test_distinct_request_states_do_not_leak_budget (test_budget.ReferencePrefixTests.test_distinct_request_states_do_not_leak_budget) ... ok
+test_failed_barrier_makes_later_exact_tokens_unreachable (test_budget.ReferencePrefixTests.test_failed_barrier_makes_later_exact_tokens_unreachable) ... ok
+test_m_one_caps_the_second_relaxed_mismatch (test_budget.ReferencePrefixTests.test_m_one_caps_the_second_relaxed_mismatch) ... ok
+test_regret_is_non_negative_target_top_gap (test_budget.ReferencePrefixTests.test_regret_is_non_negative_target_top_gap) ... ok
+test_reset_clears_spend_before_slot_reuse (test_budget.ReferencePrefixTests.test_reset_clears_spend_before_slot_reuse) ... ok
+test_score_field_length_mismatch_fails_loudly (test_budget.ReferencePrefixTests.test_score_field_length_mismatch_fails_loudly) ... ok
+test_zero_regret_mismatch_is_rejected_at_B_zero (test_budget.ReferencePrefixTests.test_zero_regret_mismatch_is_rejected_at_B_zero) ... ok
+test_block_size_validation_fails_loudly (test_config.ConfigTests.test_block_size_validation_fails_loudly) ... ok
+test_canonical_B_g_m_mapping_round_trips (test_config.ConfigTests.test_canonical_B_g_m_mapping_round_trips) ... ok
+test_fingerprint_changes_with_B_g_m_and_block_size (test_config.ConfigTests.test_fingerprint_changes_with_B_g_m_and_block_size) ... ok
+test_fingerprint_is_stable (test_config.ConfigTests.test_fingerprint_is_stable) ... ok
+test_fingerprint_payload_covers_value_scheme (test_config.ConfigTests.test_fingerprint_payload_covers_value_scheme) ... ok
+test_invalid_numeric_values_fail_loudly (test_config.ConfigTests.test_invalid_numeric_values_fail_loudly) ... ok
+test_only_normalized_suffix_is_supported (test_config.ConfigTests.test_only_normalized_suffix_is_supported) ... ok
+test_sampling_and_reporting_fields_are_not_in_decode_mapping (test_config.ConfigTests.test_sampling_and_reporting_fields_are_not_in_decode_mapping) ... ok
+test_unknown_reporting_or_success_keys_fail_loudly (test_config.ConfigTests.test_unknown_reporting_or_success_keys_fail_loudly) ... ok
+test_legacy_success_and_project_orchestration_are_not_exported (test_public_surface.PublicSurfaceTests.test_legacy_success_and_project_orchestration_are_not_exported) ... ok
+test_B_zero_and_zero_regret_mismatch_are_strict (test_torch_rule.TensorRuleTests.test_B_zero_and_zero_regret_mismatch_are_strict) ... ok
+test_block_size_mismatch_fails_loudly (test_torch_rule.TensorRuleTests.test_block_size_mismatch_fails_loudly) ... ok
+test_budget_spent_tensor_persists_across_blocks (test_torch_rule.TensorRuleTests.test_budget_spent_tensor_persists_across_blocks) ... ok
+test_contiguous_prefix_blocks_later_exact_positions (test_torch_rule.TensorRuleTests.test_contiguous_prefix_blocks_later_exact_positions) ... ok
+test_exact_exhaustion_inside_block_blocks_later_tie (test_torch_rule.TensorRuleTests.test_exact_exhaustion_inside_block_blocks_later_tie) ... ok
+test_fixed_seed_width_five_blocks_match_reference (test_torch_rule.TensorRuleTests.test_fixed_seed_width_five_blocks_match_reference) ... ok
+test_hot_rule_does_not_call_tensor_item (test_torch_rule.TensorRuleTests.test_hot_rule_does_not_call_tensor_item) ... ok
+test_m_one_caps_the_second_mismatch (test_torch_rule.TensorRuleTests.test_m_one_caps_the_second_mismatch) ... ok
+test_rows_have_independent_remaining_budgets (test_torch_rule.TensorRuleTests.test_rows_have_independent_remaining_budgets) ... ok
+test_width_five_tensor_values_are_frozen (test_torch_rule.TensorRuleTests.test_width_five_tensor_values_are_frozen) ... ok
+
+----------------------------------------------------------------------
+Ran 33 tests in 0.151s
+
+OK
+
+===== dflash_hedge_integration =====
+test_B_zero_matches_the_strict_prefix_and_bonus (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeAdapterTests.test_B_zero_matches_the_strict_prefix_and_bonus) ... ok
+test_active_mode_rejects_non_greedy_before_verify (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeAdapterTests.test_active_mode_rejects_non_greedy_before_verify) ... ok
+test_calibration_records_the_first_positive_strict_rejection (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeAdapterTests.test_calibration_records_the_first_positive_strict_rejection) ... ok
+test_hot_path_has_no_tensor_to_host_conversion (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeAdapterTests.test_hot_path_has_no_tensor_to_host_conversion) ... ok
+test_native_config_off_delegates_without_request_state (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeAdapterTests.test_native_config_off_delegates_without_request_state) ... ok
+test_request_state_survives_reorder_and_resets_on_slot_reuse (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeAdapterTests.test_request_state_survives_reorder_and_resets_on_slot_reuse) ... ok
+test_unannounced_slot_reuse_discards_the_old_budget (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeAdapterTests.test_unannounced_slot_reuse_discards_the_old_budget) ... ok
+test_native_mode_has_no_decode_config (tests.hedge_dflash_integration.test_dflash_hedge_integration.DFlashHedgeSettingsTests.test_native_mode_has_no_decode_config) ... ok
+test_injected_core_is_byte_identical_to_canonical_core (tests.hedge_dflash_integration.test_dflash_hedge_integration.InjectedCoreTests.test_injected_core_is_byte_identical_to_canonical_core) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 3.289s
+
+OK
+
+===== dflash_d4c_tooling =====
+test_snapshot_validator_accepts_strict_b0_and_clean_lifecycle (tests.hedge_dflash_integration.test_dflash_d4c_tooling.D4CApiSnapshotTests.test_snapshot_validator_accepts_strict_b0_and_clean_lifecycle) ... ok
+test_contract_pins_final_source_lane_and_b0 (tests.hedge_dflash_integration.test_dflash_d4c_tooling.D4CLauncherContractTests.test_contract_pins_final_source_lane_and_b0) ... ok
+test_launcher_syntax_and_sampler_are_d4_self_contained (tests.hedge_dflash_integration.test_dflash_d4c_tooling.D4CLauncherContractTests.test_launcher_syntax_and_sampler_are_d4_self_contained) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.054s
+
+OK
+
+===== dflash_d4_source_capture_tooling =====
+test_capture_cli_emits_whitespace_clean_zero_context_patch (tests.hedge_dflash_integration.test_dflash_d4_source_capture.D4SourceCaptureContractTests.test_capture_cli_emits_whitespace_clean_zero_context_patch) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.151s
+
+OK
+
+===== dflash_primary_regression =====
+test_deepseek_v4_capture_keeps_layer_ids_and_flattens_mhc (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_deepseek_v4_capture_keeps_layer_ids_and_flattens_mhc) ... /home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+W0729 12:51:47.911000 2368021 torch/utils/cpp_extension.py:140] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'
+ok
+test_deepseek_v4_defaults_allow_dflash (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_deepseek_v4_defaults_allow_dflash) ... ok
+test_draft_model_uses_mhc_projection_and_primary_vocab_weights (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_draft_model_uses_mhc_projection_and_primary_vocab_weights) ... Ignore import error when loading sglang.srt.models.bailing_moe_linear: No module named 'vllm'
+Ignore import error when loading sglang.srt.models.bailing_moe_nextn: No module named 'vllm'
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:1640: DeprecationWarning: `torch.jit.interface` is deprecated. Please use `torch.compile` instead.
+  warnings.warn(
+/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+ok
+test_primary_attention_header_shapes_map_to_fused_state (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_primary_attention_header_shapes_map_to_fused_state) ... ok
+test_primary_projection_and_vocab_header_shapes_on_meta (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_primary_projection_and_vocab_header_shapes_on_meta) ... ok
+test_primary_tp8_row_parallel_shapes_accept_global_weights (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_primary_tp8_row_parallel_shapes_accept_global_weights) ... ok
+test_production_loader_normalizes_primary_schema (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_production_loader_normalizes_primary_schema) ... Failed to load generation config for /tmp/tmpswuom_p0: /tmp/tmpswuom_p0 does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co//tmp/tmpswuom_p0/tree/main' for available files.. Proceeding without generation config.
+ok
+test_replicated_parameter_and_buffer_keep_exact_shape_guard (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_replicated_parameter_and_buffer_keep_exact_shape_guard) ... ok
+test_tp8_row_parallel_weight_uses_checkpoint_global_shape (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_tp8_row_parallel_weight_uses_checkpoint_global_shape) ... ok
+test_worker_maps_seven_draft_vocab_tokens_after_current_token (__main__.TestDeepSeekV4PrimaryDFlashConfig.test_worker_maps_seven_draft_vocab_tokens_after_current_token) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 7.216s
+
+OK
+
+===== dflash_overlap_regression =====
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/kernels/ops/attention/fla/utils.py:223: UserWarning: Triton is not supported on current platform, roll back to CPU.
+  warnings.warn(
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/awq/awq.py:52: UserWarning: Only CUDA, HIP and XPU support AWQ currently.
+  warnings.warn(f"Only CUDA, HIP and XPU support AWQ currently.")
+/home/tiger/src/deepspec-sglang-hedge-dflash/python/sglang/srt/layers/quantization/gguf.py:69: UserWarning: Only CUDA, MUSA and NPU support GGUF quantization currently.
+  warnings.warn(f"Only CUDA, MUSA and NPU support GGUF quantization currently.")
+test_sawtooth_counterexample (__main__.TestCompactSeqLensHostBound.test_sawtooth_counterexample) ... [CI Test Method] TestCompactSeqLensHostBound.test_sawtooth_counterexample
+W0729 12:51:58.274000 2368291 torch/utils/cpp_extension.py:140] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'
+ok
+test_upper_bound_of_exact (__main__.TestCompactSeqLensHostBound.test_upper_bound_of_exact) ... [CI Test Method] TestCompactSeqLensHostBound.test_upper_bound_of_exact
+ok
+test_matches_full_vocab_argmax (__main__.TestDflashDraftSamplerVocabParallel.test_matches_full_vocab_argmax) ... [CI Test Method] TestDflashDraftSamplerVocabParallel.test_matches_full_vocab_argmax
+ok
+test_shard_boundary_tie_resolves_to_first_global_index (__main__.TestDflashDraftSamplerVocabParallel.test_shard_boundary_tie_resolves_to_first_global_index) ... [CI Test Method] TestDflashDraftSamplerVocabParallel.test_shard_boundary_tie_resolves_to_first_global_index
+ok
+test_host_keep_list_matches_gpu_indices (__main__.TestFilterBatchHostIndices.test_host_keep_list_matches_gpu_indices) ... [CI Test Method] TestFilterBatchHostIndices.test_host_keep_list_matches_gpu_indices
+ok
+test_delegation (__main__.TestHybridNeedsCpuSeqLens.test_delegation) ... [CI Test Method] TestHybridNeedsCpuSeqLens.test_delegation
+ok
+test_bitexact_vs_legacy (__main__.TestRebuildCompactDraftReqToToken.test_bitexact_vs_legacy) ... skipped 'triton kernel requires CUDA'
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.745s
+
+OK (skipped=1)
+
+===== injected_core_check =====
+{
+  "canonical_commit": "86231e536573ccc43cda732b4eca920d5ce0a28a",
+  "canonical_repository": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash",
+  "content_hash": "7a82564b72058cfd22b062a11ee897e711f620c9e88f51ee08560365e22f208c",
+  "files": [
+    {
+      "path": "__init__.py",
+      "sha256": "e51bba48b8a67895270b3285775dfc3741421eb4a0c3cdf566a1cf0e9360daca"
+    },
+    {
+      "path": "budget.py",
+      "sha256": "c573fe2381416c70511f97968fe14fa9ef1e16d08c805eb55982efc0d23a5ce8"
+    },
+    {
+      "path": "config.py",
+      "sha256": "03079c13b327b1c31374421060d07217401dc3049c7b8fb5fb6c68d30b6db176"
+    },
+    {
+      "path": "hedge_core_identity.json",
+      "sha256": "acd9ebe5cd71bd50313a06c5a7ebb2e02289aa010bc92d9fcd72e9f8ded80d2a"
+    },
+    {
+      "path": "torch_rule.py",
+      "sha256": "92bb84a3bf3f03fd127636c5d5ef6b7bb9e22d4198cc57dac320606ae1256c72"
+    }
+  ],
+  "mode": "check",
+  "schema_version": 1,
+  "sglang_base_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "sglang_head_before": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+  "sglang_repository": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+  "status": "PASS",
+  "target_root": "python/sglang/srt/speculative/hedge_spec",
+  "upstream_pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a"
+}
+
+===== source_syntax =====
+syntax=PASS files=3

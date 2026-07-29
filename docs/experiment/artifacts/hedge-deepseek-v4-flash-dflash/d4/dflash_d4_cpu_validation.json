@@ -1,0 +1,123 @@
+{
+  "cases": [
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/hedge_spec",
+        "-v"
+      ],
+      "cwd": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash",
+      "finished_at_utc": "2026-07-29T04:27:01.664209+00:00",
+      "name": "canonical_core",
+      "returncode": 0,
+      "started_at_utc": "2026-07-29T04:27:00.030854+00:00",
+      "status": "PASS",
+      "test_counts": [
+        33
+      ]
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "-m",
+        "unittest",
+        "tests.hedge_dflash_integration.test_dflash_hedge_integration",
+        "-v"
+      ],
+      "cwd": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash",
+      "finished_at_utc": "2026-07-29T04:27:07.003065+00:00",
+      "name": "dflash_hedge_integration",
+      "returncode": 0,
+      "started_at_utc": "2026-07-29T04:27:01.664390+00:00",
+      "status": "PASS",
+      "test_counts": [
+        9
+      ]
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py",
+        "-v"
+      ],
+      "cwd": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+      "finished_at_utc": "2026-07-29T04:27:16.940864+00:00",
+      "name": "dflash_primary_regression",
+      "returncode": 0,
+      "started_at_utc": "2026-07-29T04:27:07.003108+00:00",
+      "status": "PASS",
+      "test_counts": [
+        10
+      ]
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "test/registered/unit/spec/test_dflash_overlap_hostsync.py",
+        "-v"
+      ],
+      "cwd": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+      "finished_at_utc": "2026-07-29T04:27:26.614236+00:00",
+      "name": "dflash_overlap_regression",
+      "returncode": 0,
+      "started_at_utc": "2026-07-29T04:27:16.940910+00:00",
+      "status": "PASS",
+      "test_counts": [
+        7
+      ]
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "scripts/dflash_d4_inject_core.py",
+        "--sglang-root",
+        "/home/tiger/src/deepspec-sglang-hedge-dflash",
+        "--check"
+      ],
+      "cwd": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash",
+      "finished_at_utc": "2026-07-29T04:27:26.659902+00:00",
+      "name": "injected_core_check",
+      "returncode": 0,
+      "started_at_utc": "2026-07-29T04:27:26.614281+00:00",
+      "status": "PASS",
+      "test_counts": []
+    },
+    {
+      "command": [
+        "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+        "-c",
+        "from pathlib import Path; paths=[Path('python/sglang/srt/speculative/dflash_hedge.py'),Path('python/sglang/srt/speculative/dflash_worker_v2.py'),Path('python/sglang/srt/managers/scheduler.py')]; [compile(path.read_text(), str(path), 'exec') for path in paths]; print('syntax=PASS files=3')"
+      ],
+      "cwd": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+      "finished_at_utc": "2026-07-29T04:27:26.716391+00:00",
+      "name": "source_syntax",
+      "returncode": 0,
+      "started_at_utc": "2026-07-29T04:27:26.659928+00:00",
+      "status": "PASS",
+      "test_counts": []
+    }
+  ],
+  "completed_at_utc": "2026-07-29T04:27:26.716500+00:00",
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "999",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONHASHSEED": "0",
+    "PYTHONNOUSERSITE": "1"
+  },
+  "gpu_used": false,
+  "python": "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+  "schema_version": 1,
+  "source_identity": {
+    "dflash_canonical_core_commit": "86231e536573ccc43cda732b4eca920d5ce0a28a",
+    "injected_core_content_hash": "2c8688110ce0fab8450df5c12b1e6d6c535f2c9f8836ef9ae02aea4ac732c348",
+    "integration_content_hash": "70fd4a14d1c9171d4a699ff1eb8b7bc1e9488cc6c523a612e733ab68375fb5e5",
+    "integration_patch_sha256": "eaf7534aae4cdc2ca0fb0cde4a856ec4e0d2150788de32eb6e5c5fd7a44684c5",
+    "pre_integration_head": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "upstream_pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a"
+  },
+  "status": "PASS"
+}

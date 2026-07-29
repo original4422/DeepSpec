@@ -1,6 +1,6 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `IN_PROGRESS — D0–D3 ACCEPTED; D4 AUTHORIZED`
+Status / outcome label: `IN_PROGRESS — D0–D3 ACCEPTED; D4 SOURCE FROZEN; D4-C B0 PENDING`
 
 Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
 
@@ -10,9 +10,9 @@ Target repo@revision / HDFS `.complete`: `deepseek-ai/DeepSeek-V4-Flash@60d8d707
 
 Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `READY — primary .complete published at 2026-07-28T23:39:20Z`
 
-SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / native D3 `1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5`; HEDGE-final pending D4
+SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / HEDGE-final `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`（parent/native D3 `1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5`）
 
-HEDGE pure-core SHA: `4d96f44065c07030ede67484a262006ec149626a` (`READY`, verified; not yet cherry-picked)
+HEDGE pure-core SHA: upstream `4d96f44065c07030ede67484a262006ec149626a` / DFlash canonical `86231e536573ccc43cda732b4eca920d5ce0a28a`（`READY`，exact hashes verified and injected）
 
 Dataset revision / seed / fingerprint: `openai/gsm8k@740312add88f781978c0658806c59bc2815b9866` / `980406` / HF `59ec1b7f9357c7a2`, content `32f83c6b…b41c4`
 
@@ -26,13 +26,13 @@ B+ result: `NOT_RUN`
 
 Canonical or exploratory: `UNDETERMINED`
 
-Primary blocker: `NONE FOR D4 ENTRY`；native TP8、target/draft、pure core、dataset 与 worker/keepalive 前置均已 READY。
+Primary blocker: `NONE FOR D4-C ENTRY`；final source、short B0 launcher/API/counter contract、target/draft 与 worker/keepalive 前置均已 READY，等待主 Agent 提交并显式授权 live attempt。
 
 Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/`
 
-Git commit: latest pushed progress `c65a60a`; DeepSpec D3 recovery `6c929a8`; SGLang native D3 `1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5`
+Git commit: latest pushed progress `c65a60a`; DeepSpec D3 recovery `6c929a8`; DeepSpec canonical core `86231e536573ccc43cda732b4eca920d5ce0a28a`; SGLang HEDGE-final `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`; D4 DeepSpec evidence pending main commit/push
 
-下一步：调度独立 D4 executor；验证 DSpark pure-core pointer，cherry-pick canonical core，并以可复现注入把同一 core 接入独立 SGLang source。
+下一步：主 Agent 审查并 commit/push D4-B source/evidence 节点；随后显式授权 D4-C executor 运行一次 short live `B=0` smoke。D4-C 验收前不进入 D5。
 
 ## D0 会话与资源基线
 
@@ -159,3 +159,49 @@ a05 HDFS manifest
 fresh readback PID `110847`、八卡 10×1 秒均值均为 100%。D3 权威 handoff 为
 `docs/plan/handoffs/dflash-phase-d3-handoff.md`，主验收记录为
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d3/dflash_d3_main_acceptance.json`。
+
+## D4 HEDGE source freeze 与 D4-C readiness
+
+上游 pure core
+`4d96f44065c07030ede67484a262006ec149626a` 已 exact cherry-pick 为 DFlash
+canonical commit `86231e536573ccc43cda732b4eca920d5ce0a28a`。10 个 tracked
+core/test 文件逐一 hash 一致，canonical 33/33 tests PASS；同一 canonical core 的
+5 个 package 文件通过可复现脚本注入独立 SGLang checkout，injected content hash
+为 `2c868811…c732c348`。
+
+DFlash integration 把 HEDGE 接在 target logits adjustments 后的 greedy verify
+seam；native config-off 仍走原 Triton/eager verifier。DFlash model block 保持 `8`，
+proposal width 固定 `7`。per-request budget 和累计 relaxed mismatch 常驻 device，
+rid/slot reorder、prefill bind、natural finish、abort 和真实 slot reuse 均有 fixture；
+calibration 首个正 strict-rejection barrier、acceptance/lifecycle counters 也只在显式
+snapshot 时批量转 CPU。active mode 对 non-greedy fail closed。
+
+主 Agent 已把最终 SGLang source 固化为
+`9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`，tree
+`53fc45b1b04963736254dc7ed582047313b8075a`。reproducible unified-zero
+integration patch SHA-256 为 `1788696e…226024`；从 parent
+`1ac1f382…2c5` 注入 core 并以 `git apply --unidiff-zero` 应用 patch 得到的
+tree 与 final tree 完全一致。patch artifact 自身的隔离
+`git diff --cached --check` PASS。post-commit CPU validation 为 canonical
+33/33、integration 9/9、DFlash primary 10/10、overlap 6 PASS/1 CUDA-only skip、
+D4-C tooling 3/3、source-capture tooling 1/1，且 source/injection/syntax 门禁
+全部 PASS。
+
+unified-zero serialization 是一次 artifact-only correction：首版 contextful patch
+中的 5 个单空格 context marker 在 patch 文件自身 staged 时触发 trailing-whitespace
+gate；它们不是 source 新增空格。correction 不改 SGLang commit/tree 或
+integration/core content hash，也不通过字符串替换吞掉其他尾随空格。
+
+D4-C 已准备独立 short live `B=0` launcher 与 API auditor，锁定 worker `4099543`、
+port `31457`、TP=8、block 8/proposal 7、final source、原 checkpoint/CUDA/JIT
+contract，以及
+`B=0,g=1000000,m=1,value_scheme=normalized_suffix,block_size=7`。请求复用 sealed
+D3 a05 的 short prompt，完整 output token IDs 必须等于 `[22,1]`；终态
+`/get_server_info` 还必须证明 strict/HEDGE accepted 相等、零 relaxation/regret、
+request lifecycle 清空。D4 sampler 已改为本 launcher 自调用并由静态测试禁止引用
+D3 attempt sampler。
+
+本节所有 D4-C readiness 核查均为 CPU-only：没有 login worker、没有暂停 keepalive、
+没有启动模型。`B0=NOT_RUN`；权威 handoff 为
+`docs/plan/handoffs/dflash-phase-d4b-handoff.md`，最终 CPU/source evidence 为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4_final_source_validation.json`。

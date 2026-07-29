@@ -1,0 +1,67 @@
+{
+  "dflash_canonical_core_commit": "86231e536573ccc43cda732b4eca920d5ce0a28a",
+  "final_source_commit": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+  "final_source_tree": "53fc45b1b04963736254dc7ed582047313b8075a",
+  "injected_core_content_hash": "2c8688110ce0fab8450df5c12b1e6d6c535f2c9f8836ef9ae02aea4ac732c348",
+  "injected_core_files": [
+    {
+      "path": "python/sglang/srt/speculative/hedge_spec/__init__.py",
+      "sha256": "e51bba48b8a67895270b3285775dfc3741421eb4a0c3cdf566a1cf0e9360daca"
+    },
+    {
+      "path": "python/sglang/srt/speculative/hedge_spec/budget.py",
+      "sha256": "c573fe2381416c70511f97968fe14fa9ef1e16d08c805eb55982efc0d23a5ce8"
+    },
+    {
+      "path": "python/sglang/srt/speculative/hedge_spec/config.py",
+      "sha256": "03079c13b327b1c31374421060d07217401dc3049c7b8fb5fb6c68d30b6db176"
+    },
+    {
+      "path": "python/sglang/srt/speculative/hedge_spec/hedge_core_identity.json",
+      "sha256": "acd9ebe5cd71bd50313a06c5a7ebb2e02289aa010bc92d9fcd72e9f8ded80d2a"
+    },
+    {
+      "path": "python/sglang/srt/speculative/hedge_spec/torch_rule.py",
+      "sha256": "92bb84a3bf3f03fd127636c5d5ef6b7bb9e22d4198cc57dac320606ae1256c72"
+    }
+  ],
+  "integration_content_hash": "70fd4a14d1c9171d4a699ff1eb8b7bc1e9488cc6c523a612e733ab68375fb5e5",
+  "integration_files": [
+    {
+      "path": "python/sglang/srt/managers/scheduler.py",
+      "sha256": "6c9cd52d9a3b56b61a3de754e0572ed8a01067a7af6aa55600c4056a4d327b9a"
+    },
+    {
+      "path": "python/sglang/srt/speculative/dflash_worker_v2.py",
+      "sha256": "ef91120acb9f16b3a253b2ca144691ef174e3387e0d1545da41e8a68529bf122"
+    },
+    {
+      "path": "python/sglang/srt/speculative/dflash_hedge.py",
+      "sha256": "34c1bce9b6c3e105a5ddbea9f140435e4aeec1f1f99d188daf3a7607303d7788"
+    }
+  ],
+  "integration_patch": {
+    "apply_args": [
+      "--unidiff-zero"
+    ],
+    "artifact_git_diff_check": "PASS",
+    "bytes": 34457,
+    "format": "unified-zero",
+    "patch_plus_injected_core_matches_final_tree": "PASS",
+    "path": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4_sglang_integration.patch",
+    "sha256": "1788696ec488d1844a061f4a1a37cb32af2754c0b6146094f1255f08fb226024",
+    "temporary_index_apply_check": "PASS"
+  },
+  "observed_head": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+  "pre_integration_head": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+  "rebuild_order": [
+    "checkout pre_integration_head",
+    "run scripts/dflash_d4_inject_core.py",
+    "git apply --unidiff-zero integration_patch"
+  ],
+  "schema_version": 1,
+  "sglang_base_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "sglang_repository": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+  "status": "PASS",
+  "upstream_pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a"
+}

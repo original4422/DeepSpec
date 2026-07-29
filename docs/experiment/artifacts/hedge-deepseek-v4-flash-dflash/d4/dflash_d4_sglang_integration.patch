@@ -1,0 +1,873 @@
+diff --git a/python/sglang/srt/managers/scheduler.py b/python/sglang/srt/managers/scheduler.py
+index c46a8c5..9e96619 100644
+--- a/python/sglang/srt/managers/scheduler.py
++++ b/python/sglang/srt/managers/scheduler.py
+@@ -3913,0 +3914,4 @@ class Scheduler(
++        elif self.spec_algorithm.is_dflash() and self.draft_worker is not None:
++            info_record = self.draft_worker.dump_info_records()
++            if info_record is not None:
++                ret["dflash_info_record"] = info_record
+diff --git a/python/sglang/srt/speculative/dflash_worker_v2.py b/python/sglang/srt/speculative/dflash_worker_v2.py
+index 8b8b1a2..6ad5594 100644
+--- a/python/sglang/srt/speculative/dflash_worker_v2.py
++++ b/python/sglang/srt/speculative/dflash_worker_v2.py
+@@ -33,0 +34,4 @@ from sglang.srt.speculative.dflash_info_v2 import DFlashDraftInputV2
++from sglang.srt.speculative.dflash_hedge import (
++    DFlashHedgeAdapter,
++    DFlashHedgeSettings,
++)
+@@ -269,0 +274,15 @@ class DFlashWorkerV2(BaseSpecWorker):
++        self._hedge_adapter = DFlashHedgeAdapter(
++            settings=DFlashHedgeSettings.from_environ(),
++            dflash_block_size=self.block_size,
++            device=self.device,
++        )
++        self._hedge_adapter.require_supported_runtime(
++            disable_cuda_graph=server_args.disable_cuda_graph,
++            disable_overlap_schedule=server_args.disable_overlap_schedule,
++        )
++        if self.ps.tp_rank == 0:
++            logger.info(
++                "Initialized DFlash HEDGE adapter: %s",
++                self._hedge_adapter.identity(),
++            )
++
+@@ -594,0 +614,9 @@ class DFlashWorkerV2(BaseSpecWorker):
++    def dump_info_records(self) -> dict:
++        return {"hedge": self._hedge_adapter.snapshot()}
++
++    def note_request_finished(self, *, rid: str, natural_stop: bool) -> None:
++        self._hedge_adapter.note_request_finished(
++            rid=rid,
++            natural_stop=natural_stop,
++        )
++
+@@ -1435,0 +1464 @@ class DFlashWorkerV2(BaseSpecWorker):
++            self._hedge_adapter.bind_batch(batch)
+@@ -1749,0 +1779,5 @@ class DFlashWorkerV2(BaseSpecWorker):
++        self._hedge_adapter.require_greedy(
++            all_greedy=(
++                sampling_info is None or sampling_info.is_all_greedy
++            )
++        )
+@@ -1774 +1808,34 @@ class DFlashWorkerV2(BaseSpecWorker):
+-            if self._use_triton_accept_bonus:
++            if self._hedge_adapter.active:
++
++                def native_accept():
++                    return compute_dflash_correct_drafts_and_bonus(
++                        candidates=candidates,
++                        target_predict=target_predict,
++                    )
++
++                accept_len, bonus = self._hedge_adapter.accept_or_native(
++                    candidates=candidates,
++                    target_logits=logits_output.next_token_logits,
++                    req_pool_indices=batch.req_pool_indices,
++                    forward_ct=int(batch.forward_iter),
++                    all_greedy=(
++                        sampling_info is None or sampling_info.is_all_greedy
++                    ),
++                    native_accept=native_accept,
++                )
++                commit_lens = accept_len.to(torch.int32) + 1
++                out_tokens = torch.empty(
++                    (bs, int(self.block_size)),
++                    dtype=torch.int64,
++                    device=device,
++                )
++                out_tokens[:, : int(self.block_size) - 1].copy_(
++                    candidates[:, 1:]
++                )
++                out_tokens[:, int(self.block_size) - 1].fill_(0)
++                out_tokens.scatter_(
++                    1,
++                    accept_len.to(torch.int64)[:, None],
++                    bonus[:, None],
++                )
++            elif self._use_triton_accept_bonus:
+diff --git a/python/sglang/srt/speculative/dflash_hedge.py b/python/sglang/srt/speculative/dflash_hedge.py
+new file mode 100644
+index 0000000..720b5ac
+--- /dev/null
++++ b/python/sglang/srt/speculative/dflash_hedge.py
+@@ -0,0 +1,779 @@
++"""HEDGE adapter for the fixed greedy DFlash verification seam."""
++
++from __future__ import annotations
++
++import json
++import os
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Callable, Mapping, Optional
++
++import torch
++
++from sglang.srt.speculative.hedge_spec.config import HedgeConfig
++from sglang.srt.speculative.hedge_spec.torch_rule import choose_prefix_batch
++
++
++HEDGE_MODE_DISABLED = "disabled"
++HEDGE_MODE_CALIBRATION = "calibration"
++HEDGE_MODE_ENABLED = "enabled"
++_HEDGE_MODES = {
++    HEDGE_MODE_DISABLED,
++    HEDGE_MODE_CALIBRATION,
++    HEDGE_MODE_ENABLED,
++}
++
++_ENABLED_ENV = "HEDGE_ENABLED"
++_CALIBRATION_TRACE_ENV = "SGLANG_DFLASH_HEDGE_CALIBRATION_TRACE"
++_CONFIG_JSON_ENV = "SGLANG_DFLASH_HEDGE_CONFIG_JSON"
++_CONFIG_PATH_ENV = "SGLANG_DFLASH_HEDGE_CONFIG_PATH"
++_TRACE_CAPACITY_ENV = "SGLANG_DFLASH_HEDGE_TRACE_CAPACITY"
++_DEFAULT_TRACE_CAPACITY = 65536
++
++
++@dataclass(frozen=True, slots=True)
++class DFlashHedgeSettings:
++    """Immutable process-start settings for one experiment behaviour."""
++
++    mode: str = HEDGE_MODE_DISABLED
++    config: Optional[HedgeConfig] = None
++    trace_capacity: int = _DEFAULT_TRACE_CAPACITY
++
++    def __post_init__(self) -> None:
++        if self.mode not in _HEDGE_MODES:
++            raise ValueError(
++                f"HEDGE mode must be one of {sorted(_HEDGE_MODES)}, "
++                f"got {self.mode!r}"
++            )
++        if self.mode == HEDGE_MODE_ENABLED and self.config is None:
++            raise ValueError("HEDGE enabled mode requires a decode configuration")
++        if self.mode != HEDGE_MODE_ENABLED and self.config is not None:
++            raise ValueError(
++                "a HEDGE decode configuration is valid only in enabled mode"
++            )
++        if (
++            isinstance(self.trace_capacity, bool)
++            or not isinstance(self.trace_capacity, int)
++            or self.trace_capacity <= 0
++        ):
++            raise ValueError("trace_capacity must be a positive integer")
++
++    @classmethod
++    def from_environ(
++        cls, environ: Optional[Mapping[str, str]] = None
++    ) -> "DFlashHedgeSettings":
++        """Resolve a native, calibration, or enabled arm explicitly."""
++
++        env = os.environ if environ is None else environ
++        enabled_raw = env.get(_ENABLED_ENV, "0")
++        trace_raw = env.get(_CALIBRATION_TRACE_ENV, "0")
++        if enabled_raw not in {"0", "1"}:
++            raise ValueError(f"{_ENABLED_ENV} must be exactly 0 or 1")
++        if trace_raw not in {"0", "1"}:
++            raise ValueError(
++                f"{_CALIBRATION_TRACE_ENV} must be exactly 0 or 1"
++            )
++        enabled = enabled_raw == "1"
++        trace = trace_raw == "1"
++        if enabled and trace:
++            raise ValueError(
++                f"{_ENABLED_ENV}=1 conflicts with "
++                f"{_CALIBRATION_TRACE_ENV}=1"
++            )
++
++        inline = env.get(_CONFIG_JSON_ENV)
++        path = env.get(_CONFIG_PATH_ENV)
++        if not enabled and (inline or path):
++            raise ValueError("HEDGE config is invalid when HEDGE_ENABLED=0")
++        if trace:
++            raw_capacity = env.get(
++                _TRACE_CAPACITY_ENV, str(_DEFAULT_TRACE_CAPACITY)
++            )
++            try:
++                capacity = int(raw_capacity)
++            except ValueError as error:
++                raise ValueError(
++                    f"{_TRACE_CAPACITY_ENV} must be an integer"
++                ) from error
++            return cls(
++                mode=HEDGE_MODE_CALIBRATION,
++                trace_capacity=capacity,
++            )
++        if not enabled:
++            return cls(mode=HEDGE_MODE_DISABLED)
++
++        if bool(inline) == bool(path):
++            raise ValueError(
++                "HEDGE enabled mode requires exactly one of "
++                f"{_CONFIG_JSON_ENV} or {_CONFIG_PATH_ENV}"
++            )
++        if path:
++            payload = json.loads(Path(path).read_text(encoding="utf-8"))
++        else:
++            payload = json.loads(inline)
++        if not isinstance(payload, Mapping):
++            raise ValueError("HEDGE config JSON must be an object")
++        return cls(
++            mode=HEDGE_MODE_ENABLED,
++            config=HedgeConfig.from_mapping(payload),
++        )
++
++    @property
++    def active(self) -> bool:
++        return self.mode != HEDGE_MODE_DISABLED
++
++    @property
++    def fingerprint(self) -> Optional[str]:
++        return None if self.config is None else self.config.fingerprint()
++
++
++class DFlashHedgeAdapter:
++    """Own the native-vs-HEDGE decision at DFlash's greedy verify seam."""
++
++    PROPOSAL_WIDTH = 7
++    _PROPOSALS = 0
++    _DRAFTS_VERIFIABLE = 1
++    _STRICT_ACCEPTED = 2
++    _HEDGE_ACCEPTED = 3
++    _RELAXED_MISMATCHES = 4
++    _REQUESTS_INITIALIZED = 5
++    _REQUESTS_FINISHED = 6
++    _REQUESTS_NON_NATURAL = 7
++    _SLOT_REUSE_RESETS = 8
++    _BUDGET_EXHAUSTIONS = 9
++    _INT_COUNTER_COUNT = 10
++
++    _REGRET_CHARGED = 0
++    _COMPLETED_REMAINING_BUDGET = 1
++    _FLOAT_COUNTER_COUNT = 2
++
++    _TRACE_VALID = 0
++    _TRACE_PROPOSAL = 1
++    _TRACE_SLOT = 2
++    _TRACE_REQUEST_SERIAL = 3
++    _TRACE_FORWARD = 4
++    _TRACE_BARRIER = 5
++    _TRACE_INT_FIELD_COUNT = 6
++
++    _TRACE_REGRET = 0
++    _TRACE_VALUE = 1
++    _TRACE_RATIO = 2
++    _TRACE_FLOAT_FIELD_COUNT = 3
++
++    def __init__(
++        self,
++        *,
++        settings: DFlashHedgeSettings,
++        dflash_block_size: int,
++        device: torch.device | str,
++    ) -> None:
++        self.settings = settings
++        self.dflash_block_size = int(dflash_block_size)
++        self.device = torch.device(device)
++        if self.dflash_block_size != self.PROPOSAL_WIDTH + 1:
++            raise ValueError(
++                "DFlash HEDGE requires block_size=8 with seven draft proposals"
++            )
++        if settings.config is not None:
++            settings.config.validate_block_size(self.PROPOSAL_WIDTH)
++
++        self._remaining_budget: Optional[torch.Tensor] = None
++        self._active_slots: Optional[torch.Tensor] = None
++        self._relaxed_by_slot: Optional[torch.Tensor] = None
++        self._request_serial_by_slot: Optional[torch.Tensor] = None
++        self._int_counters: Optional[torch.Tensor] = None
++        self._float_counters: Optional[torch.Tensor] = None
++        self._accepted_by_position: Optional[torch.Tensor] = None
++        self._accept_length_histogram: Optional[torch.Tensor] = None
++        self._trace_cursor: Optional[torch.Tensor] = None
++        self._trace_dropped: Optional[torch.Tensor] = None
++        self._trace_int: Optional[torch.Tensor] = None
++        self._trace_float: Optional[torch.Tensor] = None
++        self._rid_to_slot: dict[str, int] = {}
++        self._slot_to_rid: dict[int, str] = {}
++        self._serial_to_rid: dict[int, str] = {}
++        self._next_request_serial = 1
++
++    @property
++    def active(self) -> bool:
++        return self.settings.active
++
++    def identity(self) -> dict[str, object]:
++        return {
++            "mode": self.settings.mode,
++            "experiment_switches": {
++                "HEDGE_ENABLED": (
++                    1 if self.settings.mode == HEDGE_MODE_ENABLED else 0
++                ),
++                "SGLANG_DFLASH_HEDGE_CALIBRATION_TRACE": (
++                    1
++                    if self.settings.mode == HEDGE_MODE_CALIBRATION
++                    else 0
++                ),
++            },
++            "config": (
++                None
++                if self.settings.config is None
++                else self.settings.config.to_mapping()
++            ),
++            "config_fingerprint": self.settings.fingerprint,
++            "dflash_block_size": self.dflash_block_size,
++            "proposal_width": self.PROPOSAL_WIDTH,
++            "candidate_alignment": {
++                "anchor_index": 0,
++                "draft_indices": [1, self.dflash_block_size],
++                "target_draft_logit_indices": [0, self.PROPOSAL_WIDTH],
++            },
++        }
++
++    def require_supported_runtime(
++        self,
++        *,
++        disable_cuda_graph: bool,
++        disable_overlap_schedule: bool,
++    ) -> None:
++        """Fail loudly instead of bypassing HEDGE on an untested hot path."""
++
++        if not self.active:
++            return
++        unsupported = []
++        if not disable_cuda_graph:
++            unsupported.append("CUDA graph")
++        if not disable_overlap_schedule:
++            unsupported.append("overlap schedule")
++        if unsupported:
++            raise ValueError(
++                "DFlash HEDGE supports only the frozen eager greedy experiment "
++                "path; disable " + ", ".join(unsupported)
++            )
++
++    def require_greedy(self, *, all_greedy: bool) -> None:
++        if self.active and not all_greedy:
++            raise ValueError(
++                "DFlash HEDGE calibration/enabled mode supports greedy verify only"
++            )
++
++    @staticmethod
++    def _pool_capacity(batch) -> int:
++        pool = batch.req_to_token_pool
++        if hasattr(pool, "_alloc_size"):
++            return int(pool._alloc_size)
++        return int(pool.size) + 1
++
++    @staticmethod
++    def _cpu_slots(batch) -> list[int]:
++        mirror = batch.req_pool_indices_cpu
++        if mirror is not None:
++            return [int(value) for value in mirror]
++        slots = [request.req_pool_idx for request in batch.reqs]
++        if any(slot is None for slot in slots):
++            raise RuntimeError("HEDGE prefill saw an unallocated request")
++        return [int(slot) for slot in slots]
++
++    def _allocate_state(self, pool_capacity: int) -> None:
++        if self._remaining_budget is not None:
++            if self._remaining_budget.shape[0] != pool_capacity:
++                raise RuntimeError(
++                    "request-pool capacity changed after HEDGE state allocation"
++                )
++            return
++        if pool_capacity <= 1:
++            raise ValueError("request-pool capacity must include at least one slot")
++        self._remaining_budget = torch.zeros(
++            (pool_capacity,), dtype=torch.float64, device=self.device
++        )
++        self._active_slots = torch.zeros(
++            (pool_capacity,), dtype=torch.bool, device=self.device
++        )
++        self._relaxed_by_slot = torch.zeros(
++            (pool_capacity,), dtype=torch.int64, device=self.device
++        )
++        self._request_serial_by_slot = torch.full(
++            (pool_capacity,), -1, dtype=torch.int64, device=self.device
++        )
++        self._int_counters = torch.zeros(
++            (self._INT_COUNTER_COUNT,), dtype=torch.int64, device=self.device
++        )
++        self._float_counters = torch.zeros(
++            (self._FLOAT_COUNTER_COUNT,), dtype=torch.float64, device=self.device
++        )
++        self._accepted_by_position = torch.zeros(
++            (self.PROPOSAL_WIDTH,), dtype=torch.int64, device=self.device
++        )
++        self._accept_length_histogram = torch.zeros(
++            (self.PROPOSAL_WIDTH + 1,),
++            dtype=torch.int64,
++            device=self.device,
++        )
++        if self.settings.mode == HEDGE_MODE_CALIBRATION:
++            capacity = self.settings.trace_capacity
++            self._trace_cursor = torch.zeros(
++                (), dtype=torch.int64, device=self.device
++            )
++            self._trace_dropped = torch.zeros(
++                (), dtype=torch.int64, device=self.device
++            )
++            self._trace_int = torch.zeros(
++                (capacity + 1, self._TRACE_INT_FIELD_COUNT),
++                dtype=torch.int64,
++                device=self.device,
++            )
++            self._trace_float = torch.zeros(
++                (capacity + 1, self._TRACE_FLOAT_FIELD_COUNT),
++                dtype=torch.float64,
++                device=self.device,
++            )
++
++    def _clear_slot(self, slot: int) -> None:
++        if self._remaining_budget is None:
++            return
++        index = torch.tensor([slot], dtype=torch.int64, device=self.device)
++        self._remaining_budget.index_fill_(0, index, 0.0)
++        self._active_slots.index_fill_(0, index, False)
++        self._relaxed_by_slot.index_fill_(0, index, 0)
++        self._request_serial_by_slot.index_fill_(0, index, -1)
++
++    def bind_batch(self, batch) -> None:
++        """Bind request identity to a stable request-pool slot at prefill."""
++
++        if not self.active or not batch.reqs:
++            return
++        self._allocate_state(self._pool_capacity(batch))
++        slots = self._cpu_slots(batch)
++        if len(slots) != len(batch.reqs):
++            raise RuntimeError("request and request-pool slot counts differ")
++
++        for request, slot in zip(batch.reqs, slots):
++            rid = str(request.rid)
++            old_slot = self._rid_to_slot.get(rid)
++            if old_slot is not None and old_slot != slot:
++                self._clear_slot(old_slot)
++                self._slot_to_rid.pop(old_slot, None)
++                self._rid_to_slot.pop(rid, None)
++
++            old_rid = self._slot_to_rid.get(slot)
++            if old_rid == rid:
++                continue
++            if old_rid is not None:
++                self._rid_to_slot.pop(old_rid, None)
++                self._clear_slot(slot)
++                self._int_counters[self._SLOT_REUSE_RESETS].add_(1)
++
++            index = torch.tensor([slot], dtype=torch.int64, device=self.device)
++            initial_budget = (
++                0.0
++                if self.settings.config is None
++                else self.settings.config.risk_budget
++            )
++            self._rid_to_slot[rid] = slot
++            self._slot_to_rid[slot] = rid
++            serial = self._next_request_serial
++            self._next_request_serial += 1
++            self._serial_to_rid[serial] = rid
++            self._remaining_budget.index_fill_(0, index, initial_budget)
++            self._active_slots.index_fill_(0, index, True)
++            self._relaxed_by_slot.index_fill_(0, index, 0)
++            self._request_serial_by_slot.index_fill_(0, index, serial)
++            self._int_counters[self._REQUESTS_INITIALIZED].add_(1)
++
++    def note_request_finished(self, *, rid: str, natural_stop: bool) -> None:
++        """Clear request-owned state for natural finish, cancellation, or abort."""
++
++        if not self.active:
++            return
++        slot = self._rid_to_slot.pop(rid, None)
++        if slot is None:
++            return
++        self._slot_to_rid.pop(slot, None)
++        index = torch.tensor([slot], dtype=torch.int64, device=self.device)
++        if self.settings.mode == HEDGE_MODE_ENABLED:
++            self._float_counters[self._COMPLETED_REMAINING_BUDGET].add_(
++                self._remaining_budget.index_select(0, index).sum()
++            )
++        self._int_counters[self._REQUESTS_FINISHED].add_(1)
++        if not natural_stop:
++            self._int_counters[self._REQUESTS_NON_NATURAL].add_(1)
++        self._clear_slot(slot)
++
++    def _assert_bound(self, req_pool_indices: torch.Tensor) -> None:
++        if self._active_slots is None:
++            raise RuntimeError("active HEDGE decode reached verify before prefill")
++        active = self._active_slots.index_select(
++            0, req_pool_indices.to(torch.int64)
++        )
++        torch._assert_async(
++            active.all(),
++            "DFlash HEDGE decode saw an inactive request-pool slot",
++        )
++
++    def _compact_scores(
++        self,
++        *,
++        candidates: torch.Tensor,
++        target_logits: torch.Tensor,
++    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++        if candidates.ndim != 2:
++            raise ValueError("DFlash HEDGE candidates must be [batch, 8]")
++        batch, width = candidates.shape
++        if width != self.dflash_block_size:
++            raise ValueError(
++                f"expected DFlash candidate width 8, got {width}"
++            )
++        if target_logits.ndim != 2:
++            raise ValueError("DFlash target logits must be [batch*8, vocab]")
++        if target_logits.shape[0] != batch * width:
++            raise ValueError(
++                "target logits row count does not match DFlash candidates"
++            )
++        logits = target_logits.view(batch, width, -1)
++        top_logits, top_token_ids = logits.max(dim=-1)
++        draft_token_ids = candidates[:, 1:]
++        draft_logits = logits[:, : self.PROPOSAL_WIDTH].gather(
++            dim=-1,
++            index=draft_token_ids.unsqueeze(-1),
++        )
++        return top_logits, top_token_ids, draft_logits.squeeze(-1)
++
++    def _strict_accept_length(
++        self,
++        *,
++        draft_token_ids: torch.Tensor,
++        top_token_ids: torch.Tensor,
++    ) -> torch.Tensor:
++        return (
++            (draft_token_ids == top_token_ids[:, : self.PROPOSAL_WIDTH])
++            .to(torch.int32)
++            .cumprod(dim=1)
++            .sum(dim=1)
++        )
++
++    def _record_acceptance(
++        self,
++        *,
++        strict_accepted: torch.Tensor,
++        accepted: torch.Tensor,
++        relaxed: torch.Tensor,
++        charged: torch.Tensor,
++        remaining_before: Optional[torch.Tensor] = None,
++        remaining_after: Optional[torch.Tensor] = None,
++    ) -> None:
++        batch = accepted.shape[0]
++        self._int_counters[self._PROPOSALS].add_(batch)
++        self._int_counters[self._DRAFTS_VERIFIABLE].add_(
++            batch * self.PROPOSAL_WIDTH
++        )
++        self._int_counters[self._STRICT_ACCEPTED].add_(
++            strict_accepted.to(torch.int64).sum()
++        )
++        self._int_counters[self._HEDGE_ACCEPTED].add_(
++            accepted.to(torch.int64).sum()
++        )
++        self._int_counters[self._RELAXED_MISMATCHES].add_(
++            relaxed.to(torch.int64).sum()
++        )
++        positions = torch.arange(
++            self.PROPOSAL_WIDTH,
++            dtype=torch.int32,
++            device=accepted.device,
++        ).unsqueeze(0)
++        self._accepted_by_position.add_(
++            (positions < accepted.unsqueeze(1)).to(torch.int64).sum(dim=0)
++        )
++        self._accept_length_histogram.index_add_(
++            0,
++            accepted.to(torch.int64),
++            torch.ones_like(accepted, dtype=torch.int64),
++        )
++        self._float_counters[self._REGRET_CHARGED].add_(
++            charged.to(torch.float64).sum()
++        )
++        if remaining_before is not None and remaining_after is not None:
++            self._int_counters[self._BUDGET_EXHAUSTIONS].add_(
++                (
++                    (remaining_before > 0.0)
++                    & (remaining_after <= 0.0)
++                    & (charged > 0.0)
++                )
++                .to(torch.int64)
++                .sum()
++            )
++
++    def _record_calibration(
++        self,
++        *,
++        req_pool_indices: torch.Tensor,
++        forward_ct: int,
++        strict_accepted: torch.Tensor,
++        top_logits: torch.Tensor,
++        draft_logits: torch.Tensor,
++    ) -> None:
++        batch = strict_accepted.shape[0]
++        regrets = (
++            top_logits[:, : self.PROPOSAL_WIDTH].to(torch.float64)
++            - draft_logits.to(torch.float64)
++        ).clamp_min_(0.0)
++        values = (
++            torch.arange(
++                self.PROPOSAL_WIDTH,
++                0,
++                -1,
++                dtype=torch.float64,
++                device=regrets.device,
++            )
++            / float(self.PROPOSAL_WIDTH)
++        )
++        barrier = strict_accepted.to(torch.int64)
++        safe_barrier = barrier.clamp(max=self.PROPOSAL_WIDTH - 1)
++        rows = torch.arange(batch, dtype=torch.int64, device=regrets.device)
++        barrier_regret = regrets[rows, safe_barrier]
++        barrier_value = values[safe_barrier]
++        valid = (barrier < self.PROPOSAL_WIDTH) & (barrier_regret > 0.0)
++
++        ordinal = self._trace_cursor + torch.arange(
++            batch, dtype=torch.int64, device=regrets.device
++        )
++        in_capacity = ordinal < self.settings.trace_capacity
++        safe_ordinal = ordinal.clamp(max=self.settings.trace_capacity)
++        serial = self._request_serial_by_slot.index_select(
++            0, req_pool_indices.to(torch.int64)
++        )
++        self._trace_int[safe_ordinal, self._TRACE_VALID] = (
++            valid & in_capacity
++        ).to(torch.int64)
++        self._trace_int[safe_ordinal, self._TRACE_PROPOSAL] = ordinal
++        self._trace_int[safe_ordinal, self._TRACE_SLOT] = req_pool_indices
++        self._trace_int[safe_ordinal, self._TRACE_REQUEST_SERIAL] = serial
++        self._trace_int[safe_ordinal, self._TRACE_FORWARD] = int(forward_ct)
++        self._trace_int[safe_ordinal, self._TRACE_BARRIER] = barrier
++        self._trace_float[safe_ordinal, self._TRACE_REGRET] = barrier_regret
++        self._trace_float[safe_ordinal, self._TRACE_VALUE] = barrier_value
++        self._trace_float[safe_ordinal, self._TRACE_RATIO] = (
++            barrier_regret / barrier_value
++        )
++        self._trace_cursor.add_(batch)
++        self._trace_dropped.add_((~in_capacity).to(torch.int64).sum())
++
++    def accept_or_native(
++        self,
++        *,
++        candidates: torch.Tensor,
++        target_logits: Optional[torch.Tensor],
++        req_pool_indices: torch.Tensor,
++        forward_ct: int,
++        all_greedy: bool,
++        native_accept: Callable[[], tuple[torch.Tensor, torch.Tensor]],
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        """Return the authoritative accepted draft length and bonus token."""
++
++        if not self.active:
++            return native_accept()
++        self.require_greedy(all_greedy=all_greedy)
++        if target_logits is None:
++            raise RuntimeError("DFlash HEDGE requires target logits")
++        self._assert_bound(req_pool_indices)
++
++        top_logits, top_token_ids, draft_logits = self._compact_scores(
++            candidates=candidates,
++            target_logits=target_logits,
++        )
++        strict_accepted = self._strict_accept_length(
++            draft_token_ids=candidates[:, 1:],
++            top_token_ids=top_token_ids,
++        )
++        if self.settings.mode == HEDGE_MODE_CALIBRATION:
++            native_result = native_accept()
++            self._record_calibration(
++                req_pool_indices=req_pool_indices,
++                forward_ct=forward_ct,
++                strict_accepted=strict_accepted,
++                top_logits=top_logits,
++                draft_logits=draft_logits,
++            )
++            native_accepted = native_result[0].to(torch.int32)
++            self._record_acceptance(
++                strict_accepted=strict_accepted,
++                accepted=native_accepted,
++                relaxed=torch.zeros_like(native_accepted),
++                charged=torch.zeros_like(native_accepted, dtype=torch.float64),
++            )
++            return native_result
++
++        slot_indices = req_pool_indices.to(torch.int64)
++        remaining_before = self._remaining_budget.index_select(0, slot_indices)
++        decision = choose_prefix_batch(
++            draft_token_ids=candidates[:, 1:],
++            top_logits=top_logits[:, : self.PROPOSAL_WIDTH],
++            top_token_ids=top_token_ids[:, : self.PROPOSAL_WIDTH],
++            draft_logits=draft_logits,
++            remaining_budget=remaining_before,
++            config=self.settings.config,
++        )
++        remaining_after = (
++            remaining_before.to(torch.float64) - decision.spent
++        ).clamp_min_(0.0)
++        self._remaining_budget.index_copy_(
++            0,
++            slot_indices,
++            remaining_after,
++        )
++        self._relaxed_by_slot.index_add_(
++            0,
++            slot_indices,
++            decision.relaxed_mismatches.to(torch.int64),
++        )
++        accepted = decision.accepted.to(torch.int32)
++        self._record_acceptance(
++            strict_accepted=strict_accepted,
++            accepted=accepted,
++            relaxed=decision.relaxed_mismatches,
++            charged=decision.spent,
++            remaining_before=remaining_before,
++            remaining_after=remaining_after,
++        )
++        rows = torch.arange(
++            candidates.shape[0],
++            dtype=torch.int64,
++            device=candidates.device,
++        )
++        bonus = top_token_ids[rows, accepted.to(torch.int64)].to(torch.int64)
++        return accepted, bonus
++
++    def snapshot(self) -> dict[str, object]:
++        """Bulk-copy lifecycle state after a run, never per proposal."""
++
++        request_state: list[dict[str, object]] = []
++        active_items = sorted(self._rid_to_slot.items())
++        if active_items:
++            indices = torch.tensor(
++                [slot for _, slot in active_items],
++                dtype=torch.int64,
++                device=self.device,
++            )
++            budgets = (
++                self._remaining_budget.index_select(0, indices)
++                .detach()
++                .cpu()
++                .tolist()
++            )
++            mismatches = (
++                self._relaxed_by_slot.index_select(0, indices)
++                .detach()
++                .cpu()
++                .tolist()
++            )
++            request_state = [
++                {
++                    "rid": rid,
++                    "slot": slot,
++                    "remaining_budget": float(budget),
++                    "relaxed_mismatches": int(relaxed),
++                }
++                for (rid, slot), budget, relaxed in zip(
++                    active_items,
++                    budgets,
++                    mismatches,
++                )
++            ]
++        snapshot: dict[str, object] = {
++            **self.identity(),
++            "request_state": request_state,
++            "active_request_states": len(request_state),
++            "state_leaks": len(request_state),
++            "proposals": 0,
++            "draft_tokens_verifiable": 0,
++            "strict_accepted_draft_tokens": 0,
++            "hedge_accepted_draft_tokens": 0,
++            "accepted_draft_tokens_by_position": [0] * self.PROPOSAL_WIDTH,
++            "accept_length_histogram": [0] * (self.PROPOSAL_WIDTH + 1),
++            "relaxed_mismatches": 0,
++            "regret_charged": 0.0,
++            "budget_exhaustion_events": 0,
++            "requests_initialized": 0,
++            "requests_finished": 0,
++            "requests_non_natural": 0,
++            "slot_reuse_resets": 0,
++            "completed_remaining_budget": 0.0,
++            "strict_rejection_trace": [],
++            "trace_rows_seen": 0,
++            "trace_rows_dropped": 0,
++        }
++        if self._int_counters is None:
++            return snapshot
++
++        int_counters = self._int_counters.detach().cpu().tolist()
++        float_counters = self._float_counters.detach().cpu().tolist()
++        snapshot.update(
++            proposals=int(int_counters[self._PROPOSALS]),
++            draft_tokens_verifiable=int(
++                int_counters[self._DRAFTS_VERIFIABLE]
++            ),
++            strict_accepted_draft_tokens=int(
++                int_counters[self._STRICT_ACCEPTED]
++            ),
++            hedge_accepted_draft_tokens=int(
++                int_counters[self._HEDGE_ACCEPTED]
++            ),
++            accepted_draft_tokens_by_position=[
++                int(value)
++                for value in self._accepted_by_position.detach().cpu().tolist()
++            ],
++            accept_length_histogram=[
++                int(value)
++                for value in self._accept_length_histogram.detach().cpu().tolist()
++            ],
++            relaxed_mismatches=int(
++                int_counters[self._RELAXED_MISMATCHES]
++            ),
++            regret_charged=float(float_counters[self._REGRET_CHARGED]),
++            budget_exhaustion_events=int(
++                int_counters[self._BUDGET_EXHAUSTIONS]
++            ),
++            requests_initialized=int(
++                int_counters[self._REQUESTS_INITIALIZED]
++            ),
++            requests_finished=int(int_counters[self._REQUESTS_FINISHED]),
++            requests_non_natural=int(
++                int_counters[self._REQUESTS_NON_NATURAL]
++            ),
++            slot_reuse_resets=int(
++                int_counters[self._SLOT_REUSE_RESETS]
++            ),
++            completed_remaining_budget=float(
++                float_counters[self._COMPLETED_REMAINING_BUDGET]
++            ),
++        )
++
++        if self.settings.mode == HEDGE_MODE_CALIBRATION:
++            seen = int(self._trace_cursor.detach().cpu().item())
++            dropped = int(self._trace_dropped.detach().cpu().item())
++            stored = min(seen, self.settings.trace_capacity)
++            trace_int = self._trace_int[:stored].detach().cpu().tolist()
++            trace_float = self._trace_float[:stored].detach().cpu().tolist()
++            records = []
++            for int_row, float_row in zip(trace_int, trace_float):
++                if not int_row[self._TRACE_VALID]:
++                    continue
++                serial = int(int_row[self._TRACE_REQUEST_SERIAL])
++                records.append(
++                    {
++                        "proposal_ordinal": int(
++                            int_row[self._TRACE_PROPOSAL]
++                        ),
++                        "request_serial": serial,
++                        "rid": self._serial_to_rid.get(serial),
++                        "request_pool_slot": int(int_row[self._TRACE_SLOT]),
++                        "forward_ct": int(int_row[self._TRACE_FORWARD]),
++                        "barrier_position": int(
++                            int_row[self._TRACE_BARRIER]
++                        ),
++                        "regret": float(float_row[self._TRACE_REGRET]),
++                        "value": float(float_row[self._TRACE_VALUE]),
++                        "regret_per_value": float(
++                            float_row[self._TRACE_RATIO]
++                        ),
++                    }
++                )
++            snapshot["strict_rejection_trace"] = records
++            snapshot["trace_rows_seen"] = seen
++            snapshot["trace_rows_dropped"] = dropped
++        return snapshot
