@@ -1,14 +1,22 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `BEST_EFFORT_BLOCKED_IMPLEMENTATION`
-（具体 outcome：`BEST_EFFORT_EARLY_STOP_INCOMPLETE`；D7 evidence/cleanup audit：
-`PASS`）
+Status / outcome label: `CONTINUATION_IN_PROGRESS`（当前 continuation；尚无新的
+protocol 或 formal 结论）
 
-Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
+Prior-window outcome（保留）：`BEST_EFFORT_BLOCKED_IMPLEMENTATION` /
+`BEST_EFFORT_EARLY_STOP_INCOMPLETE`；D7 evidence/cleanup audit `PASS`
 
-Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8；D7 最终
-owned keepalive PID/PGID/SID `123914`，八卡 fresh 10×1 秒均值全部 100%，无
-owned model context
+Continuation timebox: `T1=2026-07-29T07:31:39Z`；
+`T+9=2026-07-29T16:31:39Z`；`T+12=2026-07-29T19:31:39Z`
+
+Prior timebox（历史）：`2026-07-28T20:55:58Z` →
+`2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为
+`2026-07-29T05:55:58Z`
+
+Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8；C0 fresh
+owned keepalive PID/PGID/SID `123914`，gate mtime
+`2026-07-29T07:36:00.119919Z`，八卡 10×1 秒均值全部 100%；port `31457`
+空闲，无 owned model 或未知 CUDA context
 
 Target repo@revision / HDFS completion marker:
 `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1` /
@@ -33,10 +41,12 @@ B+ result: `NOT_RUN`
 
 Canonical or exploratory: `NO D5/D6 RESULT`
 
-Primary blocker: `D5 PREFLIGHT PASS NOT SURFACED TO ORCHESTRATOR + T+9 WINDOW
-INSUFFICIENT`；a01 的 `preflight.json` 于 `05:40:13Z` 写出 PASS，但 mlx PTY
-wrapper 没有向主 Agent 返回可恢复的 rc/stdout；剩余窗口不足以安全完成冷启动、
-32 请求、cleanup 和 seal，因此在 keepalive pause/model launch 前 early-stop。
+Current continuation blocker: D5 launcher 仍硬编码 prior-window
+`HARD_STOP_UTC=2026-07-29T05:55:48Z`；C1 必须先把 deadline 最小参数化为显式
+immutable 输入，不改变 frozen source、checkpoint 或 decode 配置。
+
+Prior-window blocker（历史）：D5 preflight PASS 未及时 surfaced，且旧 T+9 剩余窗口
+不足；因此在 keepalive pause/model launch 前 early-stop。
 
 Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/`
 
@@ -45,16 +55,23 @@ Formal artifact: `NONE`；D4-C short-smoke HDFS run
 D7 final audit
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json`
 
-Git commit: D7 final audit `711747ad2e80d69de38fa93c10a42e78569413c0`；
+Git commit: continuation C0 起点 HEAD/origin
+`a1febb7a22920f891eb7365cf2d13415003ac91e`；C0 executor 未 commit/push。历史
+D7 final audit `711747ad2e80d69de38fa93c10a42e78569413c0`；
 D7 main acceptance `324684bc55d6255b4d87dbea845d9e50f8f21a57`；06:12 progress
 checkpoint `fc71d0c`；D5 tooling/blocker `af6e4a6`；D4
 source/evidence `a80031a`；D4-C live evidence `a18655a`；DeepSpec canonical core
 `86231e536573ccc43cda732b4eca920d5ce0a28a`；SGLang HEDGE-final
 `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`
 
-下一步：本 timebox 不进入 D6；保持 worker `4099543` owned keepalive。任何未来
-续跑都需要新的授权窗口，并从 native calibration 开始；不得声称本次存在
-q25/protocol B0/B+ 或 formal 结果。
+下一步：C1 最小参数化 D5 deadline，然后以新 ID
+`dflash-d5-native-20260729T073139Z-a01` 从 fresh native calibration 开始。D5
+continuation live attempt 为 `0/3`；旧 preflight 不计数且不得复用。第三次仍失败时
+停止、恢复并验证 keepalive、封存三次证据、向用户汇报建议并等待决策。
+
+C0 artifact：
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/continuation-c0/continuation_c0.json`；
+handoff：`docs/plan/handoffs/dflash-continuation-c0-handoff.md`。
 
 ## 快速结果
 

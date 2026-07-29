@@ -1,6 +1,21 @@
 # DFlash × HEDGE 进展
 
-当前标签：`BEST_EFFORT_BLOCKED_IMPLEMENTATION — FINAL`
+当前标签：`CONTINUATION_IN_PROGRESS`（prior-window：
+`BEST_EFFORT_BLOCKED_IMPLEMENTATION — FINAL`）
+
+- Continuation timebox：`T1=2026-07-29T07:31:39Z`；
+  `T+9=2026-07-29T16:31:39Z`；`T+12=2026-07-29T19:31:39Z`。
+- 当前 phase：C0 governance/read-only preflight PASS；没有 model launch、
+  keepalive pause 或 signal。D5 continuation live attempt 为 `0/3`。
+- Fresh worker：`4099543` / 8×H20；keepalive PID/PGID/SID `123914`，gate mtime
+  `2026-07-29T07:36:00.119919Z`，8×10×1 秒逐卡均值全部 100%；port `31457`
+  空闲，无 owned model 或未知 CUDA context。
+- 当前 blocker：D5 launcher 仍硬编码已过期的 prior-window absolute hard stop；
+  C1 需先把它最小参数化为显式 immutable deadline。
+- 下一步：以 reserved ID `dflash-d5-native-20260729T073139Z-a01` 从 fresh native
+  calibration 开始；旧 D5 preflight 不计新 live attempt，也不得复用为结果。
+
+## Prior-window final snapshot
 
 - Timebox：`2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；若 B0 未完成，`2026-07-29T05:55:58Z` 停止实现。
 - 已用/剩余：约 `9h22m`；T+9 实现停止点已过约 `22m`，在 T+12 前约 `2h38m` 完成收尾。
@@ -40,3 +55,4 @@
 | 2026-07-29T05:42:00Z | D4-C/D5 | 8.8 小时 checkpoint：主验并提交 D4-C；完成 D5 native tooling GO 后审计 preflight stall与剩余时间，执行 best-effort early stop | D4-C `a18655a` 已 push；short B0 infra PASS但 protocol B0仍NOT_RUN。D5 tooling主验7/7，a01在pause前的SGLang import停滞，仅有2个CUDA-view JSON；a02/a03为只读诊断，worker/source/CUDA/Python均PASS。没有模型/GPU side effect，keepalive PID `123914` 保持八卡100%；剩余时间不足以安全完成native+B0 | `a18655a`；D5 a01 preflight scratch；D5 tooling（待提交） | 禁止新模型/D6；封存D5 blocker、fresh keepalive证据、handoff/experiment并进入D7最终审计 |
 | 2026-07-29T06:12:00Z | D7 | T+9 后只读最终审计：复核 Git/source/checkpoint/dataset、D4-C HDFS 39/39、D5 scratch、67 个 CPU cases 与 fresh worker/keepalive；纠正 D5 inventory | D7 audit PASS，但实验 `BEST_EFFORT_EARLY_STOP_INCOMPLETE`、formal result NONE。D5 preflight 实际 05:40:13Z PASS 但未及时 surfaced；14 个文件均为 preflight-only、0 requests、zero GPU side effect。keepalive `123914` 八卡100%，无 model context | `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json`；D7 handoff/manifest/reproduction commands | 主 Agent 独立验收 D7，提交/push final audit；随后最终 progress 与 keepalive gate |
 | 2026-07-29T06:18:00Z | D7 final | 主 Agent完成 staged diff、语义、67 cases、HDFS identity/manifest 与 fresh remote keepalive 复核；提交并回填验收 | D7 evidence `711747a`、main acceptance `324684b` 均已 push；D7 manifest `2ca89175…aef3` 3/3 PASS；branch/origin 同步。完成标签 `BEST_EFFORT_BLOCKED_IMPLEMENTATION`，formal result NONE | `711747a`；`324684b`；canonical experiment 与 D7 final audit | 本 timebox 收尾；保持八卡 keepalive，未来续跑需新授权 |
+| 2026-07-29T07:40:00Z | continuation C0 | 冻结新 T1/T+9/T+12；fresh 核验 Git/source/identity/HDFS/worker/keepalive；审计 D5 tooling | C0 PASS；formal inventory 仍为空，keepalive 八卡 100%；唯一 C1 blocker 为旧 absolute hard stop；live attempt `0/3` | `continuation-c0/continuation_c0.json`；`dflash-continuation-c0-handoff.md` | 主 Agent 验收；C1 参数化 deadline 后以新 ID 跑 native calibration |

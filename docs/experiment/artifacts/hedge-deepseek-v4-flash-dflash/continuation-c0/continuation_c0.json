@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "phase": "CONTINUATION_C0",
+  "status": "PASS",
+  "assembled_at_utc": "2026-07-29T07:40:00Z",
+  "scope": "governance/read-only preflight; no model launch or signal",
+  "timebox": {
+    "t1_utc": "2026-07-29T07:31:39Z",
+    "t_plus_9_utc": "2026-07-29T16:31:39Z",
+    "t_plus_12_utc": "2026-07-29T19:31:39Z",
+    "prior_window_outcome": "BEST_EFFORT_BLOCKED_IMPLEMENTATION / BEST_EFFORT_EARLY_STOP_INCOMPLETE"
+  },
+  "attempt_policy": {
+    "maximum_live_attempts_per_stage": 3,
+    "live_attempt_boundary": "owned keepalive pause begins",
+    "stage_counter_at_c0_exit": 0,
+    "preflight_only_counts_as_live_attempt": false,
+    "after_third_failure": "stop; restore and fresh-gate keepalive; seal three attempts; report cause/options/recommendation; wait for user",
+    "supersedes_prior_auto_strategy_switch": true
+  },
+  "git": {
+    "branch": "exp/hedge-v4-dflash",
+    "head": "a1febb7a22920f891eb7365cf2d13415003ac91e",
+    "origin_head": "a1febb7a22920f891eb7365cf2d13415003ac91e",
+    "ahead_behind": [
+      0,
+      0
+    ],
+    "clean_at_c0_start": true
+  },
+  "source": {
+    "sglang_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "sglang_final": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+    "sglang_tree": "53fc45b1b04963736254dc7ed582047313b8075a",
+    "sglang_clean": true,
+    "dflash_core": "86231e536573ccc43cda732b4eca920d5ce0a28a",
+    "core_injection_check": "PASS"
+  },
+  "identity_drift": {
+    "target_revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+    "draft_revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+    "core_pointer_sha256": "c9c09cd23655e395d3f3b85cbc7e1740194f9e4e174938cb5f54594afe31b80c",
+    "dataset_revision": "740312add88f781978c0658806c59bc2815b9866",
+    "dataset_seed": 980406,
+    "dataset_fingerprint": "59ec1b7f9357c7a2",
+    "status": "NONE"
+  },
+  "formal_inventory": {
+    "d5_runs": [],
+    "d6_runs": [],
+    "formal_runs": [],
+    "status": "EMPTY"
+  },
+  "worker": {
+    "worker_id": "4099543",
+    "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+    "gpu_identity": "8x NVIDIA H20",
+    "port_31457_free": true,
+    "owned_model_processes": [],
+    "unknown_cuda_contexts": [],
+    "keepalive": {
+      "pid": 123914,
+      "pgid": 123914,
+      "sid": 123914,
+      "fresh_gate_mtime_utc": "2026-07-29T07:36:00.119919Z",
+      "samples_per_gpu": 10,
+      "per_gpu_mean_utilization_percent": {
+        "0": 100.0,
+        "1": 100.0,
+        "2": 100.0,
+        "3": 100.0,
+        "4": 100.0,
+        "5": 100.0,
+        "6": 100.0,
+        "7": 100.0
+      },
+      "healthy": true
+    }
+  },
+  "c1_resume_contract": {
+    "blocker": "scripts/dflash_d5_attempt.sh hard-codes expired HARD_STOP_UTC=2026-07-29T05:55:48Z",
+    "minimum_tooling_change": "accept an explicit immutable deadline and propagate it through contract, metadata, readiness and API",
+    "recommended_d5_hard_stop_utc": "2026-07-29T16:31:29Z",
+    "reserved_native_attempt_id": "dflash-d5-native-20260729T073139Z-a01",
+    "scratch_collision": false,
+    "hdfs_collision": false,
+    "live_attempt_counter": 0,
+    "old_preflight_attempt": "dflash-d5-native-20260729T053735Z-a01",
+    "old_preflight_counts_as_live_attempt": false,
+    "old_preflight_reusable_as_calibration": false
+  }
+}
