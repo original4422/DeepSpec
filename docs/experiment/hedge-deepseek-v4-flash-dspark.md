@@ -4,6 +4,8 @@
 
 - 状态：`IN_PROGRESS`
 - 记录更新时间：`2026-07-29T08:23:59Z`
+- 读者版结果报告：
+  [`docs/results/hedge-deepseek-v4-flash-dspark.md`](../results/hedge-deepseek-v4-flash-dspark.md)
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；原截止
   `2026-07-29T08:54:41Z` 已由用户于 `2026-07-29T07:47:18Z` 明确解除，
   当前无截止时间
