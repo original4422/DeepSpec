@@ -1,13 +1,14 @@
-# DFlash Phase D4-B source freeze / D4-C readiness handoff
+# DFlash Phase D4 source freeze / D4-C live handoff
 
 ## 结论
 
-`D4-B SOURCE FROZEN；READY_FOR_D4C`。canonical HEDGE core 已按原字节
+`D4-C SHORT B0 INFRASTRUCTURE PASS；READY_FOR_D5`。canonical HEDGE core 已按原字节
 注入独立 SGLang checkout，DFlash greedy verify seam 的配置、request state、
 calibration trace、HEDGE acceptance 和 counters 已完成 CPU 门禁；最终 SGLang
 source 已由主 Agent 固化，D4-C short live `B=0` launcher/API/counter contract
-也已通过 CPU 静态门禁。尚未运行任何 D4 live attempt，因此 `B0=NOT_RUN`，
-本 handoff 不宣称整个 D4 完成，也不进入 D5。
+已通过 CPU 静态门禁和唯一 TP=8 live attempt。计划定义的 32 条 calibration
+`B=0` arm 尚未运行，因此 protocol-level `B0=NOT_RUN`；这里的 PASS 只属于单条
+short prompt 的基础设施核查。本 executor 不进入 D5。
 
 ## 固定身份
 
@@ -113,7 +114,7 @@ hot-path host-sync guard。
 integration/core content hash，并复核 integration patch + injected core 与最终
 tree 完全相同。
 
-## D4-C short live `B=0` contract
+## D4-C short live `B=0` contract 与结果
 
 - launcher：`scripts/dflash_d4_b0_attempt.sh`
 - API/counter auditor：`scripts/dflash_d4_b0_api.py`
@@ -135,8 +136,42 @@ tree 完全相同。
 - seal：只有 ready、API、token-ID、HEDGE counters、定向 cleanup、CUDA context
   clear 和 keepalive resume 全部 PASS，最终 summary 才能为 PASS
 
-contract action 与 tooling tests 均为 CPU-only；未 login worker、未暂停 keepalive、
-未启动 server。
+唯一 live attempt：
+
+- attempt ID：
+  `dflash-d4-b0-20260729T045317Z-a01`
+- HDFS run：
+  `/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d4-b0-20260729T045317Z-a01`
+- server lifecycle：`05:03:52Z` 启动，`05:10:43Z` ready，
+  `05:11:58Z` cleanup/seal PASS
+- source：commit
+  `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`、tree
+  `53fc45b1b04963736254dc7ed582047313b8075a`、clean
+- API：HTTP 200，content `4`，completion tokens `2`，elapsed
+  `0.377162s`，output token IDs `[22,1]` 与 D3 a05 精确一致
+- HEDGE：8 proposals / 56 verifiable draft tokens；strict/HEDGE accepted
+  均为 `0`；relaxed mismatches、regret charged、active request states 和 state
+  leaks 均为 `0`；histogram `[8,0,0,0,0,0,0,0]`
+- TP/GPU：TP rank 0–7 均初始化并加载 target/draft；ready 显存
+  `[93037,93083,93083,93083,93083,93083,93083,92843] MiB`
+- cleanup：registered process group 定向关停后 contexts clear；keepalive resume
+  gate 八卡 10×1 秒均值 `60.0–61.3%`，fresh PID `123914` 再测八卡均为 100%
+- seal：39/39 manifest PASS，SHA-256
+  `eae4f4b21dd89c55a39133ecd5acd29f3ad356e5587304887bbd9732cdee43d6`
+
+首次 orchestration wrapper 的返回码无法恢复，但真实 preflight body 于
+`04:56:25Z` PASS，且 recovery audit 证明继续前没有 keepalive pause、server、
+sampler 或 HDFS side effect。主 Agent据此明确授权在同一 attempt ID 内继续；
+没有启动第二个模型 attempt。
+
+请求仅 `0.377s`，短于 sampler 前一秒 lifecycle polling interval，故 2344 行
+`gpu_samples.csv` 中没有 `phase=request` 行。紧邻 HTTP response 的逐卡快照为
+`[65,58,49,4,49,31,65,67]%`；本结论同时依赖 TP0–7 load 和八卡显存证据，不把
+该 sampler 限制写成逐请求采样成功。
+
+server log 的 fatal counts 全为零。cleanup 中按已登记顺序出现的 SIGTERM、
+detokenizer exit `-15` 与 SIGQUIT 是正常定向关停，不是未处理 CUDA/NCCL/worker
+crash。
 
 ## 可复现文件
 
@@ -160,6 +195,12 @@ contract action 与 tooling tests 均为 CPU-only；未 login worker、未暂停
   `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4_source_manifest.json`
 - integration patch：
   `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4_sglang_integration.patch`
+- prelaunch recovery auditor：
+  `scripts/dflash_d4_prelaunch_audit.sh`
+- D4-C sealed-run auditor：
+  `scripts/dflash_d4c_audit.py`
+- D4-C authoritative success audit：
+  `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4c_success_audit.json`
 
 重建顺序：
 
@@ -170,10 +211,9 @@ contract action 与 tooling tests 均为 CPU-only；未 login worker、未暂停
 
 ## 主 Agent 下一门禁
 
-1. 只读审查最终 DeepSpec diff、final validation、native disabled path、D4-C
-   launcher process ownership 与 lifecycle/counter gate；
-2. 显式暂存、commit 并 push 本阶段的小型 DeepSpec 文件；
-3. 主 Agent 明确授权 D4-C 后，才使用 worker `4099543` 运行 short live `B=0`
-   smoke；attempt 前后执行 lane keepalive 的定向暂停、context-clear、恢复与逐卡
-   gate；
-4. D4-C 未验收前不进入 D5。
+1. 只读审查 D4-C authoritative success audit、HDFS complete/manifest、TP0–7、
+   API/HEDGE counters、正常关停分类和 keepalive fresh observation；
+2. 只显式暂存本阶段 experiment/handoff、两个小型 auditor 与 success audit，
+   生成 Conventional Commit message 后 commit 并 push；
+3. D4-C 验收后派发独立 D5 executor，运行固定 32 条 calibration `B=0` 并产生
+   protocol-level B0 结论；本 D4 executor 到此停止。

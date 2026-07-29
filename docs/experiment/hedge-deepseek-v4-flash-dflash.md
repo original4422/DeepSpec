@@ -1,6 +1,6 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `IN_PROGRESS — D0–D3 ACCEPTED; D4 SOURCE FROZEN; D4-C B0 PENDING`
+Status / outcome label: `IN_PROGRESS — D0–D3 ACCEPTED; D4-C SHORT B0 INFRASTRUCTURE PASS; D5 CALIBRATION PENDING`
 
 Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
 
@@ -16,9 +16,9 @@ HEDGE pure-core SHA: upstream `4d96f44065c07030ede67484a262006ec149626a` / DFlas
 
 Dataset revision / seed / fingerprint: `openai/gsm8k@740312add88f781978c0658806c59bc2815b9866` / `980406` / HF `59ec1b7f9357c7a2`, content `32f83c6b…b41c4`
 
-B0 PASS|FAIL|NOT_RUN: `NOT_RUN`
+B0 PASS|FAIL|NOT_RUN: `NOT_RUN`（D4-C 单条 short prompt 的 live `B=0` infrastructure smoke `PASS`；计划要求的 32 条 calibration `B=0` arm 尚未运行）
 
-Frozen B/g/m: `NOT_CALIBRATED`
+Frozen B/g/m: `NOT_CALIBRATED`（D4-C smoke 仅使用 `B=0,g=1000000,m=1`，不是自动校准结果）
 
 Native result: `D3 SHORT SMOKE PASS`；正式 500 条 native arm 尚未运行
 
@@ -26,13 +26,15 @@ B+ result: `NOT_RUN`
 
 Canonical or exploratory: `UNDETERMINED`
 
-Primary blocker: `NONE FOR D4-C ENTRY`；final source、short B0 launcher/API/counter contract、target/draft 与 worker/keepalive 前置均已 READY，等待主 Agent 提交并显式授权 live attempt。
+Primary blocker: `NONE FOR D5 ENTRY`；D4-C 已证明 final source 的 TP=8 target/draft load、HEDGE strict-equivalence、API、request-state cleanup、定向关停与 keepalive 恢复链路。
 
 Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/`
 
-Git commit: latest pushed progress `c65a60a`; DeepSpec D3 recovery `6c929a8`; DeepSpec canonical core `86231e536573ccc43cda732b4eca920d5ce0a28a`; SGLang HEDGE-final `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`; D4 DeepSpec evidence pending main commit/push
+Formal artifact: D4-C HDFS run `/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d4-b0-20260729T045317Z-a01`；repo audit `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4c_success_audit.json`
 
-下一步：主 Agent 审查并 commit/push D4-B source/evidence 节点；随后显式授权 D4-C executor 运行一次 short live `B=0` smoke。D4-C 验收前不进入 D5。
+Git commit: latest pushed progress `66b44a7`; D4 source/evidence `a80031a`; DeepSpec canonical core `86231e536573ccc43cda732b4eca920d5ce0a28a`; SGLang HEDGE-final `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`; D4-C live evidence pending main commit/push
+
+下一步：主 Agent 审查并 commit/push D4-C 小型 evidence 节点，再派发独立 D5 executor 运行固定 32 条 calibration `B=0`。本 D4 executor 在 handoff 后停止，不自行进入 D5。
 
 ## D0 会话与资源基线
 
@@ -160,7 +162,7 @@ fresh readback PID `110847`、八卡 10×1 秒均值均为 100%。D3 权威 hand
 `docs/plan/handoffs/dflash-phase-d3-handoff.md`，主验收记录为
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d3/dflash_d3_main_acceptance.json`。
 
-## D4 HEDGE source freeze 与 D4-C readiness
+## D4 HEDGE source freeze 与 D4-C short live `B=0`
 
 上游 pure core
 `4d96f44065c07030ede67484a262006ec149626a` 已 exact cherry-pick 为 DFlash
@@ -192,7 +194,7 @@ unified-zero serialization 是一次 artifact-only correction：首版 contextfu
 gate；它们不是 source 新增空格。correction 不改 SGLang commit/tree 或
 integration/core content hash，也不通过字符串替换吞掉其他尾随空格。
 
-D4-C 已准备独立 short live `B=0` launcher 与 API auditor，锁定 worker `4099543`、
+D4-C 独立 short live `B=0` launcher 与 API auditor 锁定 worker `4099543`、
 port `31457`、TP=8、block 8/proposal 7、final source、原 checkpoint/CUDA/JIT
 contract，以及
 `B=0,g=1000000,m=1,value_scheme=normalized_suffix,block_size=7`。请求复用 sealed
@@ -201,7 +203,36 @@ D3 a05 的 short prompt，完整 output token IDs 必须等于 `[22,1]`；终态
 request lifecycle 清空。D4 sampler 已改为本 launcher 自调用并由静态测试禁止引用
 D3 attempt sampler。
 
-本节所有 D4-C readiness 核查均为 CPU-only：没有 login worker、没有暂停 keepalive、
-没有启动模型。`B0=NOT_RUN`；权威 handoff 为
-`docs/plan/handoffs/dflash-phase-d4b-handoff.md`，最终 CPU/source evidence 为
-`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4_final_source_validation.json`。
+唯一 live attempt `dflash-d4-b0-20260729T045317Z-a01` 已在同一 ID 内完成。首次
+orchestration wrapper 的返回码不可恢复，但其真实 preflight body 于
+`2026-07-29T04:56:25Z` 为 PASS；恢复审计证明此前没有 keepalive pause、server、
+sampler 或 HDFS side effect，因此在主 Agent 明确授权后继续同一 attempt，而没有
+制造第二个模型 attempt。服务于 `05:03:52Z` 启动、`05:10:43Z` ready：
+TP rank 0–7 均初始化并加载 target 与 draft，八卡 ready 显存为
+`92843–93083 MiB`，日志确认 DFlash block 8/proposal 7 和 HEDGE enabled。
+
+short API 在 `0.377162s` 内 HTTP 200，返回 content `4`、completion tokens `2`、
+output token IDs `[22,1]`，与 sealed D3 a05 精确一致。8 个 proposals 对应 56 个
+可验证 draft tokens；strict/HEDGE accepted 均为 `0`，relaxed mismatch 与 charged
+regret 均为 `0`，accept-length histogram 为 `[8,0,0,0,0,0,0,0]`。终态
+active request states 与 state leaks 均为 `0`，真实 slot reuse 计数为 `1` 且旧状态
+已清除。
+
+请求短于 sampler 的前一秒 lifecycle polling interval，因此
+`gpu_samples.csv` 没有 `phase=request` 行；这不是采样缺失的隐瞒。HTTP response 后
+紧邻快照的八卡利用率为 `[65,58,49,4,49,31,65,67]%`，并结合 TP0–7 load、八卡约
+93 GiB 显存证明参与。日志无 Traceback、CUDA/NCCL error、OOM、scheduler exception
+或被杀；cleanup 中的 SIGTERM、detokenizer `-15` 与 SIGQUIT 按已登记顺序发生，属于
+定向正常关停，不是未处理 worker crash。
+
+cleanup 于 `05:11:58Z` PASS，CUDA contexts clear；恢复 gate 八卡 10×1 秒均值为
+`60.0–61.3%`，随后 fresh observation 的 keepalive PID `123914` 八卡均值均为
+100%。HDFS `.complete.json` 为 PASS，39/39 manifest hash 一致，manifest SHA-256
+为 `eae4f4b21dd89c55a39133ecd5acd29f3ad356e5587304887bbd9732cdee43d6`。
+权威 repo audit 为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4c_success_audit.json`，
+handoff 为 `docs/plan/handoffs/dflash-phase-d4b-handoff.md`。
+
+该结果只证明单条 short prompt 的 live `B=0` 基础设施与 strict-equivalence 链路，
+不是计划定义的 32 条 calibration arm。因此顶部继续标记
+`B0 PASS|FAIL|NOT_RUN = NOT_RUN`；D5 才负责形成 protocol-level B0 结论与自动校准。
