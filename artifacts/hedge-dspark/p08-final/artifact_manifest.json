@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "audit_id": "20260729T100504Z-p08-final-audit",
+  "created_at_utc": "2026-07-29T10:47:24.920Z",
+  "status": "PASS",
+  "self_excluded": true,
+  "self_exclusion_reason": "artifact_manifest.json does not record its own bytes or hash, avoiding an impossible self-reference",
+  "scope": "Direct records cover the final P08 repository outputs, all phase handoffs, frozen dataset/calibration inputs and the fixed P00-P03 identity evidence. Nested immutable archive manifests cover the complete canonical P04-P07 run directories.",
+  "counts": {
+    "direct_records": 39,
+    "nested_archive_manifests": 6,
+    "nested_file_records": 214,
+    "total_verified_external_files_including_nested_manifests": 259
+  },
+  "direct_records": [
+    {
+      "bytes": 6775,
+      "category": "p00",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/session.json",
+      "sha256": "a5e3b69aa928ab93052ef97063474358433c0b3d0d78bfe4596a1941a772b96b"
+    },
+    {
+      "bytes": 3699,
+      "category": "p00",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/checkpoint_identity.json",
+      "sha256": "53379797e902e8e6a23347b02e5a2522fbaa4efdead1bfc9919d41b6ce91ef81"
+    },
+    {
+      "bytes": 1768,
+      "category": "p00",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/environment_identity.json",
+      "sha256": "2a848d3e5ad605445e8b5b723975f3fd185694e6181b0a0c09dbb3d4e19310d9"
+    },
+    {
+      "bytes": 664,
+      "category": "p00",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/sglang_base_identity.json",
+      "sha256": "8445b1dc9a615c65d1a2357157908e2df8ecdc2d9b443cdf7f9014a075d1c0c1"
+    },
+    {
+      "bytes": 3434,
+      "category": "p00",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/cuda_link_probe.json",
+      "sha256": "42f42acbd635f974def42900f64890978b7a1f4a4bea35eb4a54e85106ea193e"
+    },
+    {
+      "bytes": 4189,
+      "category": "p00",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/keepalive-migration/keepalive_migration.json",
+      "sha256": "b034c550427803fdfc14b323c03fb8c51335d791a01d2f3d418d125c143b2814"
+    },
+    {
+      "bytes": 14440,
+      "category": "p00",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/final-state/worker_inventory.json",
+      "sha256": "60fab89ddd0dcd0fb285f3d5c988d059378d3447e45c0ad2da00931d19e8a181"
+    },
+    {
+      "bytes": 8810,
+      "category": "p01",
+      "path": "artifacts/hedge-dspark/p01-protocol/dataset_manifest.json",
+      "sha256": "34db2fc76099b2725f51dfd6ceeb1410802ad54c9008b2ab3cc1b8927f02be90"
+    },
+    {
+      "bytes": 37796,
+      "category": "p01",
+      "path": "artifacts/hedge-dspark/p01-protocol/gsm8k_calibration_32.jsonl",
+      "sha256": "28a7080565cde90b8cf1db79c88bb463861515fabe3fa7409481802104a6e47d"
+    },
+    {
+      "bytes": 586192,
+      "category": "p01",
+      "path": "artifacts/hedge-dspark/p01-protocol/gsm8k_formal_500.jsonl",
+      "sha256": "33554b90f751252ced2cfd16333d749f427c84cf025dccef4c7934144e9d5108"
+    },
+    {
+      "bytes": 4895,
+      "category": "p01",
+      "path": "artifacts/hedge-dspark/p01-protocol/protocol_config.json",
+      "sha256": "71437ecc1ec5144ed66616322dbb0b37d73eb28d20d49af8c14d58ae5b4c8699"
+    },
+    {
+      "bytes": 9455,
+      "category": "p02",
+      "path": "deepspec/hedge_spec/hedge_core_identity.json",
+      "sha256": "acd9ebe5cd71bd50313a06c5a7ebb2e02289aa010bc92d9fcd72e9f8ded80d2a"
+    },
+    {
+      "bytes": 2317,
+      "category": "p02",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/hedge-core.json",
+      "sha256": "c9c09cd23655e395d3f3b85cbc7e1740194f9e4e174938cb5f54594afe31b80c"
+    },
+    {
+      "bytes": 2953,
+      "category": "p03_identity",
+      "path": "integrations/sglang_dspark_hedge/core_injection_manifest.json",
+      "sha256": "0098dc6cce0b41a6a51d5be166ad4a853536222bb68cb6c7ea58f8748ba81cff"
+    },
+    {
+      "bytes": 5918,
+      "category": "p03_identity",
+      "path": "integrations/sglang_dspark_hedge/engine_identity.json",
+      "sha256": "025ab438b4aed3f87203e783a4bd09145c5014e0751f99ca44bf1e4f9f58eaa1"
+    },
+    {
+      "bytes": 39428,
+      "category": "p03_identity",
+      "path": "integrations/sglang_dspark_hedge/integration.patch",
+      "sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52"
+    },
+    {
+      "bytes": 4925,
+      "category": "p03_identity",
+      "path": "integrations/sglang_dspark_hedge/patch_record.json",
+      "sha256": "571546a7394d174d901e2ad8761016980e05bad64c75b80cac28abe579a2a222"
+    },
+    {
+      "bytes": 7976,
+      "category": "p03_identity",
+      "path": "integrations/sglang_dspark_hedge/wheel_manifest.json",
+      "sha256": "2a0569a0f5c6c3725aef5ff33765d6f80b43ce855eb112a2f313aa1a3413ee46"
+    },
+    {
+      "bytes": 14646093,
+      "category": "p03_identity",
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+      "sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9"
+    },
+    {
+      "bytes": 512,
+      "category": "p05_freeze",
+      "path": "artifacts/hedge-dspark/p05-calibration/b0_equivalence.json",
+      "sha256": "63ea87842ab2d576e3419f8c9de521954200609e78fb10b6c109643522784b5f"
+    },
+    {
+      "bytes": 1469,
+      "category": "p05_freeze",
+      "path": "artifacts/hedge-dspark/p05-calibration/calibration_summary.json",
+      "sha256": "8d4f0fd823ad9452883e32f141168e99b306226d326d56fe06c5eaeae743eeee"
+    },
+    {
+      "bytes": 117577,
+      "category": "p05_freeze",
+      "path": "artifacts/hedge-dspark/p05-calibration/calibration_values.jsonl",
+      "sha256": "4c3fce054619606f98813c0c2acd4d99178b77a3311c64f5b533236efb49c9cf"
+    },
+    {
+      "bytes": 101,
+      "category": "p05_freeze",
+      "path": "artifacts/hedge-dspark/p05-calibration/hedge_config.json",
+      "sha256": "760128b85b8c3dd67e3b4dee512cc302ee59bd2e2a1b3ab3390fd186ade36b71"
+    },
+    {
+      "bytes": 8263,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p00-20260728T205441Z-p00-bootstrap.md",
+      "sha256": "5e16778c2f395ea810528fd740958666a969877d93472560466eeb6f1da19fb6"
+    },
+    {
+      "bytes": 6962,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p01-20260728T205900Z.md",
+      "sha256": "7bcc02d47d12b43facafc2719365a2e9a04ca1ebe025f4e538e4954dd66b4636"
+    },
+    {
+      "bytes": 9825,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p02-20260728T205701Z.md",
+      "sha256": "fc12bfffebd2b4f6b14f86d5fced6c729f0c50b596aa97e7ad2b577dd2de9cee"
+    },
+    {
+      "bytes": 7142,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p03-20260728T223835Z.md",
+      "sha256": "64a2ec7d22e6f756be88e7167cec276f75091ccf12a7daabe1acceb62b8f2bdb"
+    },
+    {
+      "bytes": 4403,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p04-20260729T010603Z-p04-b0-r1.md",
+      "sha256": "85c25334d731a5efc56b0670637c25161949ade0cdeeca2e1695db829fd4d175"
+    },
+    {
+      "bytes": 4779,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p05-20260729T051340Z-p05-b0-calibration-r1.md",
+      "sha256": "effb2df5c0f720f87917e820a6021e3e94ac61cfc9ff22564dfcda9b440de320"
+    },
+    {
+      "bytes": 4128,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p06-20260729T062241Z-p06-native-formal-r1.md",
+      "sha256": "632346de40ad00becd5dd55ea85e4f04e740f265e1095cfc3534d583a79026a7"
+    },
+    {
+      "bytes": 5808,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p07-20260729T084544Z-p07-hedge-formal-r1.md",
+      "sha256": "c8492f261a5fe90625ec37fa5420d7a636bebaae82c9f28fad98d6d6bbbc90a6"
+    },
+    {
+      "bytes": 6438,
+      "category": "phase_handoffs",
+      "path": "docs/plan/handoffs/hedge-dspark-p08-20260729T100504Z-p08-final-audit.md",
+      "sha256": "6acc4b19327ec643b99f11a4af9271a4197628e307f5d551428b6f5d01b3c20e"
+    },
+    {
+      "bytes": 13505,
+      "category": "p08_outputs",
+      "path": "artifacts/hedge-dspark/p08-final/final_results.json",
+      "sha256": "968ecf29e800ecfea9ab03910f4d67012ad26657d9a0435cc32b1cf2639fe078"
+    },
+    {
+      "bytes": 11726,
+      "category": "p08_outputs",
+      "path": "artifacts/hedge-dspark/p08-final/final_audit.json",
+      "sha256": "e9ac6ca0f0d710a6314cb20e2d4726740bbcb0c5a9501ee4f02a23fc348bc0bd"
+    },
+    {
+      "bytes": 8279,
+      "category": "p08_outputs",
+      "path": "artifacts/hedge-dspark/p08-final/reproduction.md",
+      "sha256": "ce78aab0d985e0832a24c1e6f32d901ff40512db9554be96c6a7942737a580ef"
+    },
+    {
+      "bytes": 11011,
+      "category": "p08_outputs",
+      "path": "docs/results/hedge-deepseek-v4-flash-dspark.md",
+      "sha256": "d727dd4262fa9ef0eae2a8b3acf73e1594303d0e13546b64dd934598cb9327c0"
+    },
+    {
+      "bytes": 1822,
+      "category": "p08_outputs",
+      "path": "docs/results/hedge-deepseek-v4-flash-dspark-reproduction.md",
+      "sha256": "3bef9116fe138687f929b1d16f4c0301f9b95c53264863d9c0f3de41755187d3"
+    },
+    {
+      "bytes": 48017,
+      "category": "p08_outputs",
+      "path": "docs/experiment/hedge-deepseek-v4-flash-dspark.md",
+      "sha256": "b31af7779e8d75ef281ad82049f3933e2041ecce5a02ef1d2090a7180f6105bb"
+    },
+    {
+      "bytes": 57218,
+      "category": "p08_outputs",
+      "path": "docs/progress/hedge-deepseek-v4-flash-dspark.md",
+      "sha256": "174bab4c2f5d98501dd82ef04688633632553f919eee17150b38fa2ba9aaa164"
+    }
+  ],
+  "nested_archive_manifests": [
+    {
+      "attempt_id": "20260729T001700Z-p04-native-smoke-r4",
+      "bytes": 5204,
+      "independent_record_verification": "PASS",
+      "phase": "P04",
+      "record_count": 32,
+      "root": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T001700Z-p04-native-smoke-r4",
+      "sha256": "bbd5b8ab7415478ec1a0ea4f31983d3ef4c49298b6df9ebc48c85ef01ecd86c4",
+      "status": "PASS"
+    },
+    {
+      "attempt_id": "20260729T010603Z-p04-b0-r1",
+      "bytes": 5337,
+      "independent_record_verification": "PASS",
+      "phase": "P04",
+      "record_count": 33,
+      "root": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T010603Z-p04-b0-r1",
+      "sha256": "2d9b6cc3c6bdf477f0fcf7fa011d7c41d2d9eca96082b69e7ffd0ab823d686a5",
+      "status": "PASS"
+    },
+    {
+      "attempt_id": "20260729T044309Z-p05-native-calibration-r4",
+      "bytes": 5753,
+      "independent_record_verification": "PASS",
+      "phase": "P05",
+      "record_count": 35,
+      "root": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4",
+      "sha256": "fb60ce3e810fb859f56cf4870709a675797908f7c095c798bc53bb46fadb02c0",
+      "status": "PASS"
+    },
+    {
+      "attempt_id": "20260729T051340Z-p05-b0-calibration-r1",
+      "bytes": 5874,
+      "independent_record_verification": "PASS",
+      "phase": "P05",
+      "record_count": 36,
+      "root": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T051340Z-p05-b0-calibration-r1",
+      "sha256": "0389025ba6f01e92f2a61efa9eae282ca0d97a97605c199bcdabcf18e30565c2",
+      "status": "PASS"
+    },
+    {
+      "attempt_id": "20260729T062241Z-p06-native-formal-r1",
+      "bytes": 6333,
+      "independent_record_verification": "PASS",
+      "phase": "P06",
+      "record_count": 39,
+      "root": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1",
+      "sha256": "f0014a88b05761b47a85b841d052a13a2e6d6d4baa21bf4f3640b4e7c96beca7",
+      "status": "PASS"
+    },
+    {
+      "attempt_id": "20260729T084544Z-p07-hedge-formal-r1",
+      "bytes": 6320,
+      "independent_record_verification": "PASS",
+      "phase": "P07",
+      "record_count": 39,
+      "root": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T084544Z-p07-hedge-formal-r1",
+      "sha256": "397462adbd28aea5e8df8f275c2d1947bf29d297b5c84747ca6bf7c6a5bdb082",
+      "status": "PASS"
+    }
+  ]
+}

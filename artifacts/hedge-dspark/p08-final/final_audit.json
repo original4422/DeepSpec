@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "phase": "P08",
+  "audit_id": "20260729T100504Z-p08-final-audit",
+  "started_at_utc": "2026-07-29T10:05:04Z",
+  "finished_at_utc": "2026-07-29T10:27:19Z",
+  "mode": "offline_read_only",
+  "input_git": {
+    "branch": "exp/hedge-v4-dspark",
+    "head": "966823eb2c8f9fe26aa8039f30e4c210beea47a6",
+    "origin_head": "966823eb2c8f9fe26aa8039f30e4c210beea47a6",
+    "worktree": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark"
+  },
+  "status": "PASS",
+  "route_recommendation": "COMPLETE",
+  "main_agent_acceptance": "PASS",
+  "main_agent_accepted_at_utc": "2026-07-29T10:45:54.693Z",
+  "main_agent_acceptance_checks": {
+    "dataset_verifier": "18/18 PASS",
+    "p00_p02_p03_identity_chain": "PASS",
+    "p04_recovered_native_and_b0_replay": "PASS",
+    "p05_reducer_byte_replay": "PASS",
+    "p06_p07_read_only_replay": "PASS; each archive 39/39",
+    "final_results_raw_recomputation": "PASS; all 1000 formal records",
+    "regression_unittests": "153/153 PASS",
+    "artifact_manifest": "PASS; 39 direct records plus 6 nested manifests / 214 files",
+    "markdown_links_json_and_diff": "PASS",
+    "final_live_keepalive": "PASS"
+  },
+  "summary": "B0 complete token-ID equivalence passed; calibration parameters were reproduced from the fixed 32-request cohort; the native and HEDGE formal 500-request arms each passed independent summary, identity, TP8/GPU, lifecycle, shutdown and immutable-archive validation.",
+  "execution_boundary": {
+    "worker_login_performed": false,
+    "gpu_or_model_process_started": false,
+    "keepalive_changed": false,
+    "signal_sent": false,
+    "hdfs_raw_artifact_changed": false,
+    "temporary_reducer_output": "/tmp/deepspec-hedge-dspark-p08-recompute-20260729T1005Z",
+    "temporary_output_is_noncanonical": true
+  },
+  "checks": {
+    "p00_through_p07_phase_evidence_read": "PASS",
+    "p04_through_p06_recovered_handoffs_generated": "PASS",
+    "dataset_manifest_recomputed": "PASS",
+    "dataset_verifier_checks": {
+      "passed": 18,
+      "total": 18,
+      "status": "PASS"
+    },
+    "b0_complete_output_token_ids": "PASS",
+    "calibration_q25_recomputed": "PASS",
+    "p05_reducer_byte_replay": "PASS",
+    "source_wheel_checkpoint_config_identity": "PASS",
+    "p06_formal_summary_recomputed": "PASS",
+    "p07_formal_summary_recomputed": "PASS",
+    "p06_p07_runtime_identity_parity": "PASS",
+    "p06_tp8_and_eight_gpu_participation": "PASS",
+    "p07_tp8_and_eight_gpu_participation": "PASS",
+    "p06_shutdown_contexts_none_keepalive": "PASS",
+    "p07_shutdown_contexts_none_keepalive": "PASS",
+    "p06_archive_manifest": {
+      "files_independently_rehashed": 39,
+      "status": "PASS"
+    },
+    "p07_archive_manifest": {
+      "files_independently_rehashed": 39,
+      "status": "PASS"
+    },
+    "formal_results_not_used_to_tune_parameters": "PASS",
+    "b0_failure_hidden": false,
+    "invented_success_thresholds": false,
+    "cross_method_absolute_ranking_claimed": false
+  },
+  "dataset_recomputation": {
+    "repo_id": "openai/gsm8k",
+    "config": "main",
+    "split": "test",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "resolved_revision": "740312add88f781978c0658806c59bc2815b9866",
+    "row_count": 1319,
+    "datasets_fingerprint": "59ec1b7f9357c7a2",
+    "content_sha256": "32f83c6becb3ba208d16bff80901547266e937b3f77c56d3ebe6a9bc3a9b41c4",
+    "seed": 980406,
+    "calibration_count": 32,
+    "formal_count": 500,
+    "cohorts_disjoint": true,
+    "dataset_manifest_sha256": "34db2fc76099b2725f51dfd6ceeb1410802ad54c9008b2ab3cc1b8927f02be90",
+    "calibration_jsonl_sha256": "28a7080565cde90b8cf1db79c88bb463861515fabe3fa7409481802104a6e47d",
+    "formal_jsonl_sha256": "33554b90f751252ced2cfd16333d749f427c84cf025dccef4c7934144e9d5108",
+    "protocol_config_sha256": "71437ecc1ec5144ed66616322dbb0b37d73eb28d20d49af8c14d58ae5b4c8699"
+  },
+  "p05_recomputation": {
+    "native_attempt": "20260729T044309Z-p05-native-calibration-r4",
+    "b0_attempt": "20260729T051340Z-p05-b0-calibration-r1",
+    "complete_output_token_id_lists_equal": 32,
+    "complete_output_token_id_lists_mismatched": 0,
+    "native_completion_tokens": 5183,
+    "b0_completion_tokens": 5183,
+    "trace_rows_seen": 1097,
+    "positive_finite_values": 484,
+    "trace_rows_dropped": 0,
+    "q25_method": "linear interpolation with h=(n-1)*0.25",
+    "q25": 2.0625,
+    "frozen_config": {
+      "g": 2.0625,
+      "B": 2.0625,
+      "m": 1,
+      "value_scheme": "normalized_suffix",
+      "block_size": 5
+    },
+    "config_fingerprint": "6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921",
+    "frozen_files_byte_identical_to_reducer_replay": {
+      "b0_equivalence.json": true,
+      "calibration_summary.json": true,
+      "calibration_values.jsonl": true,
+      "hedge_config.json": true
+    }
+  },
+  "formal_recomputation": {
+    "native": {
+      "attempt": "20260729T062241Z-p06-native-formal-r1",
+      "success_failed_retry": [
+        500,
+        0,
+        0
+      ],
+      "completion_tokens": 74594,
+      "timed_wall_seconds": 2348.31919839,
+      "output_tps": 31.76484698125425,
+      "proposal_count": 16045,
+      "accepted_draft_tokens": 58473,
+      "accepted_draft_tokens_per_proposal": 3.644312870052976,
+      "acceptance_length_including_bonus": 4.64904954814584,
+      "answers_match_mismatch_parse_failure": [
+        478,
+        11,
+        11
+      ],
+      "tp_target_draft_ranks": "0-7",
+      "gpu_count": 8,
+      "archive_manifest_sha256": "f0014a88b05761b47a85b841d052a13a2e6d6d4baa21bf4f3640b4e7c96beca7"
+    },
+    "hedge": {
+      "attempt": "20260729T084544Z-p07-hedge-formal-r1",
+      "success_failed_retry": [
+        500,
+        0,
+        0
+      ],
+      "completion_tokens": 75819,
+      "timed_wall_seconds": 2263.710352404,
+      "output_tps": 33.493242595936465,
+      "proposal_count": 15386,
+      "accepted_draft_tokens": 60357,
+      "accepted_draft_tokens_per_proposal": 3.922851943325101,
+      "acceptance_length_including_bonus": 4.927791498765111,
+      "answers_match_mismatch_parse_failure": [
+        474,
+        13,
+        13
+      ],
+      "tp_target_draft_ranks": "0-7",
+      "gpu_count": 8,
+      "archive_manifest_sha256": "397462adbd28aea5e8df8f275c2d1947bf29d297b5c84747ca6bf7c6a5bdb082"
+    },
+    "within_route_observed_delta": {
+      "completion_tokens": 1225,
+      "timed_wall_seconds": -84.60884598600023,
+      "output_tps": 1.7283956146822135,
+      "output_tps_percent": 5.4412212837109175,
+      "accepted_draft_tokens_per_proposal": 0.2785390732721247,
+      "accepted_draft_tokens_per_proposal_percent": 7.643116362511315,
+      "acceptance_length_including_bonus": 0.27874195061927143,
+      "acceptance_length_including_bonus_percent": 5.995676056634869,
+      "gsm8k_match_rate_percentage_points": -0.8
+    }
+  },
+  "identity_recomputation": {
+    "sglang_base_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "integration_commit": "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
+    "integration_patch_sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52",
+    "patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
+    "pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
+    "hedge_source_commit": "9fb903d676254ea5f5d171051fb15c54f331111c",
+    "formal_wheel_sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9",
+    "installed_record_sha256": "675b26b198e9ebc6b14d4961b3d9f70be4fc3a54e50319403704c29c5afa283f",
+    "checkpoint_provider_snapshot": "bb7ac3172e1a257482d3256d7a720f20ea39ce25625f3cacc1091f59ad43bcae",
+    "checkpoint_hf_reference_revision": "62af8fffb2f7030cac4de2f0169f5b8d1101b646",
+    "p06_p07_parity_fields": [
+      "source",
+      "wheel",
+      "dspark_integration",
+      "hedge_core",
+      "checkpoint_identity"
+    ],
+    "parity_status": "PASS"
+  },
+  "final_operational_state": {
+    "p07_immutable_archived_evidence": {
+      "contexts_after_registered_cleanup": "none",
+      "keepalive_pid_pgid_sid": "121312/121312/121312",
+      "keepalive_gpu_gate": "8 GPUs x 10 samples; each GPU mean/min/max utilization 100%",
+      "status": "PASS"
+    },
+    "main_agent_attestation": {
+      "observed_at": "2026-07-29T18:44:58.993+08:00",
+      "worker_id": "4106666",
+      "worker_online": true,
+      "keepalive_pid_pgid_sid": "121312/121312/121312",
+      "keepalive_gpu_gate": "8 GPUs x 10 samples; each GPU mean/min/max utilization 100%",
+      "per_gpu_memory_mib": 815,
+      "gpu_process_scope": "each GPU only had the registered dedicated keepalive context",
+      "status": "PASS"
+    },
+    "p08_executor_requeried_worker": false,
+    "evidence_basis": "P07 immutable archive plus the main Agent's 2026-07-29 18:44:58.993 CST read-only attestation; P08 itself did not log in"
+  },
+  "historical_handoff_gap": {
+    "status": "REPAIRED",
+    "procedural_gap": "P04, P05 and P06 did not have standalone phase handoffs at their contemporaneous completion points.",
+    "repair_method": "Retrospective evidence reconstructions were written from immutable phase artifacts, authoritative experiment/progress records and Git history. They are explicitly marked retrospective and do not claim to be contemporaneous executor notes.",
+    "recovered_handoffs": [
+      "docs/plan/handoffs/hedge-dspark-p04-20260729T010603Z-p04-b0-r1.md",
+      "docs/plan/handoffs/hedge-dspark-p05-20260729T051340Z-p05-b0-calibration-r1.md",
+      "docs/plan/handoffs/hedge-dspark-p06-20260729T062241Z-p06-native-formal-r1.md"
+    ]
+  },
+  "failed_attempt_inventory": {
+    "p00": [
+      "keepalive wrapper awk-name failure",
+      "CUDA forward-compat environment failure",
+      "uv PATH failure",
+      "pinned SGLang fetch SSL timeout",
+      "checkpoint checker scope failure",
+      "session exact-head assertion invalidated by concurrent descendant commits"
+    ],
+    "p03": [
+      "superseded wheel builds while build dependencies, Rust/protoc environment, trace capacity and patch whitespace reproducibility were repaired"
+    ],
+    "p04": [
+      "native r2 preflight rejected the worker-local missing wheel path",
+      "native r4 first live sampler cadence check failed and was recovered without changing decode identity"
+    ],
+    "p05": [
+      "native r1 FAIL_TRACE_SCOPE",
+      "native r2 FAIL_PRE_COHORT_QUIESCENCE",
+      "native r3 FAIL_PREFILL_TERMINAL_LIFECYCLE"
+    ],
+    "p06": [],
+    "p07": []
+  },
+  "limitations": [
+    "Each formal arm was run once; no variance or confidence interval is reported.",
+    "No TPS, acceptance-length or GSM8K-match threshold was used as a success gate.",
+    "Only the within-route native versus HEDGE observation is reported; no cross-method absolute ranking is claimed.",
+    "The approximately 166.9 GB checkpoint was not fully rehashed by design; pinned provider identity, manifest checks and successful model loading are the retained evidence.",
+    "GSM8K answer match is an observed metric, not an infrastructure correctness gate."
+  ],
+  "outputs": {
+    "final_results": {
+      "path": "artifacts/hedge-dspark/p08-final/final_results.json",
+      "sha256": "968ecf29e800ecfea9ab03910f4d67012ad26657d9a0435cc32b1cf2639fe078"
+    },
+    "artifact_manifest": "artifacts/hedge-dspark/p08-final/artifact_manifest.json",
+    "artifact_reproduction": "artifacts/hedge-dspark/p08-final/reproduction.md",
+    "reader_reproduction": "docs/results/hedge-deepseek-v4-flash-dspark-reproduction.md",
+    "authoritative_experiment": "docs/experiment/hedge-deepseek-v4-flash-dspark.md",
+    "reader_results": "docs/results/hedge-deepseek-v4-flash-dspark.md",
+    "progress": "docs/progress/hedge-deepseek-v4-flash-dspark.md"
+  }
+}

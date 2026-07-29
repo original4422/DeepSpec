@@ -1,0 +1,439 @@
+{
+  "authorized_phase": "P08",
+  "created_at_utc": "2026-07-29T10:15:53Z",
+  "experiment_identity": {
+    "checkpoint": {
+      "full_checkpoint_hash_performed": false,
+      "hf_reference_revision": "62af8fffb2f7030cac4de2f0169f5b8d1101b646",
+      "model": "deepseek-ai/DeepSeek-V4-Flash-DSpark",
+      "provider": "ModelScope",
+      "provider_payload_bytes": 166898666759,
+      "provider_payload_files": 75,
+      "provider_snapshot": "bb7ac3172e1a257482d3256d7a720f20ea39ce25625f3cacc1091f59ad43bcae",
+      "weight_shards": 48
+    },
+    "deep_spec": {
+      "hedge_source_commit": "9fb903d676254ea5f5d171051fb15c54f331111c",
+      "integration_commit": "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
+      "pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a"
+    },
+    "hardware": {
+      "gpu_count": 8,
+      "gpu_model": "NVIDIA H20",
+      "tensor_parallel_size": 8,
+      "worker_id": "4106666"
+    },
+    "sglang": {
+      "base_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+      "formal_wheel_bytes": 14646093,
+      "formal_wheel_sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9",
+      "installed_record_sha256": "675b26b198e9ebc6b14d4961b3d9f70be4fc3a54e50319403704c29c5afa283f",
+      "integration_patch_sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52",
+      "patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
+      "version": "0.5.16"
+    }
+  },
+  "b0_equivalence": {
+    "b0_attempt": "20260729T051340Z-p05-b0-calibration-r1",
+    "b0_completion_tokens": 5183,
+    "b0_outputs_sha256": "d59b0e17483c1415dddd9ccee8ed41c22f26ab6fbfb47d4fd3a0d4f9fec3a434",
+    "b0_retry_attempts": 0,
+    "b0_success_requests": 32,
+    "complete_output_token_id_lists_equal": 32,
+    "comparison": "complete output_token_ids lists, no re-tokenization",
+    "first_mismatch": null,
+    "hedge_accepted_draft_tokens": 4081,
+    "mismatch_count": 0,
+    "native_attempt": "20260729T044309Z-p05-native-calibration-r4",
+    "native_completion_tokens": 5183,
+    "native_outputs_sha256": "b5550312da76c86dc68f3b7f0685f4eb1009f7f778be8c24e1d400b382e78b23",
+    "native_retry_attempts": 0,
+    "native_success_requests": 32,
+    "proposal_count": 1097,
+    "regret_charged": 0.0,
+    "relaxed_mismatches": 0,
+    "sample_count": 32,
+    "state_leaks": 0,
+    "status": "PASS",
+    "strict_accepted_draft_tokens": 4081,
+    "trace_rows_dropped": 0
+  },
+  "calibration": {
+    "B": 2.0625,
+    "block_size": 5,
+    "calibration_summary_sha256": "8d4f0fd823ad9452883e32f141168e99b306226d326d56fe06c5eaeae743eeee",
+    "calibration_values_sha256": "4c3fce054619606f98813c0c2acd4d99178b77a3311c64f5b533236efb49c9cf",
+    "config_fingerprint": "6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921",
+    "config_sha256": "760128b85b8c3dd67e3b4dee512cc302ee59bd2e2a1b3ab3390fd186ade36b71",
+    "g": 2.0625,
+    "m": 1,
+    "native_trace_sha256": "8ffa9e45214c6a40520448c5d7dda098182e66134e809a92e20530fd9a5130f6",
+    "positive_value_count": 484,
+    "q25": 2.0625,
+    "q25_method": "linear interpolation with h=(n-1)*0.25",
+    "source": "first strict-rejection barrier positive finite regret/value values from the fixed 32-request native calibration cohort",
+    "status": "PASS",
+    "trace_response_id_count": 32,
+    "trace_rows_dropped": 0,
+    "trace_rows_seen": 1097,
+    "trace_rows_stored": 484,
+    "trace_scope_proven": true,
+    "value_scheme": "normalized_suffix"
+  },
+  "dataset": {
+    "calibration_count": 32,
+    "calibration_jsonl_sha256": "28a7080565cde90b8cf1db79c88bb463861515fabe3fa7409481802104a6e47d",
+    "cohorts_disjoint": true,
+    "config": "main",
+    "content_sha256": "32f83c6becb3ba208d16bff80901547266e937b3f77c56d3ebe6a9bc3a9b41c4",
+    "datasets_fingerprint": "59ec1b7f9357c7a2",
+    "formal_count": 500,
+    "formal_jsonl_sha256": "33554b90f751252ced2cfd16333d749f427c84cf025dccef4c7934144e9d5108",
+    "provider": "Hugging Face",
+    "repo_id": "openai/gsm8k",
+    "resolved_revision": "740312add88f781978c0658806c59bc2815b9866",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "row_count": 1319,
+    "seed": 980406,
+    "selection": "indices=list(range(1319)); random.Random(980406).shuffle(indices); first 32 calibration; next 500 formal",
+    "split": "test",
+    "status": "PASS",
+    "warmup_count": 10
+  },
+  "formal_arms": {
+    "hedge": {
+      "acceptance": {
+        "accepted_draft_tokens": 60357,
+        "accepted_draft_tokens_by_position": [
+          14779,
+          13649,
+          12278,
+          10688,
+          8963
+        ],
+        "accepted_draft_tokens_by_position_rate": [
+          0.9605485506304433,
+          0.8871051605355518,
+          0.7979981801637852,
+          0.6946574808267256,
+          0.5825425711685949
+        ],
+        "acceptance_length_including_bonus": 4.927791498765111,
+        "draft_tokens_proposed": 76930,
+        "mean_accepted_draft_tokens_per_proposal": 3.922851943325101,
+        "proposal_count": 15386
+      },
+      "answers": {
+        "match_rate_percent": 94.8,
+        "matches": 474,
+        "mismatches": 13,
+        "parse_failures": 13
+      },
+      "arm": "HEDGE B>0",
+      "attempt_id": "20260729T084544Z-p07-hedge-formal-r1",
+      "completion_tokens": 75819,
+      "completion_tokens_per_request": {
+        "count_at_max_tokens_512": 1,
+        "maximum": 512,
+        "mean": 151.638,
+        "median_linear": 141.0,
+        "minimum": 52,
+        "p95_linear": 254.04999999999995
+      },
+      "failed_requests": 0,
+      "formal_count": 500,
+      "formal_outputs_sha256": "615063928d19a8d5274bc669dc1ce1e7ce538c3b59ba21ce9b49e135d5078668",
+      "gpu_evidence": {
+        "formal_window_samples_per_gpu": 1909,
+        "gpu_count": 8,
+        "maximum_utilization_percent_range": [
+          99,
+          99
+        ],
+        "minimum_model_memory_mib_range": [
+          79621,
+          80101
+        ],
+        "tp_draft_ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "tp_ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "tp_target_ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "hedge_config": {
+        "B": 2.0625,
+        "block_size": 5,
+        "g": 2.0625,
+        "m": 1,
+        "value_scheme": "normalized_suffix"
+      },
+      "latency_seconds": {
+        "maximum": 18.128207647,
+        "mean": 4.527166058286002,
+        "median_linear": 4.181927538,
+        "minimum": 1.836995838,
+        "p95_linear": 7.81581026935,
+        "sum_of_request_wall_seconds": 2263.583029143001
+      },
+      "output_tps": 33.493242595936465,
+      "retry_attempts": 0,
+      "status": "PASS",
+      "success_requests": 500,
+      "timed_wall_seconds": 2263.710352404,
+      "warmup_count": 10,
+      "warmup_included": false,
+      "worker_id": "4106666"
+    },
+    "native": {
+      "acceptance": {
+        "accepted_draft_tokens": 58473,
+        "accepted_draft_tokens_by_position": [
+          14904,
+          13227,
+          11688,
+          10119,
+          8535
+        ],
+        "accepted_draft_tokens_by_position_rate": [
+          0.9288875038952945,
+          0.8243689622935494,
+          0.7284512309130571,
+          0.6306637581801184,
+          0.5319414147709567
+        ],
+        "acceptance_length_including_bonus": 4.64904954814584,
+        "draft_tokens_proposed": 80225,
+        "mean_accepted_draft_tokens_per_proposal": 3.644312870052976,
+        "proposal_count": 16045
+      },
+      "answers": {
+        "match_rate_percent": 95.6,
+        "matches": 478,
+        "mismatches": 11,
+        "parse_failures": 11
+      },
+      "arm": "native speculative baseline",
+      "attempt_id": "20260729T062241Z-p06-native-formal-r1",
+      "completion_tokens": 74594,
+      "completion_tokens_per_request": {
+        "count_at_max_tokens_512": 1,
+        "maximum": 512,
+        "mean": 149.188,
+        "median_linear": 140.0,
+        "minimum": 53,
+        "p95_linear": 253.0
+      },
+      "failed_requests": 0,
+      "formal_count": 500,
+      "formal_outputs_sha256": "ecd9952536a860836babc3451e066b4ea164b0e520e263bfc5c200f46e902607",
+      "gpu_evidence": {
+        "formal_window_samples_per_gpu": 1982,
+        "gpu_count": 8,
+        "maximum_utilization_percent_range": [
+          99,
+          100
+        ],
+        "minimum_model_memory_mib_range": [
+          79619,
+          80099
+        ],
+        "tp_draft_ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "tp_ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "tp_target_ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "hedge_config": null,
+      "latency_seconds": {
+        "maximum": 19.141377849,
+        "mean": 4.696380725542002,
+        "median_linear": 4.3324875595000005,
+        "minimum": 1.844203036,
+        "p95_linear": 8.050472885999998,
+        "sum_of_request_wall_seconds": 2348.190362771001
+      },
+      "output_tps": 31.76484698125425,
+      "retry_attempts": 0,
+      "status": "PASS",
+      "success_requests": 500,
+      "timed_wall_seconds": 2348.31919839,
+      "warmup_count": 10,
+      "warmup_included": false,
+      "worker_id": "4106666"
+    }
+  },
+  "hedge_runtime_counters": {
+    "active_request_states": 0,
+    "budget_conservation": {
+      "charged_plus_remaining": 1031.25,
+      "initial_budget_total": 1031.25,
+      "status": "PASS"
+    },
+    "budget_exhaustion_events": 0,
+    "budget_spent_percent": 70.18181818181817,
+    "candidate_alignment": {
+      "anchor_index": 0,
+      "draft_indices": [
+        1,
+        6
+      ],
+      "target_draft_logit_indices": [
+        0,
+        5
+      ]
+    },
+    "cap_trim_lens": 0,
+    "counter_schema_version": 1,
+    "draft_tokens_verifiable": 76930,
+    "hedge_accepted_draft_tokens": 60357,
+    "hedge_minus_strict_accepted_draft_tokens": 3715,
+    "initial_budget_total": 1031.25,
+    "regret_charged": 723.75,
+    "relaxed_mismatches": 1427,
+    "remaining_budget_total": 307.5,
+    "requests_finished": 500,
+    "requests_initialized": 500,
+    "requests_non_natural": 1,
+    "runtime_calls": 15386,
+    "score_seam": "native full-vocab next_token_logits after the existing LogitsProcessor TP all-gather; HEDGE adds no TP collective",
+    "slot_reuse_resets": 0,
+    "state_leaks": 0,
+    "strict_accepted_draft_tokens": 56642,
+    "trace_rows_dropped": 0,
+    "trace_rows_seen": 0
+  },
+  "output_comparison": {
+    "complete_output_token_id_lists_different": 485,
+    "complete_output_token_id_lists_equal": 15,
+    "outcome_transitions": {
+      "match->match": 472,
+      "match->mismatch": 4,
+      "match->parse_failure": 2,
+      "mismatch->match": 2,
+      "mismatch->mismatch": 9,
+      "parse_failure->parse_failure": 11
+    },
+    "sample_count": 500
+  },
+  "protocol": {
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "max_tokens": 512,
+    "request_concurrency": 1,
+    "request_messages": "one user message, no system prompt",
+    "retry_policy": "at most 3 total attempts per request; retries and backoff included in formal wall time",
+    "temperature": 0,
+    "timing": "time.monotonic_ns immediately before formal request 1 through immediately after formal request 500 reaches terminal state; 10 warmups excluded",
+    "top_p": 1,
+    "user_suffix": "Please reason step by step, and put your final answer within \\boxed{}."
+  },
+  "route_status": "COMPLETE",
+  "route_status_reason": "B0 complete token-ID equivalence passed and both single-run 500-request formal arms passed all technical, identity, TP8/GPU, shutdown and archive gates",
+  "route_within_method_deltas": {
+    "acceptance_length_including_bonus": {
+      "absolute": 0.27874195061927143,
+      "relative_percent": 5.995676056634869
+    },
+    "accepted_draft_tokens": {
+      "absolute": 1884,
+      "relative_percent": 3.221999897388539
+    },
+    "accepted_draft_tokens_by_position": [
+      -125,
+      422,
+      590,
+      569,
+      428
+    ],
+    "completion_tokens": {
+      "absolute": 1225,
+      "relative_percent": 1.6422232351127386
+    },
+    "draft_tokens_proposed": {
+      "absolute": -3295,
+      "relative_percent": -4.107198504206922
+    },
+    "gsm8k_match_count": {
+      "absolute": -4,
+      "relative_percent": -0.8368200836820083
+    },
+    "gsm8k_match_rate_percentage_points": -0.8,
+    "gsm8k_mismatch_count": {
+      "absolute": 2,
+      "relative_percent": 18.181818181818183
+    },
+    "gsm8k_parse_failure_count": {
+      "absolute": 2,
+      "relative_percent": 18.181818181818183
+    },
+    "mean_accepted_draft_tokens_per_proposal": {
+      "absolute": 0.2785390732721247,
+      "relative_percent": 7.643116362511315
+    },
+    "output_tps": {
+      "absolute": 1.7283956146822135,
+      "relative_percent": 5.4412212837109175
+    },
+    "proposal_count": {
+      "absolute": -659,
+      "relative_percent": -4.107198504206922
+    },
+    "timed_wall_seconds": {
+      "absolute": -84.60884598600023,
+      "relative_percent": -3.602953382317353
+    }
+  },
+  "schema_version": 1,
+  "status": "PASS"
+}

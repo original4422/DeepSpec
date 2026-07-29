@@ -2,12 +2,12 @@
 
 ## 最新快照
 
-- 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T09:52:49Z`（P07 主验收关键节点）
+- 状态：`COMPLETE`
+- 快照时间：`2026-07-29T10:45:54.693Z`（P08 主 Agent最终验收）
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
   `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
 - elapsed / deadline：持续执行 / `NONE`
-- 当前 phase：P00–P07 均已 PASS；P08 `READY`
+- 当前 phase：P00–P08 均已 PASS；路线 `COMPLETE`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
   - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
@@ -25,16 +25,20 @@
   - P07：tooling commit/push `3253062`；唯一 HEDGE formal 500/500、0 retry、
     75819 tokens、33.493242595936465 TPS；主 Agent独立重算 client/HEDGE/GPU/
     identity/server/lifecycle/shutdown/keepalive 与 39-file manifest 均 PASS
+  - P08：dataset 18/18、P05 reducer byte replay、P06/P07 formal summary/
+    identity/TP8/GPU/shutdown/keepalive 与两个 39-file archive manifest 均
+    `PASS`；主 Agent另行复核 P00–P03 identity、P04 replay、1000 条 formal
+    raw results、153/153 tests 与 39+6 manifest 全通过，route `COMPLETE`
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
 - keepalive / server / PID：P07 server/sampler 已按登记 PID/PGID 定向退出；
   `cuda_contexts_after.txt` 为 contexts none；dedicated keepalive 已恢复为
-  `121312/121312/121312`，8×10 全卡 mean/min/max 100%
-- 最新 attempt：`20260729T084544Z-p07-hedge-formal-r1`；preflight/ready PASS，
-  10 warmup 排除，500/500 与完整生命周期主审 PASS
+  `121312/121312/121312`，8×10 全卡 mean/min/max 100%。主 Agent于
+  `2026-07-29T18:44:58.993+08:00` 最终只读确认同一状态；P08 未登录 worker
+- 最新 attempt：`20260729T100504Z-p08-final-audit`；纯离线 `PASS`
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T084544Z-p07-hedge-formal-r1`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；上一已 push 节点 `55c35af`
+  branch `exp/hedge-v4-dspark`；P08 输入/上一已 push 节点 `966823e`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -42,12 +46,11 @@
   `eb4962f`；failure docs `fd88b69`；quiescence recovery `fe0aea0`；
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
-  `c244651`；P06 tooling `6a74186`；P07 tooling `3253062`
-- 首要事项：提交 P07 结果 Git 节点，然后启动不使用 GPU 的 P08 最终离线审计
-- 下一检查点：`2026-07-29T10:22:49Z`
-- 下一 30 分钟动作：完成 P07 result/handoff commit/push；P08 重算
-  calibration、B0、两个 formal summary/delta、identity、TP8/GPU 与最终
-  process/keepalive，生成 final JSON/Markdown/manifest
+  `c244651`；P06 tooling `6a74186`；P06 result `9134825`；P07 tooling
+  `3253062`；P07 result `966823e`；P08 最终节点为本次待提交变更
+- 首要事项：主 Agent验收已经 `PASS`；完成最终 commit/push，不再启动模型
+- 下一检查点：无运行检查点
+- 下一动作：只做 staged diff gate 与最终提交，不触碰 worker
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -830,3 +833,49 @@
 - 权威 monotonic artifact 证明 counter clear 先于 formal timing start
   351410 ns。此前运行中心跳的 `09:06:31Z` 来自 server wall-log 观察点，
   不作为正式计时边界。
+
+### 2026-07-29T10:00:37.631Z（18:00:37.631 CST）— 最终 operational 只读核查
+
+- 主 Agent确认 worker `4106666` 在线，dedicated keepalive
+  PID/PGID/SID `121312/121312/121312` 健康，8×10 每卡 mean/min/max
+  100%；每张 GPU 只有登记的 keepalive context、815 MiB。
+- 这是主 Agent的 live read-only attestation；P08 executor 没有登录 worker。
+  P07 immutable archive 仍是 contexts-none 与 keepalive 恢复的运行证据。
+
+### 2026-07-29T10:27:19Z — P08 最终离线审计
+
+- P08 输入 HEAD/origin 为
+  `966823eb2c8f9fe26aa8039f30e4c210beea47a6`，全程未登录 worker、启动
+  GPU/model 进程、改变 keepalive、发送 signal 或改写 HDFS raw artifact。
+- dataset verifier 18/18 `PASS`；P05 reducer 在独立 `/tmp` 从 immutable
+  native r4/B0 r1 输入重放，四个冻结文件逐字节相同，B0 32/32 token IDs
+  相同，484 values 的固定线性 q25 再得 `2.0625`。
+- P06/P07 client summary、acceptance、answers、source/wheel/checkpoint/config
+  identity、TP8/八卡参与、server/sampler、lifecycle、shutdown、contexts-none、
+  keepalive 均独立重放 `PASS`；两个 archive manifest 各 39/39 size/SHA
+  匹配。
+- P04/P05/P06 同时期缺失 standalone handoff 的流程缺口已修复：三份 recovered
+  handoff 明确标记 `retrospective evidence reconstruction`，仅从 immutable
+  phase evidence、权威文档与 Git history 重建，不冒充同时期记录。
+- `final_results.json`、`final_audit.json`、两份 reproduction 文档和最终
+  results/experiment/progress 更新已落盘；`artifact_manifest.json` 最后生成，
+  以覆盖最终文件 bytes/hash 并避免自引用。
+- 最终路线状态 `COMPLETE`。主 Agent acceptance 与 commit/push 尚待完成；
+  后续不再启动模型。
+
+### 2026-07-29T10:45:54.693Z — P08 主 Agent最终验收
+
+- 主 Agent独立执行 dataset 18/18、P05 reducer byte replay、P04 recovered
+  native/B0 replay、P06/P07 全 validator 与两个 39/39 archive、1000 条
+  formal raw result/delta 重算；全部 `PASS`。
+- P00/P02/P03 session、READY marker、core injection、integration patch、
+  formal wheel、installed RECORD 与固定 SGLang base 身份链 `PASS`；
+  P04–P07/protocol/integration/core 完整回归 153/153 `PASS`。
+- 最终 manifest 的 39 direct records、6 个 nested manifests 与 214 个 nested
+  files 全部重新读取 size/SHA 通过；JSON、Markdown links、Git ancestry 与
+  `git diff --check` 通过。
+- `2026-07-29T18:44:58.993+08:00` 最终 live status 继续确认 worker
+  `4106666` 在线、keepalive `121312/121312/121312` 健康，8×10 每卡
+  mean/min/max 100%、815 MiB；没有启动模型。
+- `final_audit.main_agent_acceptance=PASS`；路线按计划发布为 `COMPLETE`。
+  唯一剩余动作是最终 commit/push。

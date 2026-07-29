@@ -3,13 +3,16 @@
 > 本文是面向读者的结果视图，数字从冻结的 JSON/HDFS artifacts 派生。
 > 唯一审计账本仍是
 > [`docs/experiment/hedge-deepseek-v4-flash-dspark.md`](../experiment/hedge-deepseek-v4-flash-dspark.md)；
-> 如两者不一致，以原始 artifact 和该审计账本为准。P08 将从最终审计 JSON
-> 重算并补齐本文。
+> 如两者不一致，以原始 artifact 和该审计账本为准。机器可读结果、最终审计和
+> 复现入口分别是
+> [`final_results.json`](../../artifacts/hedge-dspark/p08-final/final_results.json)、
+> [`final_audit.json`](../../artifacts/hedge-dspark/p08-final/final_audit.json) 和
+> [`复现索引`](hedge-deepseek-v4-flash-dspark-reproduction.md)。
 
 ## 一页结论
 
-- 状态：`IN_PROGRESS`；32 条 calibration、native 正式 500 与 HEDGE
-  `B>0` 正式 500 均已完成并通过主 Agent复验；仅剩 P08 最终离线审计。
+- 状态：`COMPLETE`；32 条 calibration、native 正式 500、HEDGE
+  `B>0` 正式 500 与 P08 最终离线审计全部 `PASS`。
 - 数据不是新生成或训练数据：固定
   `openai/gsm8k@740312add88f781978c0658806c59bc2815b9866`
   的 `main/test`，用 seed `980406` 确定性 shuffle；前 32 条 calibration，
@@ -212,6 +215,31 @@ P06/P07 中 15/500 条完整输出 token-ID 列表相同，485/500 不同；答�
 `match→parse_failure`、2 `mismatch→match`、9 `mismatch→mismatch`、
 11 `parse_failure→parse_failure`。这些都是观察值，不是通过门槛。
 
+## 最终离线审计
+
+P08 在输入 HEAD `966823eb2c8f9fe26aa8039f30e4c210beea47a6` 上只读重放，
+没有登录 worker、启动模型、改变 keepalive、发送 signal 或修改 HDFS 原始
+artifact：
+
+- dataset verifier 18/18 `PASS`；
+- P05 reducer 四个冻结文件与独立 `/tmp` 重放结果逐字节相同；
+- P06/P07 的 client summary、identity、server、sampler、lifecycle、shutdown、
+  contexts-none、keepalive 与 formal-window 八卡证据全部 `PASS`；
+- P06/P07 archive manifest 各 39 个文件的 size/SHA 独立重算全部匹配；
+- source、wheel、checkpoint 与 config identity 复核 `PASS`；
+- 路线结论为 `COMPLETE`，没有把正式结果用于回调 `g/B/m`，也没有新增
+  TPS、接受长度或 GSM8K 门槛。
+
+P04/P05/P06 当时缺失的独立 phase handoff 已在 P08 作为
+`retrospective evidence reconstruction` 补齐。每份均明确标记为事后证据重建，
+不伪装成同时期 executor 记录；该流程缺口现已修复。
+
+完整审计、artifact 覆盖与离线命令见
+[`final_audit.json`](../../artifacts/hedge-dspark/p08-final/final_audit.json)、
+[`artifact_manifest.json`](../../artifacts/hedge-dspark/p08-final/artifact_manifest.json)
+和
+[`reproduction.md`](../../artifacts/hedge-dspark/p08-final/reproduction.md)。
+
 ## 限制
 
 - 不设置 TPS、接受长度或 GSM8K 匹配率门槛。
@@ -220,4 +248,5 @@ P06/P07 中 15/500 条完整输出 token-ID 列表相同，485/500 不同；答�
 - GSM8K match 是观测指标，不是基础设施成功门禁。
 - 每个正式 arm 只运行一次，不报告方差或置信区间；观察到的路线内差值不能外推为
   跨硬件、跨方法或生产吞吐结论。
-- P08 尚未生成最终审计 JSON/manifest，因此总体状态暂不标记 `COMPLETE`。
+- checkpoint 按计划使用固定 provider identity、manifest 与真实模型加载核查，
+  没有额外完整重读约 166.9 GB payload 计算全量 SHA-256。

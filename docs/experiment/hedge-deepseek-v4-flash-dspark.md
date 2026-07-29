@@ -2,21 +2,28 @@
 
 ## 快速结果
 
-- 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T09:52:49Z`
+- 状态：`COMPLETE`
+- 记录更新时间：`2026-07-29T10:45:54.693Z`
 - 读者版结果报告：
   [`docs/results/hedge-deepseek-v4-flash-dspark.md`](../results/hedge-deepseek-v4-flash-dspark.md)
+- 复现索引：
+  [`docs/results/hedge-deepseek-v4-flash-dspark-reproduction.md`](../results/hedge-deepseek-v4-flash-dspark-reproduction.md)
+- 最终机器可读结果 / 审计 / manifest：
+  [`final_results.json`](../../artifacts/hedge-dspark/p08-final/final_results.json) /
+  [`final_audit.json`](../../artifacts/hedge-dspark/p08-final/final_audit.json) /
+  [`artifact_manifest.json`](../../artifacts/hedge-dspark/p08-final/artifact_manifest.json)
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；原截止
   `2026-07-29T08:54:41Z` 已由用户于 `2026-07-29T07:47:18Z` 明确解除，
   当前无截止时间
 - B0：P04 单请求 smoke `PASS`；P05 32 条完整 token IDs `PASS`（32/32）
-- 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
+- 结论/首要事项：路线 `COMPLETE`。P05 native r1/r2/r3 分别保留为
   `FAIL_TRACE_SCOPE`、`FAIL_PRE_COHORT_QUIESCENCE` 与
   `FAIL_PREFILL_TERMINAL_LIFECYCLE`。生命周期修复后的唯一 native r4 已主审
   `PASS`：32/32、0 retry、5183 completion tokens，trace 精确覆盖 32 个 response
   RID，484 个正且有限的 barrier 值得到 q25=`2.0625`。唯一 P05 B0 32/32
   完整 token-ID 列表与 native 相同；reducer 已冻结
-  `g=B=2.0625,m=1`，P05 `PASS`。
+  `g=B=2.0625,m=1`，P05 `PASS`。P06/P07 两个正式 arm 与 P08 离线重放
+  均 `PASS`；主 Agent独立验收后发布 `COMPLETE`。
 - 正式 native run：`PASS`；
   `20260729T062241Z-p06-native-formal-r1`，500/500、0 retry、74594 tokens、
   2348.31919839s、31.76484698125425 output TPS
@@ -60,16 +67,17 @@
   r1 failure docs `fd88b69`；r2 progress `64e6be7`；quiescence recovery
   `fe0aea0`；r2/recovery experiment `3c37a41`；r3 heartbeat `9e4aceb`；
   prefill lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration
-  freeze `c244651`；P06 tooling `6a74186`；P07 tooling `3253062`
+  freeze `c244651`；P06 tooling `6a74186`；P06 result `9134825`；
+  P07 tooling `3253062`；P07 result `966823e`；P08 最终结果节点为本次待提交
+  变更
 - DeepSpec worktree / branch / accepted integration commit：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
-- latest implementation HEAD/pushed：
-  `325306216f12640d1e0b97a9367a1dc360a53c46`
-- 下一步：P07 已由主 Agent独立验收 `PASS`。进入 P08 纯离线审计，重算
-  calibration/B0/native/HEDGE/delta，生成最终 JSON/Markdown/manifest；不再
-  启动模型
+- P08 输入/latest pushed HEAD：
+  `966823eb2c8f9fe26aa8039f30e4c210beea47a6`
+- 下一步：不再启动模型。主 Agent验收已 `PASS`；只需按
+  `$git-commit-message` 提交并 push 本次最终结果节点
 
 ## 当前阶段
 
@@ -82,8 +90,8 @@
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
 | P06 | `PASS` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS | — |
-| P07 | `PASS` | 唯一 HEDGE formal 500/500、0 retry、75819 tokens、2263.710352404s、33.493242595936465 TPS；HEDGE/runtime/TP8/GPU/cleanup/archive 主审全 PASS | 结果 Git 节点 |
-| P08 | `READY` | P06/P07 均有效；所有服务已停止；keepalive `121312` 8×10 全卡 100% | 最终离线审计 |
+| P07 | `PASS_COMMITTED` | 唯一 HEDGE formal 500/500、0 retry、75819 tokens、2263.710352404s、33.493242595936465 TPS；HEDGE/runtime/TP8/GPU/cleanup/archive 主审全 PASS；result commit `966823e` | — |
+| P08 | `PASS / COMPLETE` | 主 Agent独立重算 dataset、P00–P07 identity/results、153 tests 与 39+6 manifest 全 PASS；最终 JSON/Markdown 已生成 | 最终 commit/push |
 
 ## 固定实验协议
 
@@ -545,6 +553,44 @@
 - P05 B0 定向 cleanup 后 contexts none；dedicated keepalive 更新为
   `93521/93521/93521`，attempt 内 8×10 全卡 mean/min/max 100%。B0 请求窗口
   八卡各有 134 个 samples，TP/target/draft ranks 0–7 均 PASS。
+- P06/P07 正式窗口分别证明 TP/target/draft ranks 0–7 全部参与，八卡各有
+  1982/1909 个 formal-window samples；两个 run 均无未处理 CUDA/NCCL/worker
+  crash，登记的 server/sampler 定向退出且 contexts none。
+- P07 归档记录最终 dedicated keepalive 为 `121312/121312/121312`，8×10
+  全卡 mean/min/max 100%。主 Agent于
+  `2026-07-29T18:44:58.993+08:00` 最终只读确认 worker `4106666` 在线、
+  同一 keepalive 健康，每张卡只有该登记 context、815 MiB。P08 executor 本身
+  没有登录 worker。
+
+## P08 最终离线审计
+
+- audit：`20260729T100504Z-p08-final-audit`；输入 branch HEAD/origin
+  `966823eb2c8f9fe26aa8039f30e4c210beea47a6`。
+- P08 纯离线执行，没有登录 worker、启动 GPU/model 进程、改变 keepalive、
+  发送 signal 或改写 HDFS raw artifacts。
+- `verify-dataset` 18/18 `PASS`；固定 revision、1319 rows、fingerprint、
+  content hash、seed shuffle、32/500 不重叠 cohort 与三个协议 artifact
+  SHA 全部重算匹配。
+- P05 reducer 从 native r4/B0 r1 raw outputs、trace 与 counter 在独立
+  `/tmp` 重放；四个冻结文件逐字节相同。B0 32/32 完整 token-ID 列表相同，
+  484 个正且有限值按固定线性 q25 再得 `2.0625`。
+- P06/P07 client/summary、acceptance、answers、identity、server、sampler、
+  lifecycle、shutdown、contexts、keepalive 与 exact formal-window GPU
+  validator 全部 `PASS`；两个 archive manifest 各 39/39 size/SHA 全匹配。
+- source、wheel、DSpark integration、pure core、checkpoint identity 的
+  P06/P07 parity 全 `PASS`；两个 decode fingerprint 的预期差异仅来自
+  HEDGE arm/config。
+- P04/P05/P06 当时没有单独 phase handoff。P08 已从 immutable phase evidence、
+  权威 experiment/progress 与 Git history 生成三份明确标记
+  `retrospective evidence reconstruction` 的 recovered handoff；不伪装为
+  同时期 executor 记录。流程缺口状态为 `REPAIRED`。
+- 输出：
+  [`final_results.json`](../../artifacts/hedge-dspark/p08-final/final_results.json)、
+  [`final_audit.json`](../../artifacts/hedge-dspark/p08-final/final_audit.json)、
+  [`artifact_manifest.json`](../../artifacts/hedge-dspark/p08-final/artifact_manifest.json)、
+  [`reproduction.md`](../../artifacts/hedge-dspark/p08-final/reproduction.md)。
+- audit status 与主 Agent acceptance 均为 `PASS`；路线发布为 `COMPLETE`。
+  只剩最终 commit/push 仓库动作，不需要再启动模型。
 
 ## 限制与复现状态
 
@@ -558,5 +604,7 @@
   validator 工具误报，不是 CUDA/NCCL/worker crash。
 - P05 参数只来自 fixed calibration scoped trace，已经 B0 完整 token-ID 等价与
   reducer 落盘冻结；正式 500 条结果不得反向修改 `g/B/m`。
-- P08 最终离线审计尚未完成，因此当前总体状态仍为 `IN_PROGRESS`，不能提前发布
-  最终 `COMPLETE`。
+- checkpoint 按计划没有额外完整重读约 166.9 GB payload 计算全量 SHA-256；
+  证据由固定 provider identity、manifest 核查和成功真实加载组成。
+- P08 已完成并发布 `COMPLETE`；每个正式 arm 单次运行、无方差/置信区间和无跨方法
+  绝对排名的限制保持不变。
