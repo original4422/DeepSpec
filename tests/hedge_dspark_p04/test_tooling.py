@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,7 +12,7 @@ import time
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -29,6 +30,7 @@ from hedge_dspark_p04_prepare import (  # noqa: E402
     prepare_attempt,
     resolve_attempt,
 )
+import hedge_dspark_p04_prepare as p04_prepare  # noqa: E402
 from hedge_dspark_p04_gpu_sampler import (  # noqa: E402
     parse_gpu_sample,
     run_sampler,
@@ -268,6 +270,137 @@ class RuntimeIdentityTests(unittest.TestCase):
         self.assertEqual(engine["status"], "PASS")
         self.assertEqual(checkpoint["status"], "PASS")
         self.assertEqual(len(resolved["gpu_inventory"]), 8)
+
+    def test_readonly_engine_probe_cli_writes_a_passing_identity(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "engine_identity.json"
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS / "hedge_dspark_p04_prepare.py"),
+                    "probe-engine",
+                    "--worker-id",
+                    "4106666",
+                    "--decode-config-fingerprint",
+                    "readonly-persistent-wheel-probe",
+                    "--output",
+                    str(output),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            identity = json.loads(output.read_text(encoding="utf-8"))
+            summary = json.loads(completed.stdout)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(identity["status"], "PASS")
+        self.assertEqual(summary["status"], "PASS")
+        self.assertEqual(summary["false_checks"], [])
+        self.assertEqual(
+            identity["wheel"]["persistent_path"],
+            str(p04_prepare.PERSISTENT_WHEEL_PATH),
+        )
+
+
+class FormalWheelStorageDomainTests(unittest.TestCase):
+    def test_persistent_path_is_required_and_build_path_is_provenance_only(
+        self,
+    ) -> None:
+        manifest = json.loads(
+            p04_prepare.WHEEL_MANIFEST.read_text(encoding="utf-8")
+        )
+        source_wheel = Path(
+            manifest["formal_wheel"]["persistent_path"]
+        )
+        self.assertTrue(source_wheel.is_file())
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            persistent_wheel = root / "shared/formal.whl"
+            persistent_wheel.parent.mkdir()
+            shutil.copyfile(source_wheel, persistent_wheel)
+            ephemeral_missing = root / "worker-local-build/formal.whl"
+
+            persistent_manifest = json.loads(json.dumps(manifest))
+            persistent_manifest["formal_wheel"]["path"] = str(
+                ephemeral_missing
+            )
+            persistent_manifest["formal_wheel"]["persistent_path"] = str(
+                persistent_wheel
+            )
+            persistent_manifest_path = root / "persistent-manifest.json"
+            self._write_json(
+                persistent_manifest_path, persistent_manifest
+            )
+            with patch.object(
+                p04_prepare,
+                "WHEEL_MANIFEST",
+                persistent_manifest_path,
+            ), patch.object(
+                p04_prepare,
+                "PERSISTENT_WHEEL_PATH",
+                persistent_wheel,
+            ):
+                identity = build_engine_identity(
+                    decode_config_fingerprint="persistent-wheel-fixture"
+                )
+            self.assertEqual(identity["status"], "PASS")
+            self.assertEqual(
+                identity["wheel"]["build_path"],
+                str(ephemeral_missing),
+            )
+            self.assertEqual(
+                identity["wheel"]["verification_path"],
+                str(persistent_wheel),
+            )
+            self.assertEqual(
+                identity["wheel"]["formal_actual_sha256"],
+                identity["wheel"]["sha256"],
+            )
+
+            corrupt_persistent = root / "shared/corrupt.whl"
+            corrupt_persistent.write_bytes(b"not the formal wheel")
+            no_fallback_manifest = json.loads(json.dumps(manifest))
+            no_fallback_manifest["formal_wheel"]["path"] = str(
+                source_wheel
+            )
+            no_fallback_manifest["formal_wheel"]["persistent_path"] = str(
+                corrupt_persistent
+            )
+            no_fallback_manifest_path = root / "no-fallback-manifest.json"
+            self._write_json(
+                no_fallback_manifest_path, no_fallback_manifest
+            )
+            with patch.object(
+                p04_prepare,
+                "WHEEL_MANIFEST",
+                no_fallback_manifest_path,
+            ), patch.object(
+                p04_prepare,
+                "PERSISTENT_WHEEL_PATH",
+                corrupt_persistent,
+            ):
+                no_fallback = build_engine_identity(
+                    decode_config_fingerprint="no-fallback-fixture"
+                )
+            self.assertEqual(no_fallback["status"], "FAIL")
+            self.assertEqual(
+                no_fallback["wheel"]["verification_path"],
+                str(corrupt_persistent),
+            )
+            self.assertNotEqual(
+                no_fallback["wheel"]["formal_actual_sha256"],
+                no_fallback["wheel"]["sha256"],
+            )
+
+    @staticmethod
+    def _write_json(path: Path, value: object) -> None:
+        path.write_text(
+            json.dumps(value, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
 
 
 class EightGpuSamplerTests(unittest.TestCase):

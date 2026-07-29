@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 
 EXPECTED_WORKER = "4106666"
@@ -73,6 +73,14 @@ PATCHED_TREE_SHA256 = (
 FINAL_WHEEL_SHA256 = (
     "f2054c32025182ea8b4e57731ffa9d015"
     "0a40d5ac296f34e93c9b124181c7262"
+)
+FINAL_WHEEL_SIZE = 14646094
+PERSISTENT_WHEEL_PATH = Path(
+    "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/"
+    "formal-wheel-"
+    "f2054c32025182ea8b4e57731ffa9d015"
+    "0a40d5ac296f34e93c9b124181c7262/"
+    "sglang-0.5.16-cp311-cp311-linux_x86_64.whl"
 )
 EXPECTED_DISTRIBUTIONS = {
     "torch": "2.11.0+cu130",
@@ -152,6 +160,81 @@ def _git(*args: str, cwd: Path = REPO_ROOT) -> str:
         capture_output=True,
         text=True,
     ).stdout.strip()
+
+
+def resolve_formal_wheel_identity(
+    manifest_wheel: Mapping[str, Any],
+    *,
+    expected_persistent_path: Path | None = None,
+) -> dict[str, Any]:
+    """Verify pinned persistent bytes; retain the build path as provenance."""
+
+    if expected_persistent_path is None:
+        expected_persistent_path = PERSISTENT_WHEEL_PATH
+    build_path_raw = manifest_wheel.get("path")
+    persistent_path_raw = manifest_wheel.get("persistent_path")
+    build_path = (
+        Path(build_path_raw)
+        if isinstance(build_path_raw, str) and build_path_raw
+        else None
+    )
+    persistent_path = (
+        Path(persistent_path_raw)
+        if isinstance(persistent_path_raw, str) and persistent_path_raw
+        else None
+    )
+    persistent_is_file = (
+        persistent_path is not None and persistent_path.is_file()
+    )
+    persistent_is_symlink = (
+        persistent_path is not None and persistent_path.is_symlink()
+    )
+    actual_size = (
+        persistent_path.stat().st_size
+        if persistent_is_file and not persistent_is_symlink
+        else None
+    )
+    actual_sha256 = (
+        _sha256_file(persistent_path)
+        if persistent_is_file and not persistent_is_symlink
+        else None
+    )
+    checks = {
+        "persistent_path_declared": persistent_path is not None,
+        "persistent_path_pinned": persistent_path
+        == expected_persistent_path,
+        "persistent_file_exists": persistent_is_file,
+        "persistent_file_is_entity": persistent_is_file
+        and not persistent_is_symlink,
+        "persistent_size": (
+            actual_size
+            == manifest_wheel.get("size_bytes")
+            == FINAL_WHEEL_SIZE
+        ),
+        "persistent_sha256": (
+            actual_sha256
+            == manifest_wheel.get("sha256")
+            == FINAL_WHEEL_SHA256
+        ),
+    }
+    return {
+        "status": "PASS" if all(checks.values()) else "FAIL",
+        "checks": checks,
+        "build_path": None if build_path is None else str(build_path),
+        "build_path_exists": (
+            False if build_path is None else build_path.is_file()
+        ),
+        "persistent_path": (
+            None if persistent_path is None else str(persistent_path)
+        ),
+        "verification_path": (
+            None if persistent_path is None else str(persistent_path)
+        ),
+        "expected_size_bytes": FINAL_WHEEL_SIZE,
+        "actual_size_bytes": actual_size,
+        "expected_sha256": FINAL_WHEEL_SHA256,
+        "actual_sha256": actual_sha256,
+    }
 
 
 def build_engine_identity(
@@ -239,16 +322,8 @@ def build_engine_identity(
     compat_libcuda = CUDA_COMPAT / "libcuda.so.1"
     manifest_wheel = manifest["formal_wheel"]
     manifest_installation = manifest["installation"]
-    formal_wheel_path = Path(str(manifest_wheel["path"]))
-    formal_wheel_size = (
-        formal_wheel_path.stat().st_size
-        if formal_wheel_path.is_file()
-        else None
-    )
-    formal_wheel_sha = (
-        _sha256_file(formal_wheel_path)
-        if formal_wheel_path.is_file()
-        else None
+    formal_wheel = resolve_formal_wheel_identity(
+        manifest_wheel,
     )
     replay_identity = manifest["verification"][
         "artifact_only_patch_replay"
@@ -277,12 +352,18 @@ def build_engine_identity(
         "wheel_manifest_status": manifest.get("status") == "PASS",
         "wheel_sha256": manifest_wheel.get("sha256")
         == FINAL_WHEEL_SHA256,
-        "formal_wheel_exists": formal_wheel_path.is_file(),
-        "formal_wheel_size": formal_wheel_size
-        == manifest_wheel.get("size_bytes")
-        == 14646094,
-        "formal_wheel_actual_sha256": formal_wheel_sha
-        == FINAL_WHEEL_SHA256,
+        "formal_wheel_persistent_path": formal_wheel["checks"][
+            "persistent_path_declared"
+        ]
+        and formal_wheel["checks"]["persistent_path_pinned"],
+        "formal_wheel_exists": formal_wheel["checks"][
+            "persistent_file_exists"
+        ]
+        and formal_wheel["checks"]["persistent_file_is_entity"],
+        "formal_wheel_size": formal_wheel["checks"]["persistent_size"],
+        "formal_wheel_actual_sha256": formal_wheel["checks"][
+            "persistent_sha256"
+        ],
         "wheel_content": all(content_checks),
         "installed_record_sha256": installed_record_sha
         == manifest_installation.get("record_sha256"),
@@ -333,9 +414,14 @@ def build_engine_identity(
         "wheel": {
             "filename": manifest_wheel["filename"],
             "sha256": FINAL_WHEEL_SHA256,
-            "formal_path": str(formal_wheel_path),
-            "formal_size_bytes": formal_wheel_size,
-            "formal_actual_sha256": formal_wheel_sha,
+            "build_path": formal_wheel["build_path"],
+            "build_path_exists": formal_wheel["build_path_exists"],
+            "persistent_path": formal_wheel["persistent_path"],
+            "verification_path": formal_wheel["verification_path"],
+            "formal_path": formal_wheel["verification_path"],
+            "formal_size_bytes": formal_wheel["actual_size_bytes"],
+            "formal_actual_sha256": formal_wheel["actual_sha256"],
+            "storage_identity_checks": formal_wheel["checks"],
             "manifest": str(WHEEL_MANIFEST),
             "manifest_sha256": _sha256_file(WHEEL_MANIFEST),
             "installed_distribution_root": str(distribution_root),
@@ -844,6 +930,13 @@ def main() -> int:
     prepare_parser.add_argument("--attempt-id", required=True)
     prepare_parser.add_argument("--scratch", type=Path, required=True)
 
+    engine_probe = subparsers.add_parser("probe-engine")
+    engine_probe.add_argument("--worker-id", required=True)
+    engine_probe.add_argument(
+        "--decode-config-fingerprint", required=True
+    )
+    engine_probe.add_argument("--output", type=Path, required=True)
+
     emit_command = subparsers.add_parser("emit-command")
     emit_command.add_argument("--resolved", type=Path, required=True)
 
@@ -886,6 +979,36 @@ def main() -> int:
         )
         print(json.dumps(result, sort_keys=True))
         return 0 if result["status"] == "PASS" else 1
+    if args.command == "probe-engine":
+        identity = build_engine_identity(
+            decode_config_fingerprint=args.decode_config_fingerprint
+        )
+        _atomic_json(args.output, identity)
+        print(
+            json.dumps(
+                {
+                    "status": identity["status"],
+                    "false_checks": [
+                        key
+                        for key, value in identity["checks"].items()
+                        if value is not True
+                    ],
+                    "wheel": {
+                        key: identity["wheel"][key]
+                        for key in (
+                            "build_path",
+                            "build_path_exists",
+                            "persistent_path",
+                            "verification_path",
+                            "formal_size_bytes",
+                            "formal_actual_sha256",
+                        )
+                    },
+                },
+                sort_keys=True,
+            )
+        )
+        return 0 if identity["status"] == "PASS" else 1
     if args.command == "emit-command":
         resolved = json.loads(args.resolved.read_text(encoding="utf-8"))
         _emit_nul([str(item) for item in resolved["server"]["command"]])

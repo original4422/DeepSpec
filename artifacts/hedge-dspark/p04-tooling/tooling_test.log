@@ -1,13 +1,26 @@
-P04 DSpark tooling offline test evidence
-Recorded at: 2026-07-28T23:52:19Z
-Scope: local CPU/process/filesystem mocks only; no worker login, GPU, model, or keepalive action
+P04 DSpark tooling test evidence
+Recorded at: 2026-07-29T00:13:34Z
+Scope: local CPU/process/filesystem tests plus one worker-4106666 read-only identity/keepalive probe; no keepalive pause, model, native, or B0 action
 Command: PYTHONDONTWRITEBYTECODE=1 /home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest tests.hedge_dspark_p04.test_tooling -v
 Result: PASS
-Tests: 20 passed, 0 failed, 0 errors
-Elapsed: 0.877s
+Tests: 22 passed, 0 failed, 0 errors
+Elapsed: 1.835s
+
+Persistent-wheel regression:
+- RED: exact FormalWheelStorageDomainTests command; 1 failure, identity status FAIL instead of PASS
+- GREEN: same command; 1 passed
+- no-fallback fixture: valid provenance build path plus corrupt persistent path remains FAIL
+- persistent entity: /mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262/sglang-0.5.16-cp311-cp311-linux_x86_64.whl
+- persistent size/SHA-256: 14646094 / f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262
+
+Worker read-only probe:
+- ID: 20260729T001241Z-p04-engine-probe-r3
+- engine identity: PASS; false_checks=[]
+- build_path_exists=false; verification_path is the pinned persistent entity
+- keepalive: PASS; 8 GPUs x 10 samples; every GPU mean utilization 100%
 
 Static checks:
-- bash -n scripts/hedge_dspark_p04_attempt.sh: PASS
+- bash -n P04 attempt/read-only-probe scripts: PASS
 - PYTHONDONTWRITEBYTECODE source compile/import checks: PASS
 - lifecycle --print-contract JSON parse: PASS
 - git diff --check (P04 files only): PASS

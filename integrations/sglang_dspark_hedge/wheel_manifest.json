@@ -5,6 +5,7 @@
     "attempt": "locked07",
     "source": "/tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05",
     "path": "/tmp/deepspec-hedge-dspark-p03-build.locked07/wheel/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+    "persistent_path": "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
     "filename": "sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
     "sha256": "f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262",
     "size_bytes": 14646094,
