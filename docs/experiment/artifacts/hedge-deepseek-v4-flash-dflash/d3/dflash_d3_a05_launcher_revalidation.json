@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "status": "PASS",
+  "purpose": "a05 launcher source-identity preparation only",
+  "deepspec_base_head": "6c929a894d97b16ea88b0708a81528b2331096b8",
+  "source_graph": {
+    "head": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "parent": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "fixed_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "fixed_base_is_ancestor": true,
+    "worktree_clean": true
+  },
+  "launcher": {
+    "path": "scripts/dflash_d3_attempt.sh",
+    "sha256": "e1694ee3aaeb09703dff5f4fec4a1a5c911bc7169e5a1ccf1ee98909e3e2dc71",
+    "baseline_commit": "c54eed8",
+    "baseline_sha256": "467835a3d3f1585bf7bbda5d66349b54c43ec63879b501e5b5a3eddc31796c0e",
+    "identity_normalization": "Regex ^(readonly SOURCE_(?:SHA|PARENT)=).+$ in multiline mode; replace each matching line with group 1 followed by <SOURCE-IDENTITY>.",
+    "identity_normalized_sha256": "b24dbae02f4998f3c7e6817261c7ebda73ff4ce5546ba5a2dbe2320347d39bb8"
+  },
+  "two_field_only_diff": {
+    "status": "PASS",
+    "changed_fields": [
+      "SOURCE_SHA",
+      "SOURCE_PARENT"
+    ],
+    "before": {
+      "SOURCE_SHA": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+      "SOURCE_PARENT": "7245c3d607a1eadc26582bb78ebd603a70c22fa7"
+    },
+    "after": {
+      "SOURCE_SHA": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+      "SOURCE_PARENT": "d49a890b5b4d779a8a88ad8735f7cbf645d62759"
+    },
+    "proof": "After replacing exactly SOURCE_SHA and SOURCE_PARENT with one common sentinel in both files, the current launcher and c54eed8 launcher are byte-identical.",
+    "model_decode_backend_jit_request_lifecycle_changes": 0
+  },
+  "static_checks": {
+    "bash_n": "PASS",
+    "inline_python_ast": {
+      "status": "PASS",
+      "heredoc_count": 11
+    },
+    "shellcheck": {
+      "status": "PASS",
+      "severity": "error",
+      "version": "0.11.0"
+    },
+    "git_diff_check": "PASS"
+  },
+  "formal_source_environment_checkpoint_dry_run": {
+    "status": "PASS",
+    "source_identity": "PASS",
+    "source_import_or_gpu_execution": false,
+    "environment_contract": "PASS",
+    "command_contract": {
+      "status": "PASS",
+      "tp_size": 8,
+      "speculative_algorithm": "DFLASH",
+      "dflash_block_size": 8,
+      "draft_candidates": 7,
+      "moe_runner_backend": "flashinfer_mxfp4",
+      "context_length": 4096,
+      "max_running_requests": 1,
+      "mem_fraction_static": 0.8
+    },
+    "target_checkpoint": {
+      "revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+      "file_count": 73,
+      "total_bytes": 159630041626,
+      "weight_shard_count": 46
+    },
+    "draft_checkpoint": {
+      "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+      "file_count": 6,
+      "total_bytes": 3607606957,
+      "block_size": 8,
+      "draft_candidates": 7,
+      "aux_hidden_state_layer_ids": [
+        3,
+        13,
+        23,
+        32,
+        42
+      ]
+    },
+    "attempt_scratch_created": false
+  },
+  "operational_scope": {
+    "worker_login_performed": false,
+    "keepalive_paused": false,
+    "gpu_attempt_started": false,
+    "commit_created": false,
+    "push_performed": false
+  },
+  "validated_at_utc": "2026-07-29T03:28:46Z",
+  "next_gate": "main-agent review and commit before any a05 operational action"
+}
