@@ -353,3 +353,20 @@
   `mlx worker login 4106666 -- bash <absolute-script>` 复核远端仍为
   `21792/21792/21792`、8×10 全 100%，随后才启动唯一 B0 attempt
   `20260729T010603Z-p04-b0-r1`。
+
+### 2026-07-29T01:24:41Z — 270 分钟 checkpoint
+
+- 状态快照于 `2026-07-29T01:22:52Z` 提前取得。cadence recovery implementation
+  `37a8d37` 与 native recovery docs `d436feb` 均已 push，worktree clean。
+- 唯一 B0 attempt `20260729T010603Z-p04-b0-r1` 正在 worker `4106666`
+  前台运行；preflight/远端 keepalive 8×10 PASS 后由 launcher 紧邻 pause，
+  CUDA contexts clear 后启动。server PID/PGID/SID `23064/23064/23064`、
+  start ticks `195862198`，process guard 与前台 launcher 均仍存活。
+- TP0–TP7 distributed/NCCL 初始化完成；target 与
+  `DeepseekV4ForCausalLMDSpark` draft 均完成 48/48 shards。八 rank 都确认
+  target/draft `flashinfer_mxfp4` 与 `Mxfp4FlashinferCutlassMoEMethod`，
+  MHC prewarm 完成；八个 CUDA contexts 已逐 UUID 覆盖固定 8 张 H20。
+- 当前将进入 draft MXFP4/attention/DeepGEMM JIT，尚未 server ready、未发固定
+  请求、未产生 B0 counter 或 PASS 结论。日志尾部无 ERROR/Traceback/CUDA/NCCL/
+  worker crash；没有第二 attempt 或额外 GPU 负载。keepalive 仍处于 attempt
+  生命周期内的预期 `PAUSED`，结束路径负责定向清理并恢复。
