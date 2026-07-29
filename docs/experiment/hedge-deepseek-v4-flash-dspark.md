@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T06:54:23Z`
+- 记录更新时间：`2026-07-29T07:24:47Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：P04 单请求 smoke `PASS`；P05 32 条完整 token IDs `PASS`（32/32）
 - 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
@@ -13,7 +13,8 @@
   RID，484 个正且有限的 barrier 值得到 q25=`2.0625`。唯一 P05 B0 32/32
   完整 token-ID 列表与 native 相同；reducer 已冻结
   `g=B=2.0625,m=1`，P05 `PASS`。
-- 正式 native run：`NOT_RUN`
+- 正式 native run：`500_COMPLETE_VALIDATION_PENDING`；
+  `20260729T062241Z-p06-native-formal-r1`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / P04 native+B0 `PASS`；P05 native
   r4 TP/target/draft ranks 0–7、八卡请求期显存与利用率、无 crash、shutdown、
@@ -50,9 +51,9 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `ada66253e719cd021cdec369914245b51ff46b61`
-- 下一步：唯一 P06 native formal
-  `20260729T062241Z-p06-native-formal-r1` 已 ready 并进入 timed 500 client；
-  等待全部 500 终态、validator、cleanup 与 archive，不得修改已冻结 source/config
+- 下一步：唯一 P06 native formal 已于 `07:24:13Z` 达到 500/500；等待
+  validator、cleanup、contexts-none、keepalive 8×10 与 archive 终态，不得在
+  主审前宣称 PASS
 
 ## 当前阶段
 
@@ -64,7 +65,7 @@
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
-| P06 | `IN_PROGRESS` | formal tooling `6a74186`；唯一 attempt preflight/ready PASS，10 warmup 后正在 timed 500，launcher/client/sampler ownership 稳定 | 500 终态、validator、cleanup/archive |
+| P06 | `IN_PROGRESS` | formal tooling `6a74186`；唯一 attempt 10 warmup 后于 `07:24:13Z` 达到 500/500；client/sampler 自然退出，launcher 正在收尾 | validator、cleanup/contexts-none、keepalive/archive 与主审 |
 | P07–P08 | `NOT_STARTED` | — | P06 门禁 |
 
 ## 固定实验协议
