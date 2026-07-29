@@ -25,6 +25,8 @@ The last independently reviewed operational state remains worker `4099544`,
   `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`
 - SGLang final commit:
   `90c8558721de37ed0dc12802f29253ba52b873bc`
+- DeepSpec Phase 03 integration commit:
+  `d8ec6fcb9d90e57a9b5f8804c084a18b57bd60dd`
 - four-file injected core aggregate:
   `53ce6f3a4bb8d2ac6cc6a531f565455e15a7021fc2cce0a446ef3c1e7352a815`
 - complete 13-file candidate patch:

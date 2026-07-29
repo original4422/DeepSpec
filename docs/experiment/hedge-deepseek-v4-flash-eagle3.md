@@ -78,7 +78,7 @@
 | Phase 01C research | `docs/research/hedge_eagle3_phase01c/eagle3_compatibility_research.md` |
 | Phase 02 target | TP0–7、46/46 shards、packed FP4 `flashinfer_mxfp4`、八卡 context/API PASS；非正式 diagnostic |
 | Phase 02 native | 3/3 terminal、6 completion tokens、proposal `3` / internal verify `4`、accepted `0/9`；八 rank Eagle3 aux trace PASS；非正式 smoke |
-| Key commits | Phase 00 bootstrap `9369479acb6cbd88ae98a6e04446c6d50134feae`；Phase 01C contract `a8d913e8f200f02519a446ea77fcb235f2c76681`；Phase 01A publication `bb6ae8a92eac8c7d5a130b247835a01c70fe891b`；Phase 01B runtime `dccbb219faf25fa803cc27e26f59cc1b9786b9f4`；Eagle3 pure-core import `4cefd0a36ea254e4c14a83f35dc8db15b37a3384`（均已 push）；Phase 03 integration commit pending main Agent |
+| Key commits | Phase 00 bootstrap `9369479acb6cbd88ae98a6e04446c6d50134feae`；Phase 01C contract `a8d913e8f200f02519a446ea77fcb235f2c76681`；Phase 01A publication `bb6ae8a92eac8c7d5a130b247835a01c70fe891b`；Phase 01B runtime `dccbb219faf25fa803cc27e26f59cc1b9786b9f4`；Eagle3 pure-core import `4cefd0a36ea254e4c14a83f35dc8db15b37a3384`；Phase 03 integration `d8ec6fcb9d90e57a9b5f8804c084a18b57bd60dd`（均已 push） |
 
 ## Phase 00：bootstrap 与 operational ownership
 
