@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T03:55:00Z`（420 分钟 checkpoint 实际心跳，晚 19 秒）
+- 快照时间：`2026-07-29T04:21:10Z`（450 分钟 checkpoint 提前 3 分 31 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`07:00:19` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`07:26:29` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -13,32 +13,36 @@
   - P02：主 Agent 验收 `PASS`；新正式 venv 33/33 tests PASS，commit/push `4d96f44065c07030ede67484a262006ec149626a`，READY marker 已发布
   - P03：主验收 `PASS`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc` 与 identity/progress `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3` 均已 push
   - P04：主 Agent 验收 `PASS`；结果 commit/push `3e10b780264557e84a3cab5c1a196dc7c2a00496`
-  - P05：native r1 `FAIL_TRACE_SCOPE`；native r2 `FAIL_PRE_COHORT_QUIESCENCE`；
-    recovery `fe0aea0` 已主审/push；唯一 native r3 正在冷加载；B0 未运行
+  - P05：native r1 `FAIL_TRACE_SCOPE`；native r2
+    `FAIL_PRE_COHORT_QUIESCENCE`；native r3
+    `FAIL_PREFILL_TERMINAL_LIFECYCLE`；最小 engine recovery
+    `e028d2c31658a06b4f5a5ee072d7e21c79d51c36` 已主审/push；新 formal wheel
+    正在 bounded CPU rebuild；B0 未运行
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：native r3 已于 `03:40:38Z` 暂停 keepalive，
-  `03:40:41.234729Z` contexts none；当前登记 server `59735/59735/59735`、
-  sampler `59742/59742/59742`，无第二套 context
-- 最新 attempt：`20260729T033920Z-p05-native-calibration-r3`；冷加载中，
-  尚未 ready、尚未执行 quiescence handshake、尚未发送 cohort 请求
+- keepalive / server / PID：native r3 登记 server/sampler 已定向停止且
+  `04:00:55.063214Z` contexts none；当前仅 dedicated keepalive
+  `69805/69805/69805`，主 Agent `04:19Z` 独立复核 8×10 全卡 100%，无模型
+  server 或第二套 context
+- 最新 attempt：`20260729T033920Z-p05-native-calibration-r3`；
+  `FAIL_PREFILL_TERMINAL_LIFECYCLE`，0/32 cohort 请求、q25 未定义
 - 最新 immutable HDFS artifact：
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T025543Z-p05-native-calibration-r2`
-  （r2，immutable）；r3 活动 scratch：
-  `/tmp/deepspec-hedge-dspark-20260729T033920Z-p05-native-calibration-r3`
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T033920Z-p05-native-calibration-r3`
+  （r3，34 项 immutable archive）
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
   branch `exp/hedge-v4-dspark`；HEAD/pushed
-  `3c37a41ef0bf80f83399ca16b29b85c94e282e87`
+  `e028d2c31658a06b4f5a5ee072d7e21c79d51c36`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
   P05 tooling `ce5d672`；sampler recovery `6b7145d`；trace-scope recovery
   `eb4962f`；failure docs `fd88b69`；quiescence recovery `fe0aea0`；
-  r2/recovery experiment `3c37a41`；calibration config / result 尚未创建
-- 首要事项：让 r3 自然完成 target/draft 冷加载；ready 后先通过有界
-  quiescence→clear→exact-zero handshake，才允许第一个 cohort 请求
-- 下一检查点：`2026-07-29T04:24:41Z`
-- 下一 30 分钟动作：完成 r3 handshake、32 条 scoped native 与定向 cleanup；
-  主验收前不运行 B0，不采用 r1 q25
+  r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
+  lifecycle recovery `e028d2c`；calibration config / result 尚未创建
+- 首要事项：从新 patch/tree 重建、发布并用 uv 安装新的 formal wheel；旧
+  `f2054c…` wheel 明确 superseded，未完成身份验收前不得启动 native r4
+- 下一检查点：`2026-07-29T04:54:41Z`
+- 下一 30 分钟动作：完成新 wheel 的 replay/build/HDFS/installed identity，
+  主审后动态创建 scoped native r4；P05 B0 继续锁住，不采用 r1 q25
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -531,3 +535,35 @@
   cleanup、archive 与 keepalive 恢复均尚未完成，不能宣称 r3 或 P05 PASS。
 - P05 B0 继续锁住；冷加载期间没有其他 GPU load、第二 attempt 或 decode/source
   改动。
+
+### 2026-07-29T04:24:41Z — 450 分钟 checkpoint
+
+- 实际快照于 `04:21:10Z` 提前 3 分 31 秒落盘。唯一 native r3
+  `20260729T033920Z-p05-native-calibration-r3` 已 immutable 封存，并验收为
+  `FAIL_PREFILL_TERMINAL_LIFECYCLE`，不是 calibration PASS。
+- server 于 `03:58:44Z` ready；新握手随后运行整整 120 秒/120 polls。每次都稳定
+  报告 `requests_initialized=2`、`requests_finished=1`、
+  `requests_non_natural=1`、`active_request_states=state_leaks=1` 与 4 行启动
+  trace；因此 `clear_attempts=0`，客户端没有 POST clear，也没有发送任何 cohort
+  请求。32 条输出为 0、scoped q25 未定义。
+- TP0–TP7 target/draft 加载与固定 `flashinfer_mxfp4` 后端均成立，日志无
+  CUDA/NCCL/OOM/worker crash。sampler terminal 为 `stopped`，
+  `sample_count=1027` 与 CSV ordinal 精确相等；登记 server/sampler 定向停止，
+  contexts none，34 项 archive size/hash 全匹配。
+- 主 Agent与 bounded executor 对固定 SGLang source 的控制流核对确认：默认
+  `/health` 会生成 `max_new_tokens=1`；该请求在 generation prefill 的
+  `req.update_finish_state()` 后已终态，但旧 prefill 分支没有调用 speculative
+  worker 的 `note_request_finished`，而 decode 分支有。启动 warmup 的较长请求进入
+  decode 并正常释放，恰好解释 2 initialized / 1 finished / 1 leak。
+- TDD fixture 先得到确定性 RED（finish events 为空且 adapter active=1），最小
+  GREEN 只在 prefill 终态、KV release 前调用一次与 decode 相同的 lifecycle hook。
+  主 Agent独立复验 integration 23/23、pure core 33/33、protocol 13/13；
+  独立 clean replay 得到 patch SHA `a4077b9f…10c52`、10-file tree
+  `69e80df9…2422`，与 executor manifest 精确相同。
+- recovery commit/push 为
+  `e028d2c31658a06b4f5a5ee072d7e21c79d51c36`。旧 formal wheel
+  `f2054c…` 未被改写且明确 superseded；bounded CPU executor 正在按 P03 锁定流程
+  重建/发布/uv 安装新 wheel。完成身份主审前不启动 r4。
+- r3 清理后 dedicated keepalive 为 `69805/69805/69805`；主 Agent `04:19Z`
+  重新运行 `mlx worker list` 与远端 status，确认仍是分配的 exact 8×H20，
+  8×10 全卡 mean/min/max 100%、每卡 815 MiB，无模型 server。P05 B0 未运行。

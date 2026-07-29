@@ -3,16 +3,16 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T03:36:16Z`
+- 记录更新时间：`2026-07-29T04:21:10Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：P04 单请求 smoke `PASS`；P05 32 条 `NOT_RUN`
-- 结论/首要事项：P00–P04 已 PASS。P05 native r1 因 strict trace 混入启动
-  warmup RID 记为 `FAIL_TRACE_SCOPE`，其 q25 不采用。scope recovery 后的 native
-  r2 在 0/32 请求处发现 startup warmup 尚有一个 live request state，按门禁记为
-  `FAIL_PRE_COHORT_QUIESCENCE`。现已 test-first 加入有界
-  `wait quiescent → clear → exact-zero verify`，不清除 live state；121/121
-  fresh-process 回归 PASS，commit/push `fe0aea0`。下一步仅运行 native r3，验收后
-  才运行 P05 B0。
+- 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
+  `FAIL_TRACE_SCOPE`、`FAIL_PRE_COHORT_QUIESCENCE` 与
+  `FAIL_PREFILL_TERMINAL_LIFECYCLE`，没有可采用的 q25。r3 的 120 次 poll 证明
+  默认 `/health` 单 token generation 在 prefill 终态漏掉 speculative request
+  finish hook。确定性 RED→最小 GREEN、69/69 主回归与独立 clean replay 均 PASS，
+  recovery commit/push `e028d2c`。下一步先重建并验收新 formal wheel，再运行
+  native r4；P05 B0 继续锁住。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / P04 native+B0 `PASS`；P05 r1 live
@@ -23,29 +23,31 @@
   P00 checkpoint r1 PASS，canonical identity 记录 75 files / 48 shards /
   166898666759 bytes，按计划未做全量 hash
 - SGLang：固定 base
-  `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`，独立 source 双侧 clean；
-  env/source identity PASS
+  `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`；当前 integration patch
+  `a4077b9f…10c52`、clean replay 10-file tree `69e80df9…2422`；旧 wheel
+  `f2054c…` 已 superseded，新 wheel 正在重建
 - g / B / m：`NOT_CALIBRATED` / `NOT_CALIBRATED` / 固定目标 `1`
 - native TPS / HEDGE TPS / delta：`NOT_RUN` / `NOT_RUN` / —
 - native accepted length / HEDGE accepted length / delta：`NOT_RUN` / `NOT_RUN` / —
 - native GSM match / HEDGE GSM match：`NOT_RUN` / `NOT_RUN`
 - artifact root：最新 P05 failed evidence
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T025543Z-p05-native-calibration-r2`
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T033920Z-p05-native-calibration-r3`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；
   integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result
   `3e10b780264557e84a3cab5c1a196dc7c2a00496`；P05 tooling `ce5d672`；
   sampler recovery `6b7145d`；trace-scope recovery `eb4962f`；
   r1 failure docs `fd88b69`；r2 progress `64e6be7`；quiescence recovery
-  `fe0aea0`；calibration config / result 尚未创建
+  `fe0aea0`；r2/recovery experiment `3c37a41`；r3 heartbeat `9e4aceb`；
+  prefill lifecycle recovery `e028d2c`；calibration config / result 尚未创建
 - DeepSpec worktree / branch / accepted integration commit：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
-  `fe0aea00b74638847b264b03480b18b29a02ce9d`
-- 下一步：P05 运行 32 条 scoped native r3 calibration/trace；主验收 PASS 后才运行
-  B0 并自动计算、冻结 q25
+  `e028d2c31658a06b4f5a5ee072d7e21c79d51c36`
+- 下一步：按固定 replay 重建/发布/安装新 formal wheel并主验 identity；随后运行
+  32 条 scoped native r4。主验收 PASS 后才运行 B0 并自动计算、冻结 q25
 
 ## 当前阶段
 
@@ -56,7 +58,7 @@
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
-| P05 | `IN_PROGRESS` | r1 `FAIL_TRACE_SCOPE`；r2 `FAIL_PRE_COHORT_QUIESCENCE` 且 0/32；quiescence recovery `fe0aea0` 已 push；121/121 回归 PASS | scoped native r3、B0 32、q25/config freeze |
+| P05 | `IN_PROGRESS` | r1 `FAIL_TRACE_SCOPE`；r2 `FAIL_PRE_COHORT_QUIESCENCE`；r3 `FAIL_PREFILL_TERMINAL_LIFECYCLE` 且 0/32；engine recovery `e028d2c` 已 push，69/69 + replay PASS | 新 wheel identity、scoped native r4、B0 32、q25/config freeze |
 | P06–P08 | `NOT_STARTED` | — | P05 门禁 |
 
 ## 固定实验协议
@@ -121,6 +123,8 @@
 | P05 trace-scope recovery | cohort 前 clear+验零，post/reducer 以 32 个 response RID 封闭 trace | PASS：旧 r1 extra RID `505959…` 被精确拒绝；全量 q25 2.083333 与 cohort-only 2.0625 的差异证明影响实质；commit/push `eb4962f` | output directory 未创建；必须重跑 native |
 | `20260729T025543Z-p05-native-calibration-r2` | scope recovery 后首个 native 重跑；decode 配置不变 | `FAIL_PRE_COHORT_QUIESCENCE`：clear 返回 `[true]` 后仍有一个 startup warmup live state；门禁在第一个 cohort 请求前失败，0/32、0 trace | immutable HDFS attempt；TP8/model load、sampler、cleanup、archive、keepalive 均完整 |
 | P05 quiescence recovery | 仅在客户端有界等待 startup warmup 自然结束，再 clear+验 exact zero | PASS：永久 active 超时且 0 cohort；identity/HTTP 立即失败；verify race 有界重试；121/121；commit/push `fe0aea0` | 成功/失败均保留 poll/clear 轨迹；不清 live state、不改 SGLang/wheel/decode |
+| `20260729T033920Z-p05-native-calibration-r3` | quiescence recovery 后唯一 native 重跑；decode 配置不变 | `FAIL_PREFILL_TERMINAL_LIFECYCLE`：120/120 polls 恒为 active/leak=1；0 clear、0/32 cohort、q25 undefined | immutable HDFS attempt；TP8/model load、1027×8 sampler、cleanup、34-file archive、keepalive 完整 |
+| P05 prefill lifecycle recovery | prefill 终态、KV release 前补齐与 decode 相同的 speculative finish hook | PASS：精确 RED→GREEN；主 Agent 23+33+13=69 tests；独立 replay manifest/tree 与 executor 相同；commit/push `e028d2c` | patch/tree 已更新；旧 wheel真实保留但 superseded，新 wheel重建中 |
 
 ## P04 integration smoke 当前状态
 
@@ -279,11 +283,29 @@
   fail-closed，且失败 summary 保存 poll/clear evidence；不删除 live state。
 - executor 与主 Agent分别完成全部相关 fresh-process 回归；最终主复验为
   P05 24/24、P04 29/29、protocol+core 46/46、integration 22/22，合计
-  121/121 PASS，另有 shell、compile 与 diff checks PASS。所有 recovery 均不改变
-  SGLang wheel、checkpoint 或 decode 配置。
-- 下一步只允许基于 HEAD `fe0aea00b74638847b264b03480b18b29a02ce9d`
-  动态创建新的 native-trace r3；主 Agent独立验收 scoped trace 与 clean
-  sampler terminal status 后，才可启动 P05 B0。
+  121/121 PASS，另有 shell、compile 与 diff checks PASS。上述 sampler、
+  trace-scope 与 quiescence client recovery 均不改变 SGLang wheel、checkpoint
+  或 decode 配置。
+- native r3 `20260729T033920Z-p05-native-calibration-r3` 在 ready 后执行完整
+  120 秒/120 polls；每次都是 initialized=2、finished=1、non-natural=1、
+  active=leak=1、trace=4。门禁未执行 clear，未发送 cohort 请求，输出 0/32，
+  q25 未定义。模型 TP8/后端无 crash，1027 ordinals、定向 cleanup、contexts
+  none、keepalive 与 34 项 archive 均成立。
+- source 诊断把 leak 唯一对应到默认 `/health` 的
+  `max_new_tokens=1` generation：它在 prefill 的 `update_finish_state()` 后终止，
+  旧 prefill 分支释放 KV 却没有调用 speculative worker finish hook；decode 分支
+  已有该 hook。较长 startup warmup 进入 decode 并正常释放，和 r3 的 2/1/1 counters
+  精确一致。
+- bounded executor 先用真实 scheduler seam 得到确定性 RED，再只在 prefill 终态、
+  KV release 前补齐一次同构 hook。主 Agent独立复验 integration 23/23、core
+  33/33、protocol 13/13，并从固定 base 重放 patch；manifest SHA
+  `942e2f0b…a3fe`、10-file tree `69e80df9…2422` 与 executor 精确相同。
+  recovery commit/push `e028d2c31658a06b4f5a5ee072d7e21c79d51c36`。
+- 下一步只允许先从 patch SHA `a4077b9f…10c52` / tree
+  `69e80df9…2422` 重建、HDFS 发布并用 uv 安装新 formal wheel；旧
+  `f2054c…` wheel 保持历史身份但不再可用于后续 arm。新 identity 主验后动态创建
+  native r4；主 Agent验收 scoped trace 与 sampler terminal status 后，才可启动
+  P05 B0。
 
 ## P03 integration 当前证据
 
