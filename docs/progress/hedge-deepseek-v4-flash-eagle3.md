@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_03_COMPLETE_SOURCE_FROZEN`
+> 当前状态：`PHASE_04_RECOVERY_TDD`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
@@ -30,6 +30,9 @@
 | 2026-07-29T03:26:00Z | 6h29m33s | 2h30m27s | 5h30m27s | Phase 03 bounded correction / `eagle3_phase03` | 主 Agent 03:23Z 重验 worker `4099544`、keepalive owner `315671`、8×10 每卡 100%；executor 未触碰 GPU | 首次 frozen-state 回归发现 finalizer fixture 错把真实 SHA 当 pending；TDD 修正为 pending→frozen、same-SHA byte-idempotent、different-SHA pre-write reject。真实 SHA 完整 CLI重跑保持原 timestamp/authority hashes，DeepSpec 71/71 PASS；SGLang candidate 未改 | HDFS authority 已由同 SHA CLI 重同步；等待主 Agent精确审阅 correction diff 后 commit/push，再派 Phase 04 |
 | 2026-07-29T03:31:00Z | 6h34m33s | 2h25m27s | 5h25m27s | Phase 03 evidence correction / `eagle3_phase03` | keepalive/GPU 未触碰；沿用主 Agent 03:23Z 的 8×10 每卡 100% gate | staged audit 发现全量 DeepSpec `diff --check` 对 immutable nested patch 报 20 条机械 warning；逐行锁定为 canonical 单空格 context marker。SGLang base→final check PASS，排除该 patch 后 DeepSpec code/docs check PASS；patch SHA仍 `13fb7ced…3945` | 修正 README/handoff/experiment/regression 的 scope，测试锁定 patch hash与20行marker；同 SHA finalizer 同步HDFS后交主 Agent重审index |
 | 2026-07-29T03:35:00Z | 6h38m33s | 2h21m27s | 5h21m27s | Phase 03 主 Agent 验收完成 | worker `4099544` 仍在分配列表；03:23Z keepalive owner `315671`、8×10 每卡 100% | SGLang final SHA `90c8558721de37ed0dc12802f29253ba52b873bc`、13-file patch `13fb7ced…3945`、DeepSpec 71/71、SGLang 32/32、HDFS authority cmp 与 scoped staged diff-check 全部复核通过；Phase 03 integration commit `d8ec6fcb9d90e57a9b5f8804c084a18b57bd60dd` 已 push | Phase 04 gate 已开放；派发独立 executor 运行 native 32、B0 32、自动 q25 calibration 与 B+ 小 smoke，禁止复用 Phase 02 三请求 smoke |
+| 2026-07-29T03:45:00Z | 6h48m33s | 2h11m27s | 5h11m27s | Phase 04 / `eagle3_phase04` | 03:39Z owner `315671` exact-eight 状态 PASS；8×10 每卡 min/mean/max=100%、815 MiB。native attempt 已原子暂停 keepalive，等待 TP=8 ready | DeepSpec/SGLang clean，final SHA `90c8558…`、reviewed patch `13fb7c…`、固定 dataset SHA `5d4654…`；三臂服务命令逐字相同且仅 HEDGE mode/config 差异，Phase 03 trace/config 回归 15/15 PASS；无 blocker | `.../20260729T034000Z-phase-04-native-calibration-01`；完成 32 条终态和 proposal identity 后定向清理、恢复 8×10，再启动独立 B0 服务 |
+| 2026-07-29T03:55:00Z | 6h58m33s | 2h01m27s | 5h01m27s | Phase 04 native attempt 01 invalid / `eagle3_phase04` | TP0–7、八卡 context、HTTP ready 后登记 SIGTERM；0 context PASS；keepalive 新 owner `321562`，8×10 每卡 100% | `INVALID_ORCHESTRATION_MUTATION`：执行中的 repo attempt script 被 apply_patch 改写，Bash 从旧文件 offset 继续读取新 inode 内容并把 `$'}\n)'` 解析为命令；runner 未执行、0 outputs，不是 SGLang/CUDA/NCCL crash。单一根因已固定 | `.../20260729T034000Z-phase-04-native-calibration-01/{orchestration_failure,attempt_status}.json`；冻结/hash 全部执行脚本并完成离线回归，retry 02 全程禁止修改执行脚本 |
+| 2026-07-29T04:14:00Z | 7h17m33s | 1h42m27s | 4h42m27s | Phase 04 native retry 02 fail closed / `eagle3_phase04` | TP0–7、精确八 context、HTTP ready；登记 SIGTERM、无 KILL fallback；0 context 后 keepalive owner `328407` 恢复，8×10 每卡 100% | tooling freeze 校验 PASS；32/32 terminal 均为 pre-generation trace-clear failure，0 generation。resolved `enable_multi_layer_eagle=false` 选择 `EAGLEWorkerV2`，但 Phase 03 只给 `MultiLayerEagleWorkerV2` 接了 HEDGE hooks；blocker 已缩到 concrete worker seam | `.../20260729T040000Z-phase-04-native-calibration-02`；保持 Phase 03 frozen authority 不变，最小 TDD recovery 后生成独立 patch/manifest，主 Agent审核前不启 GPU |
 
 ## 当前依赖
 
@@ -44,7 +47,7 @@
   `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`，editable import、201-package
   `uv pip check`、CUDA 13 link-layout 和关键版本均已验证。GSM8K split、runner、
   q25/B0/report/cleanup fixtures 与 4 unit tests PASS。
-- Operational keepalive：Phase 02 attempt 02 结束后恢复为 owner `315671`；
+- Operational keepalive：Phase 04 retry 02 结束后恢复为 owner `328407`；
   准确 8 个 owned worker/context，10×1 秒逐卡 mean=100%，CUDA visibility、
   UUID 与 lane-local environment 见 native attempt 的 `keepalive_after*` 证据。
 

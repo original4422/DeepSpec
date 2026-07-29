@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_03_COMPLETE_SOURCE_FROZEN`。**
+> **状态：`PHASE_04_RECOVERY_TDD`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -13,12 +13,23 @@
 > clean fixed-base replay 与联合回归均 PASS。主 Agent 已提交精确
 > candidate，并由 identity finalizer 冻结 `sglang_final_sha` 为 `90c8558721de37ed0dc12802f29253ba52b873bc`；
 > committed tree、patch、core 与 uv lock identity 均 PASS。Phase 03 source
-> gate 已完成，主 Agent 验收后 Phase 04 gate 可开放。
+> gate 已完成并经主 Agent 验收；Phase 04 已在同一最终 source 上启动。
 >
-> Phase 03 为 CPU-only 实现与 replay，没有启动服务、暂停 keepalive 或执行 GPU
-> workload。worker `4099544` 与 operational keepalive owner `315671` 保持不变；
-> 32 条 calibration、`B=0`、`g/B` 与正式 500 条仍全部 pending，不能把 Phase 02
-> 的 3-request smoke 写成 native baseline。
+> Phase 04 preflight 于 `2026-07-29T03:39Z` 复核 worker `4099544`、
+> operational keepalive owner `315671` 与 8×10 样本逐卡 100%。native
+> attempt 01 已到达 TP0–7、八卡 context、Eagle3 aux trace 与 HTTP ready，但在
+> runner 前因执行中的 repo script 被 `apply_patch` 改写而触发 Bash 混合字节解析，
+> 判定 `INVALID_ORCHESTRATION_MUTATION`，不构成 32 条结果。登记 SIGTERM 后
+> 0 context，keepalive 新 owner `321562` 已恢复 8×10 每卡 100%。
+> 冻结工具后的 native retry 02 再次达到 TP0–7、精确八卡 context 和 HTTP ready，
+> 但 32/32 条都在 generation 前的 trace clear fail closed，0 次 generation。
+> live 证据把 blocker 缩小到实际 registry seam：当前
+> `enable_multi_layer_eagle=false` 选择 `EAGLEWorkerV2`，而 Phase 03 HEDGE
+> lifecycle/observability 只接入了 `MultiLayerEagleWorkerV2`。服务已登记
+> SIGTERM、无 KILL fallback，0 context 后 keepalive owner `328407` 恢复，
+> 8×10 样本逐卡 100%。Phase 03 frozen authority 保持不变；Phase 04 recovery
+> source SHA 仍 pending 主 Agent 审核与提交。
+> `B=0`、`g/B` 与正式 500 条仍 pending。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -66,7 +77,7 @@
 | Dataset seed | 980406 |
 | Formal samples | 500 |
 | DeepSpec source | branch `exp/hedge-v4-eagle3`; Phase 00 base `cac6c78d88df97d395406fe831f573df3016e7f7` |
-| SGLang source | `/home/tiger/src/sglang-hedge-v4-eagle3`; fixed base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; 13-file final candidate patch SHA-256 `13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945`; final commit `90c8558721de37ed0dc12802f29253ba52b873bc` |
+| SGLang source | `/home/tiger/src/sglang-hedge-v4-eagle3`; fixed base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; Phase 03 frozen patch SHA-256 `13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945`; Phase 03 final commit `90c8558721de37ed0dc12802f29253ba52b873bc`; Phase 04 recovery final SHA pending |
 | Target | `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1`; 73 regular files，`159630041626` bytes，manifest `af6f274af9b0b257a6b910ae9b8ac4d0e1dd0a0bbcd96898fc6772c7e158facd`，published |
 | Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; 7 regular files，`1858538499` bytes，manifest `dfa6b2de48c46f4fda0cf7070466d35e6bd3df44b84ba0363616cc0f1f6020a0`，published |
 | HEDGE core | source `9fb903d676254ea5f5d171051fb15c54f331111c`；DSpark publisher `4d96f44065c07030ede67484a262006ec149626a`；Eagle3 import `4cefd0a36ea254e4c14a83f35dc8db15b37a3384`；10-file byte identity 与 33 tests PASS |
@@ -303,8 +314,33 @@ enable/B/g 字段按 native、B0、B+ 变化。trace capacity 固定 `1024`，
 | `20260729T030500Z-phase-03-hedge-adapter-01` | 从已验收 native source 导入 byte-identical pure core，并接入 Eagle3-specific adapter/control/runner | FINAL SOURCE FROZEN PASS；final commit 90c8558721de37ed0dc12802f29253ba52b873bc | 真实 verifier 的第二返回值必须保持 drafts-only，最终 bonus 只在 `eagle_sample` 加一次；历史 Phase 02 source identity test 已正交隔离，全部联合回归收敛 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T030500Z-phase-03-hedge-adapter-01` |
 | `phase-03-finalizer-idempotence-correction` | 唯一变化为冻结状态下 finalizer 的 identity state machine 与对应 fixture | PASS；DeepSpec 71/71 | 真实 frozen repo 不再误走 pending 文案转换；same SHA no-op、different SHA pre-write reject，SGLang candidate 未改 | 同上 authoritative Phase 03 artifact |
 
+## Phase 04：calibration live 与 bounded recovery
+
+### Native attempt 历史
+
+| Attempt | 单一变化 | 结果 | 根因/新证据 | Artifact |
+| --- | --- | --- | --- | --- |
+| `20260729T034000Z-phase-04-native-calibration-01` | 首次用 Phase 04 runner 启动 native 32 | INVALID；0 outputs | live repo script 被改写，运行中的 Bash 混读旧 offset 与新 bytes；属于 orchestration mutation，不是模型或 SGLang crash | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T034000Z-phase-04-native-calibration-01` |
+| `20260729T040000Z-phase-04-native-calibration-02` | 16-file tooling freeze 校验 PASS 后原样重试 | FAIL CLOSED；32 terminal、0 generation、32 trace failures、64 trace retries | HTTP ready 后每次 pre-generation clear 都返回 `eagle3_hedge_clear_info_records requires an Eagle3 draft worker`；resolved config 的 `enable_multi_layer_eagle=false` 使 registry 选择缺少 HEDGE hooks 的 `EAGLEWorkerV2`，而不是已接入的 `MultiLayerEagleWorkerV2` | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T040000Z-phase-04-native-calibration-02` |
+
+retry 02 的服务命令、checkpoint、TP=8、proposal `3` / internal verify `4` 和
+decode 配置与冻结 preflight 一致；TP0–7 全部初始化，八卡均有约 60.4 GiB model
+context。runner 正确把 clear 失败记录为终态，不把 0 次 generation 冒充 native
+结果。服务收尾使用登记 PGID 的 SIGTERM，`kill_fallback=false`；随后
+`cuda_contexts_after.json` 为 `PASS` 且 contexts 空。恢复后的 keepalive owner
+`328407` 通过 8×10 样本逐卡 mean=100%。
+
+这是 blocker 迁移：runner/API shape 和 frozen tooling 已在真实服务上工作到 clear
+control；缺口被缩到 registry 实际选择的 concrete worker。recovery 只允许把同一
+HEDGE adapter 的 bind/verify/finish/dump/clear public lifecycle 接入
+`EAGLEWorkerV2`，不改变 proposal、server command、core 语义或 Phase 03 frozen
+authority。新 source patch、测试和 identity 作为独立 Phase 04 recovery artifact
+交主 Agent审核；审核/提交前不再启动 GPU attempt。
+
 ## 下一步
 
-Phase 03 source identity 已冻结为 `90c8558721de37ed0dc12802f29253ba52b873bc` 并通过全部门禁。主 Agent 完成最终 diff/artifact/worker/keepalive
-复核后可派发独立 Phase 04 executor，运行 native 32、B0 32 和 q25
-calibration；不得把既有 3-request smoke 复用为 baseline。
+按 `EAGLEWorkerV2` concrete worker public lifecycle 做最小 RED→GREEN，生成独立
+Phase 04 recovery patch/manifest 并交主 Agent 审核、提交和封存新 source identity。
+审核完成后在同一 recovery source 上完成 native 32，定向清理并恢复 keepalive，再从新服务运行
+B0 32、执行可重算 token-ID diff，以固定 NumPy linear q25 冻结 `g=B`、`m=1`，
+最后只做少量 B+ calibration smoke。Phase 04 不进入正式 500。
