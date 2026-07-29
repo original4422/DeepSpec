@@ -3,12 +3,13 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-28T23:57:08Z`
+- 记录更新时间：`2026-07-29T00:04:22Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：`NOT_RUN`
-- 结论/首要事项：P00–P03 均已 PASS 并 commit/push；P04 静态 tooling 已由
-  主 Agent 验收并以 `210b281` commit/push。模型/server、native/B0 attempts
-  均未启动；下一步是把 native live smoke 分配给新的 bounded executor。
+- 结论/首要事项：P00–P03 与 P04 静态 tooling 已 PASS/commit/push。首个实际
+  native launcher r2 在 pause keepalive / server start 之前 fail-closed：
+  P03 formal wheel manifest 指向开发机局部 `/tmp`，worker 上该路径不存在。
+  模型、请求和 TP rank 均未启动；当前只修复 wheel 的跨 worker 持久身份。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / 模型参与 `NOT_RUN`；keepalive 8/8 gate `PASS`
@@ -35,8 +36,8 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `210b2815b8cdb1905a5ad57e8b565319567f8405`
-- 下一步：重新只读核对 lane/keepalive 后，运行唯一的新 native P04 attempt；
-  主 Agent 验收并恢复 keepalive 后才允许 B0 attempt
+- 下一步：把 exact formal wheel 原子发布到 HDFS 并建立 red→green 回归门禁；
+  worker 只读 identity probe PASS 后才运行新的 native attempt
 
 ## 当前阶段
 
@@ -46,7 +47,7 @@
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
-| P04 | `IN_PROGRESS` | read-only preflight PASS；静态 tooling 20/20、contract/syntax/identity/cleanup review PASS；commit/push `210b281` | native smoke、主验收、B0 smoke |
+| P04 | `IN_PROGRESS` | tooling commit/push `210b281`；native r2 在 pre-pause engine identity FAIL，artifact 完整封存且 keepalive 保持 PASS | 持久 wheel identity 修复、native smoke、主验收、B0 smoke |
 | P05–P08 | `NOT_STARTED` | — | P04 门禁 |
 
 ## 固定实验协议
@@ -100,11 +101,12 @@
 | `20260728T230700Z-p04-preflight` | P04 read-only lane/keepalive preflight | PASS：exact 8×H20、无未知任务、PID 4730、8×10×1s 100%；无 server | HDFS `worker_inventory.json` |
 | `20260728T230647Z-p04-native-smoke-r1` / B0 | 原计划 live attempts | `NOT_RUN`；首次 executor 被中断/重分配，未 pause keepalive、未动 GPU | 调度记录；无实验 artifact |
 | P04 static tooling | 固定 native/B0 lifecycle、client、sampler、process guard 与 validator | 主 Agent验收 PASS：executor 20/20，主复验 20/20，contract/syntax/whitespace PASS；commit/push `210b281` | `artifacts/hedge-dspark/p04-tooling/tooling_test.log` |
+| `20260728T235900Z-p04-native-smoke-r2` | 首次实际 native launcher；无 decode 配置变化 | FAIL：pre-pause engine identity 发现 worker-local formal wheel 缺失；server/model/request 未启动；archive PASS，keepalive 从未暂停且 after PASS | HDFS attempt root；`engine_identity.json`、`shutdown.json`、`archive_manifest.json` |
 
 ## P04 integration smoke 当前状态
 
-- 状态：`IN_PROGRESS`；静态 tooling `PASS_COMMITTED`；B0 `NOT_RUN`；
-  模型/server 从未启动。
+- 状态：`IN_PROGRESS`；静态 tooling `PASS_COMMITTED`；native r2
+  `FAIL_PRE_PAUSE`；B0 `NOT_RUN`；模型/server 从未启动。
 - 首次 read-only preflight artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T230700Z-p04-preflight/worker_inventory.json`。
   worker `4106666` 精确 8×H20、无未知任务、keepalive `4730/4730/4730`、
@@ -122,7 +124,26 @@
 - 直接执行非 executable shell 文件曾在本地得到一次 `Permission denied`；固定
   合同一直是 `bash <absolute-script-path>`，按该方式复验 PASS。它不是 live
   attempt、没有状态变化，也不是实验 blocker。
-- 下一 bounded executor 只运行 native live smoke；主 Agent验收前不得启动 B0。
+- r2 bounded executor 只运行了该 native launcher，未重试、未运行 B0；主 Agent
+  验收新的 native PASS 前仍不得启动 B0。
+- native r2 artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T235900Z-p04-native-smoke-r2`。
+  `checkpoint_identity` 与 8×H20 inventory PASS；`engine_identity` 仅有
+  `formal_wheel_exists`、`formal_wheel_size` 和
+  `formal_wheel_actual_sha256` 三项 false。其余 fixed distribution、
+  installed 9-file content、RECORD、source/base/tree/core/integration ancestry、
+  CUDA 13 toolchain 与 compat checks 全 true。
+- manifest 的 build provenance 路径是
+  `/tmp/deepspec-hedge-dspark-p03-build.locked07/wheel/sglang-0.5.16-cp311-cp311-linux_x86_64.whl`。
+  该实体仍在开发机存在，14,646,094 bytes，SHA-256
+  `f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262`；
+  worker 的独立 NVMe `/tmp` 中不存在。因此根因是 storage-domain identity，
+  不是 wheel 内容、安装漂移、checkpoint、CUDA 或 GPU blocker。
+- r2 在 `keepalive_pause` 前退出。`server.log`、API、counter、GPU samples 是显式
+  `MISSING` placeholder；没有 server/sampler process group 或 signal。
+  `archive_manifest.status=PASS`；shutdown overall FAIL 只反映 main rc=1 与进程
+  从未启动。keepalive 从未暂停，after gate 为 PID/PGID/SID
+  `4730/4730/4730`、8 卡各 10 样本 100%。
 
 ## P03 integration 当前证据
 
@@ -189,11 +210,13 @@
   8 卡 10×1 秒均 100%，无模型 server。该 keepalive 仅是 operational load。
 - 尚未启动 SGLang model server，尚无 TP rank 0–7 初始化、模型显存或请求期间八卡
   参与证据。
+- native r2 在 engine identity preflight 退出；keepalive 未暂停、没有新增 CUDA
+  context，结束后 8×10×1 秒门禁仍 PASS。
 
 ## 限制与复现状态
 
-- P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 静态 tooling 已完成，
-  live GPU smoke 尚未启动。
+- P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 静态 tooling 已完成。
+  native r2 只到 pre-pause identity 门禁，不构成 live GPU smoke 成功。
 - B0、q25 calibration、native 500 与 HEDGE B>0 500 均未运行。
 - 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
 - 尚未发生模型 shutdown；env setup 失败属于依赖获取路径，不是 CUDA/NCCL/worker
