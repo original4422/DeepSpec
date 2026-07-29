@@ -3,8 +3,10 @@
 > **状态：`COMPLETE`；Phase 07 最终审计于
 > `2026-07-29T09:55:59Z` PASS。**
 > Native 与 HEDGE B+ 的 500 条正式结果均已完成根线程独立重算并发布 accepted
-> marker；marker、artifact/hash、停机语义、共享 target、Git 边界与当前
-> exact-eight keepalive 已再次只读交叉核对。
+> marker；marker、artifact/hash、停机语义、共享 target 和 Git 边界已再次只读
+> 交叉核对。实验结束后，用户于 `2026-07-29T10:05:02Z` 授权释放 lane；
+> Eagle3 keepalive 已定向暂停，CUDA contexts 已清空。
+> 正式派生指标于 `2026-07-29T10:09:25Z` 从两份冻结 artifact 重新计算。
 >
 > 本文是面向读者的结果视图，数字从冻结的 JSON/HDFS artifacts 派生。attempt、
 > 故障归因和复现证据的权威账本见
@@ -27,12 +29,23 @@
 - Accepted draft tokens/proposal 从 `1.3440812581` 增至
   `1.4635368588`，相对增加 `8.888%`；mean acceptance length 从
   `2.3440812581` 增至 `2.4635368588`。
+- 总 draft candidate 接受率从 `42,477 / 94,809 = 44.8027086036%`
+  增至 `44,392 / 90,996 = 48.7845619588%`，增加 `3.9819` 个百分点。
+  B+ 自身 strict 接受率为 `40,610 / 90,996 = 44.6283353114%`；
+  HEDGE 相对该 strict 路径增加 `3,782` 个 accepted drafts，即
+  `4.1562` 个百分点。
 - 两个 arm 的 GSM8K aggregate 均为 488/500 match、12/500 mismatch、
   0 parse failure。样本级状态有 494/500 相同，另有 3 条由 mismatch 变为
   match、3 条由 match 变为 mismatch。
 - B+ 的 30,332 个 proposals 中有 2,121 个 relaxed proposals，共比 strict
-  多接受 3,782 个 draft tokens；500 条 request 的预算总消费为 3,120，
-  196 条耗尽预算，预算连续性、记账、非负约束和 `m<=1` 的违例均为 0。
+  多接受 3,782 个 draft tokens；总初始预算为
+  `500 × 6.75 = 3,375`，消费 `3,120`、剩余 `255`，预算使用率
+  `92.4444%`。196/500（`39.2%`）条 request 耗尽预算，预算连续性、
+  记账、非负约束和 `m<=1` 的违例均为 0。
+- 配对比较中，B+ 与 Native 的完整 output token-ID 列表 0/500 完全相同，
+  但规范化最终答案有 493/500 相同；answer-match 迁移为 485
+  `match→match`、3 `match→mismatch`、3 `mismatch→match`、9
+  `mismatch→mismatch`。
 - 这是每个 arm 各一次的冻结正式运行，不提供重复实验置信区间；因此上述百分比是本次
   路线内观测差值，不外推为跨方法绝对排名。
 
@@ -199,11 +212,17 @@ q25 = 6.75
 | Terminal / success | 500 / 500 | 500 / 500 | 0 / 0 |
 | Failure / generation retry / trace retry | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
 | Completion tokens | 74,580 | 75,224 | +644（+0.864%） |
+| Completion tokens / request | 149.160 | 150.448 | +1.288（+0.864%） |
 | 客户端正式墙钟 | 4,411.045604754 s | 4,209.940660915 s | −201.104943839 s（−4.559%） |
 | Output TPS | 16.9075558683 | 17.8681853401 | +0.9606294718（+5.682%） |
 | Proposals | 31,603 | 30,332 | −1,271（−4.022%） |
+| Proposals / request | 63.206 | 60.664 | −2.542（−4.022%） |
+| Proposed draft tokens（proposals × 3） | 94,809 | 90,996 | −3,813（−4.022%） |
 | Strict accepted draft tokens | 42,477 | 40,610 | −1,867（−4.395%） |
+| Strict draft acceptance rate | 44.8027086036% | 44.6283353114% | −0.1744 pp |
 | Accepted draft tokens | 42,477 | 44,392 | +1,915（+4.508%） |
+| Accepted draft tokens / request | 84.954 | 88.784 | +3.830（+4.508%） |
+| Draft candidate acceptance rate | 44.8027086036% | 48.7845619588% | +3.9819 pp（+8.888%） |
 | Accepted draft tokens / proposal | 1.3440812581 | 1.4635368588 | +0.1194556007（+8.888%） |
 | Mean acceptance length | 2.3440812581 | 2.4635368588 | +0.1194556007（+5.096%） |
 | Acceptance length 1 / 2 / 3 / 4 | 12,111 / 5,813 / 4,373 / 9,306 | 10,454 / 5,445 / 4,352 / 10,081 | −1,657 / −368 / −21 / +775 |
@@ -211,18 +230,64 @@ q25 = 6.75
 | Draft position 1 accepted / rate | 13,679 / 0.4328386546 | 14,433 / 0.4758341026 | +754 / +4.2995 pp |
 | Draft position 2 accepted / rate | 9,306 / 0.2944657153 | 10,081 / 0.3323552684 | +775 / +3.7890 pp |
 | Relaxed proposals / mismatches | 0 / 0 | 2,121 / 2,121 | +2,121 / +2,121 |
-| 相对 strict 的额外 accepted drafts | 0 | 3,782 | +3,782 |
+| Relaxed proposal rate | 0% | 6.9926150600% | +6.9926 pp |
+| 相对 strict 的额外 accepted drafts | 0 | 3,782（相对 B+ strict +9.313%） | +3,782 |
+| 额外 accepted drafts / relaxed proposal | N/A | 1.7831211693 | N/A |
 | Checked requests / budget-unchecked failures | N/A | 500 / 0 | N/A |
-| Total budget spent / exhausted requests | N/A | 3,120.0 / 196 | N/A |
+| Total initial / spent / remaining budget | N/A | 3,375.0 / 3,120.0 / 255.0 | N/A |
+| Budget spent / remaining rate | N/A | 92.4444% / 7.5556% | N/A |
+| Mean spent / remaining budget per request | N/A | 6.24 / 0.51 | N/A |
+| Exhausted requests / rate | N/A | 196 / 39.2% | N/A |
+| Mean budget charge / relaxed mismatch | N/A | 1.4710042433 | N/A |
 | Budget continuity / accounting / nonnegative violations | N/A | 0 / 0 / 0 | N/A |
 | Proposals exceeding `m=1` | N/A | 0 | N/A |
 | GSM8K matches | 488/500（97.6%） | 488/500（97.6%） | 0（0 pp） |
 | GSM8K mismatches | 12/500 | 12/500 | 0 |
 | Parse failures | 0 | 0 | 0 |
-| 样本级 answer-match 状态 | 基准 | 494/500 与 Native 相同 | 3 条改善 / 3 条退化 |
+| 完整 output token IDs 与 Native 相同 | 基准 | 0/500（0%） | 500 条均不同 |
+| 规范化最终答案与 Native 相同 | 基准 | 493/500（98.6%） | 7 条不同 |
+| 样本级 answer-match 迁移 | 基准 | 485 M→M / 3 M→X / 3 X→M / 9 X→X | 494/500 状态相同；3 改善 / 3 退化 |
 
 `Output TPS = completion tokens / 客户端正式墙钟`。Acceptance length 包含最终
 target token，因此等于 accepted draft tokens/proposal 加 1。
+
+### 指标计算与数值复核
+
+下面把冻结 artifact 中的计数直接代入，避免只展示指标名称而不展示计算结果。
+相对差值统一为 `(B+ − Native) / Native`；`pp` 表示百分点：
+
+- Output TPS：
+  `74,580 / 4,411.0456047540065 = 16.9075558683`；
+  `75,224 / 4,209.940660914872 = 17.8681853401`；
+  相对差值为 `+5.6816578296%`。墙钟相对差值为
+  `−201.1049438391345 / 4,411.0456047540065 = −4.5591218468%`。
+- Draft candidate 接受率：
+  Native 为 `42,477 / (31,603 × 3) = 44.8027086036%`；
+  B+ strict 为 `40,610 / (30,332 × 3) = 44.6283353114%`；
+  B+ HEDGE 为 `44,392 / (30,332 × 3) = 48.7845619588%`。
+  因此 B+ 相对自身 strict 增加 `3,782 / 90,996 = 4.1562266473 pp`
+  （相对提升 `9.3129770992%`）。
+- Accepted drafts/proposal：
+  `42,477 / 31,603 = 1.3440812581`；
+  `44,392 / 30,332 = 1.4635368588`。含最终 target token 后，
+  mean acceptance length 分别为
+  `(12,111×1 + 5,813×2 + 4,373×3 + 9,306×4) / 31,603
+  = 2.3440812581` 和
+  `(10,454×1 + 5,445×2 + 4,352×3 + 10,081×4) / 30,332
+  = 2.4635368588`。
+- Relaxed 路径：
+  `2,121 / 30,332 = 6.9926150600%` 的 B+ proposals 使用 relaxed
+  acceptance；平均每个 relaxed proposal 多接受
+  `3,782 / 2,121 = 1.7831211693` 个 draft tokens。
+- 预算：
+  初始总额 `500 × B = 500 × 6.75 = 3,375`；
+  剩余 `3,375 − 3,120 = 255`；使用率
+  `3,120 / 3,375 = 92.4444444444%`，平均每条 request 消费
+  `3,120 / 500 = 6.24`；耗尽率 `196 / 500 = 39.2%`。
+- GSM8K：
+  两个 arm 均为 `488 / 500 = 97.6%`。逐样本配对重算得到完整
+  output token-ID equality `0 / 500 = 0%`，规范化最终答案 equality
+  `493 / 500 = 98.6%`，与 485/3/3/9 的 answer-match 迁移计数一致。
 
 ### Native 运行证据
 
@@ -320,6 +385,7 @@ git diff --check
 - 不设置 TPS、acceptance length 或 GSM8K match 门槛。
 - GSM8K match 只展示，不把质量门槛反向用于挑选参数。
 - 不做跨 DSpark/Eagle3/DFlash 的绝对 TPS 排名。
-- Phase 07 只读终审确认 worker `4099544` 仍为 8×H20，当前 operational
-  keepalive owner `378796` 为 exact-eight，10×1 秒逐卡均为 100%；它不是实验负载，
-  也不进入正式指标。
+- Phase 07 只读终审时确认 worker `4099544` 仍为 8×H20，operational
+  keepalive owner `378796` 当时为 exact-eight，10×1 秒逐卡均为 100%；它不是实验
+  负载，也不进入正式指标。实验完成后用户授权释放 lane，`2026-07-29T10:05:02Z`
+  已定向暂停该 keepalive，随后状态为 `PAUSED` 且 CUDA contexts 为空。

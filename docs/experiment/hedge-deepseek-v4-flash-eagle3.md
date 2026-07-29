@@ -712,3 +712,11 @@ SHA-256 7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812
 正式 server command、环境和 source/model identity 以两份 accepted artifact 的
 `resolved_config.json` 为准。后续无需再运行 formal arm；若扩展结论，应新建独立
 实验，不覆盖本次一次性 accepted 结果。
+
+### 完成后的 lane 释放
+
+用户于 `2026-07-29T10:05:02Z` 明确授权把 8 卡 lane 交给其他人使用。根线程先核对
+项目登记的唯一 keepalive owner 为 PID/PGID `378796`，随后只通过本路线
+`hedge_eagle3_keepalive.sh pause 4099544` 定向停止该 process group。命令返回
+`PAUSED ... CUDA contexts are clear`；`2026-07-29T10:06:11Z` 再次只读查询仍为
+`PAUSED`。没有停止未知进程，也没有改写任何 accepted 实验 artifact。
