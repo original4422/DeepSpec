@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_04_CALIBRATION_FROZEN_AWAITING_BPLUS_SMOKE`
+> 当前状态：`PHASE_04_COMPLETE_PASS`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
@@ -37,6 +37,7 @@
 | 2026-07-29T04:56:00Z | 7h59m33s | 1h00m27s | 4h00m27s | Phase 04 native retry 03 PASS / `eagle3_phase04` | TP0–7 与八卡请求参与证据完整；registered SIGTERM、无 KILL fallback、0 context；keepalive owner `335940` 恢复，8×10 每卡 100% | 主 Agent独立验收：32/32 terminal/generation/trace success，0 retry/failure，5034 completion tokens，2116 proposal rows，32 unique sample IDs；请求窗口逐卡 245 samples、max util 93–97%、约 60.2–60.55 GiB；38 artifact hashes 精确一致 | `.../20260729T044000Z-phase-04-native-calibration-03`；下一步仅 B0 32 与可重算 token-ID diff，未放行前不启动 |
 | 2026-07-29T05:18:00Z | 8h21m33s | 38m27s | 3h38m27s | Phase 04 B0 PASS / `eagle3_phase04` | TP0–7 与八卡请求参与证据完整；registered SIGTERM、无 KILL fallback、0 context；keepalive owner `342599` 恢复，8×10 每卡 100% | 32/32 terminal/generation/trace success，0 retry/failure；B0 config=`B=0,g=0,m=1,normalized_suffix`，server command/source 与 native 完全相同；完整 token IDs mismatch=0，`B0_PASS`；1486 positive barriers；38 artifact hashes 精确一致 | `.../20260729T050000Z-phase-04-b0-calibration-01`；下一步仅离线 token diff/q25 freeze，未验收前不启动 B+ |
 | 2026-07-29T05:22:00Z | 8h25m33s | 34m27s | 3h34m27s | Phase 04 calibration frozen / `eagle3_phase04` | 纯离线步骤；未暂停或触碰 keepalive owner `342599` | 正式重算 `B0_PASS`；1486 positive values 的 NumPy linear q25=`6.75`，唯一 `g=B=6.75,m=1`；calibration SHA `836ca7c4…e2e60`、B+ config SHA `87a41b12…e131a` 经主 Agent独立重算一致，live source identity 仍由 resolver 固定 `2600c7b…`/`73de4048…` | `.../20260729T052000Z-phase-04-calibration-01`；下一步只运行 3 条 B+ calibration smoke |
+| 2026-07-29T05:36:19Z | 8h39m52s | 20m08s | 3h20m08s | Phase 04 COMPLETE/PASS / `eagle3_phase04` | TP0–7 load/aux 与八卡 context 完整；请求窗口每卡 20 samples，GPU3 max util 21%、其余 93–98%，约 60.2–60.5 GiB/卡；registered SIGTERM、无 KILL fallback、0 context；keepalive owner `348863` 恢复，8×10 每卡 100% | bounded B+ smoke 3/3 terminal/generation/trace success，0 retry/failure，441 completion tokens、173 proposals、3 IDs；config=`enabled,B=g=6.75,m=1,normalized_suffix`，source `2600c7b…`/patch `73de4048…`，command 与 native/B0 exact；14 relaxed proposals/22 extra drafts，三请求 spent `6.75/6.75/6.375`、remaining `0/0/0.375`，continuity/account/nonnegative/`m<=1` 无违例；38 artifact hashes 精确一致 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T052500Z-phase-04-bplus-smoke-01`；Phase 05 next，禁止在 Phase 04 运行 formal500 |
 
 ## 当前依赖
 
@@ -47,13 +48,16 @@
 - DSpark pure HEDGE core marker：READY；主 Agent 已核对 commit
   `4d96f44065c07030ede67484a262006ec149626a` 的 parent、10 个文件 hash、33 tests 与
   远端祖先关系；Phase 03 前不 cherry-pick。
-- SGLang source/uv env：Phase 01B PASS；独立 source clean HEAD 为固定
-  `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`，editable import、201-package
+- SGLang source/uv env：Phase 04 final source clean HEAD
+  `2600c7b16c648d281be060b33ffadc7ae320f7e3`，固定 base
+  `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`，14-file canonical patch
+  `73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf`；
+  editable import、201-package
   `uv pip check`、CUDA 13 link-layout 和关键版本均已验证。GSM8K split、runner、
   q25/B0/report/cleanup fixtures 与 4 unit tests PASS。
-- Operational keepalive：Phase 04 B0 结束后恢复为 owner `342599`；
+- Operational keepalive：Phase 04 B+ smoke 结束后恢复为 owner `348863`；
   准确 8 个 owned worker/context，10×1 秒逐卡 mean=100%，CUDA visibility、
-  UUID 与 lane-local environment 见 native attempt 的 `keepalive_after*` 证据。
+  UUID 与 lane-local environment 见 B+ attempt 的 `keepalive_after*` 证据。
 
 ## Phase 00 操作边界
 

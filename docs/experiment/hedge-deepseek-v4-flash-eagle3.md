@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_04_CALIBRATION_FROZEN_AWAITING_BPLUS_SMOKE`。**
+> **状态：`PHASE_04_COMPLETE_PASS`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -43,7 +43,13 @@
 > 已恢复并通过 8×10 每卡 100%。
 > 独立 `B=0` arm 同样完成 32/32、0 retry/failure；与 native 的 32 份完整
 > token IDs 零差异，判定 `B0_PASS`。1486 个正 barrier 的 NumPy linear q25
-> 已冻结为 `g=B=6.75,m=1`；正式 500 条仍 pending。
+> 已冻结为 `g=B=6.75,m=1`。唯一 bounded B+ 3-sample smoke 已完成：
+> 3/3 terminal、generation、trace success，0 retry/failure，441 completion
+> tokens、173 proposal rows、3 个 unique sample IDs；14 个 relaxed proposals
+> 带来 22 个相对 strict 的额外 accepted drafts。三条 request 分别消费
+> `6.75/6.75/6.375` risk budget，结束余额为 `0/0/0.375`，budget continuity、
+> accounting、非负约束与 `m<=1` 均无违例。Phase 04 判定 COMPLETE/PASS；
+> 正式 500 条仍 pending，由 Phase 05/06 分别执行。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -86,17 +92,20 @@
 >
 > **权威 Phase 04 frozen calibration artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T052000Z-phase-04-calibration-01`
+>
+> **权威 Phase 04 B+ bounded smoke artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T052500Z-phase-04-bplus-smoke-01`
 
 ## 快速结果
 
 | 快速结果 | Native | HEDGE B+ |
 | --- | ---: | ---: |
-| Status | calibration PASS；formal pending | pending |
-| Requests terminal | 32/32 calibration | — |
+| Status | calibration PASS；formal pending | Phase 04 bounded smoke PASS；formal pending |
+| Requests terminal | 32/32 calibration | 3/3 bounded smoke |
 | Output TPS | — | — |
 | Mean accept length | — | — |
-| GSM8K matches | — | — |
-| Parse failures | — | — |
+| GSM8K matches | — | 3/3（smoke only） |
+| Parse failures | — | 0 |
 
 | 配置 | 值 |
 | --- | --- |
@@ -426,8 +435,32 @@ B+ config SHA-256 为
 单独强制最终 SGLang SHA `2600c7b…` 与 patch `73de4048…`；校准未触碰 GPU，
 keepalive 持续运行。
 
+唯一 bounded B+ smoke 使用同一 freeze 02、最终 SGLang
+`2600c7b16c648d281be060b33ffadc7ae320f7e3`、canonical patch
+`73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf`
+和与 native/B0 逐字相同的 server command；仅 HEDGE mode/config 切换为
+`enabled`、`B=g=6.75,m=1,value_scheme=normalized_suffix`。结果为 3/3
+terminal/generation/trace success，0 retry/failure，441 completion tokens、
+173 proposal rows、3 个 unique sample IDs，答案 3/3 匹配且 0 parse failure。
+38 个 artifact 的 size/hash 经主 Agent独立重算全部一致。
+
+live proposal trace 证明跨 request 持续预算实际生效：14 个 relaxed proposals
+相对 strict verifier 多接受 22 个 drafts；三条 request 的累计 spend 分别为
+`6.75/6.75/6.375`，最终 remaining 分别为 `0/0/0.375`。逐 proposal 的
+before/after continuity、`remaining_after = remaining_before - spent`、
+remaining 非负与每 block `relaxed_mismatches<=1` 均无违例。
+
+TP0–7 target/draft load 与 Eagle3 aux evidence 完整。请求窗口八张卡各有 20 个
+sampler 样本，除 GPU3 的短窗口 maximum utilization 为 21% 外，其余为 93–98%；
+八卡均保持约 60.2–60.5 GiB 模型显存，且 TP/context/aux 证据完整，因此该短采样
+不构成 rank 缺席。服务仅向登记 process group 发送 SIGTERM，
+`kill_fallback=false`；随后 CUDA context 精确为空。operational keepalive
+恢复为 owner `348863`，准确 8 个 owned worker/context，8×10 样本逐卡
+utilization 均为 100%。
+
 ## 下一步
 
-用同一 freeze 02、最终 source 和 server command 启动独立 B+ 服务，只在固定
-calibration 前 3 条 smoke `g=B=6.75,m=1`。验收后冻结 Phase 05/06 正式配置；
-Phase 04 不进入正式 500。
+Phase 04 已 COMPLETE/PASS。下一阶段为 Phase 05：确认现有
+source/env/model/config freeze，按计划新启动 native Eagle3 服务，执行固定 10 条
+warmup 后唯一一次顺序 500 条正式 baseline。Phase 04 不运行 formal 500；B+ 正式
+arm 留给 Phase 06。
