@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "identity_kind": "hedge_engine_neutral_pure_core",
+  "generated_at_utc": "2026-07-28T21:05:46Z",
+  "last_verified_at_utc": "2026-07-28T21:49:28Z",
+  "source": {
+    "repository": "/mlx_devbox/users/pengzegang/playground/github/HEDGE",
+    "required_commit": "9fb903d676254ea5f5d171051fb15c54f331111c",
+    "required_commit_object_type": "commit",
+    "observed_worktree_head": "eb3948117a8be505da64904ad718dc4efd97a5b1",
+    "observed_worktree_state": "tracked files clean; untracked user docs/assets present and ignored",
+    "observed_untracked_roots": [
+      "MISSION.md",
+      "NOTES.md",
+      "RESOURCES.md",
+      "assets/",
+      "lessons/",
+      "reference/"
+    ],
+    "extraction": "git archive of the required commit's tracked objects into an independent chmod a-w scratch tree",
+    "adopted_files": [
+      {
+        "path": "src/hedge_spec/__init__.py",
+        "git_blob_oid": "e3232296d8d455a4c6fa5082e80ff3dbb91bd8bb",
+        "sha256": "4a29f6fc9245ce30eeeb1005cd7da0552ccb0c4cb667eb2868c542a5ece11008"
+      },
+      {
+        "path": "src/hedge_spec/budget.py",
+        "git_blob_oid": "9b3a74781a6d6e0a162a73014b80fa85c1912b2c",
+        "sha256": "4a7faeda119c8131d6718c6b7b3aeb094223f64fe642517c52aa9dcf9965d6a6"
+      },
+      {
+        "path": "src/hedge_spec/config.py",
+        "git_blob_oid": "751fd4b11d42dddab45f3fa0ec9cccfb4a9cc9c0",
+        "sha256": "b5c9dc3db616cd5d4a1eee68e9aaaa3891c0c8f0ed18d42bce5c1af9214c13dc"
+      },
+      {
+        "path": "src/hedge_spec/torch_rule.py",
+        "git_blob_oid": "fd5994c2aef6317fae1bbc48ea1f7ba9f4a0d355",
+        "sha256": "f14fbf2156a17d40531b36c81d772d3c9c57f1569f5d12f65a86d89f9ccd8d12"
+      },
+      {
+        "path": "tests/test_budget.py",
+        "git_blob_oid": "6792f0b0ddc683f096d9a7574f41484431babe35",
+        "sha256": "418f2481d7e9f74e685e6f64a61aad64b06a8f5d1bc6fea036f664469c0ea3a6"
+      },
+      {
+        "path": "tests/test_config.py",
+        "git_blob_oid": "d6151bf943cbe8b2dfd579e6367ba4d1ff7158a3",
+        "sha256": "0ac8869ac6692285f5f38f3f9e444ce69c4a868de46d1ed97d0e356b1ba3a16f"
+      },
+      {
+        "path": "tests/test_torch_rule.py",
+        "git_blob_oid": "630f8192c29a78679c3ca050a044025abeb5cb4a",
+        "sha256": "2748e77e2038d574a8cd869a44042b664e21450104172217a41871be2b53a676"
+      }
+    ]
+  },
+  "target": {
+    "repository": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark",
+    "branch": "exp/hedge-v4-dspark",
+    "parent_head_at_extraction": "cac6c78d88df97d395406fe831f573df3016e7f7",
+    "canonical_package": "deepspec/hedge_spec",
+    "decode_mapping_keys": [
+      "B",
+      "g",
+      "m",
+      "value_scheme",
+      "block_size"
+    ],
+    "files": [
+      {
+        "path": "deepspec/hedge_spec/__init__.py",
+        "sha256": "e51bba48b8a67895270b3285775dfc3741421eb4a0c3cdf566a1cf0e9360daca"
+      },
+      {
+        "path": "deepspec/hedge_spec/budget.py",
+        "sha256": "c573fe2381416c70511f97968fe14fa9ef1e16d08c805eb55982efc0d23a5ce8"
+      },
+      {
+        "path": "deepspec/hedge_spec/config.py",
+        "sha256": "03079c13b327b1c31374421060d07217401dc3049c7b8fb5fb6c68d30b6db176"
+      },
+      {
+        "path": "deepspec/hedge_spec/torch_rule.py",
+        "sha256": "92bb84a3bf3f03fd127636c5d5ef6b7bb9e22d4198cc57dac320606ae1256c72"
+      },
+      {
+        "path": "tests/hedge_spec/test_budget.py",
+        "sha256": "9dd688528184066d5bee1b894e095d1fa46be22705ae23cc22b7bbc4d3bb0c97"
+      },
+      {
+        "path": "tests/hedge_spec/test_config.py",
+        "sha256": "d4ca76f4b063b707412fee9875f837ee91a12f8543f3024165f78222fffba0f9"
+      },
+      {
+        "path": "tests/hedge_spec/test_torch_rule.py",
+        "sha256": "f1212aa777fe0e3d187062b24106ebffa6f06ddcdfa83a7c14f9a397a659e89f"
+      },
+      {
+        "path": "tests/hedge_spec/test_public_surface.py",
+        "sha256": "0d702f79313f58c7d420c0eb249d4d9cc9b566536b08b2f16fec19bde0e5a5af"
+      },
+      {
+        "path": "tests/hedge_spec/hedge_core_test.log",
+        "sha256": "ae7d500f75ceb1383d799de19a5b6e47b63f3d8390698ff7c01021605f905b06"
+      }
+    ]
+  },
+  "source_to_target_mapping": [
+    {
+      "source": "src/hedge_spec/__init__.py",
+      "target": "deepspec/hedge_spec/__init__.py",
+      "adaptation": "export only config, reference decision, request state, and normalized_suffix values; remove SuccessCriteria"
+    },
+    {
+      "source": "src/hedge_spec/budget.py",
+      "target": "deepspec/hedge_spec/budget.py",
+      "adaptation": "retain compact scores, regret, request-wide budget, three gates, and contiguous prefix; remove suffix/unlocked schemes and diagnostic event metrics; add explicit reset"
+    },
+    {
+      "source": "src/hedge_spec/config.py",
+      "target": "deepspec/hedge_spec/config.py",
+      "adaptation": "reduce config and fingerprint to B/g/m/value_scheme/block_size; remove SuccessCriteria, evidence_status, notes, method_name, temperature, warnings, and JSON file I/O"
+    },
+    {
+      "source": "src/hedge_spec/torch_rule.py",
+      "target": "deepspec/hedge_spec/torch_rule.py",
+      "adaptation": "retain device-resident compact-score batch rule; remove alternative value schemes and full-vocabulary convenience wrappers owned by the P03 engine adapter"
+    },
+    {
+      "source": "tests/test_budget.py",
+      "target": "tests/hedge_spec/test_budget.py",
+      "adaptation": "port and extend to all P02 reference-rule gates, width five, persistence, exhaustion, reset, cap, reachability, and loud mismatch failures"
+    },
+    {
+      "source": "tests/test_config.py",
+      "target": "tests/hedge_spec/test_config.py",
+      "adaptation": "replace legacy reporting/config tests with strict five-field mapping, validation, exclusions, and per-field fingerprint coverage"
+    },
+    {
+      "source": "tests/test_torch_rule.py",
+      "target": "tests/hedge_spec/test_torch_rule.py",
+      "adaptation": "freeze width-five fixed-seed parity and add B0, tie, persistence, exhaustion, m=1, multi-row, reachability, block mismatch, and no-item checks"
+    },
+    {
+      "source": null,
+      "target": "tests/hedge_spec/test_public_surface.py",
+      "adaptation": "new scope regression guard proving old project gates and adapters are absent from the public interface"
+    }
+  ],
+  "intentional_semantic_choices": [
+    "Only value_scheme=normalized_suffix is valid; source suffix and unlocked_tokens variants are deliberately excluded.",
+    "The descriptive Python fields serialize canonically as B, g, and m; m counts relaxed mismatches, not arbitrary tokens.",
+    "block_size is mandatory so a proposal-width mismatch always fails loudly instead of disabling the guard with None.",
+    "SuccessCriteria and all performance, quality, evidence-status, notes, method, runner, metric, and orchestration fields are excluded.",
+    "The exact plan gate is used without the source implementation's +1e-9 affordability slack.",
+    "A mismatch requires positive budget immediately before that mismatch. This preserves B=0 strictness and makes the remainder strict after an earlier accepted mismatch exactly exhausts B, including within the same block.",
+    "RequestRiskState.reset is an engine-neutral reference primitive; stable slot identity, reorder, abort, finish, and device-state cleanup are P03 adapter responsibilities.",
+    "The tensor interface accepts compact top_logit/top_token_id/draft_logit tensors only. Candidate alignment, sharded-vocabulary reduction, bonus/cutoff, accept_index, commit length, KV/request state, and native disable-path fixtures are deferred to P03 as required."
+  ],
+  "explicit_exclusions": [
+    "src/hedge_spec/config.py:SuccessCriteria",
+    "src/hedge_spec/metrics.py",
+    "src/hedge_spec/run_artifacts.py",
+    "src/hedge_spec/cli.py",
+    "src/hedge_spec/adapters/",
+    "src/hedge_spec/engines/",
+    "tests/test_metrics.py",
+    "tests/test_run_artifacts.py",
+    "tests/test_runner.py",
+    "tests/test_adapter.py",
+    "Qwen and DeepSpec adapters",
+    "keepalive, worker, runbook, ticket, old gates, and experiment orchestration",
+    "HEDGE source worktree HEAD content and all untracked user files"
+  ],
+  "tests": {
+    "available_environment_status": "PASS",
+    "formal_hedge_venv_status": "PASS",
+    "p02_acceptance_status": "FORMAL_TESTS_PASS_PENDING_MAIN_COMMIT_PUSH_MARKER",
+    "test_count": 33,
+    "fixed_seed": 20260725,
+    "commands": [
+      {
+        "command": "PYTHONHASHSEED=0 python -m unittest discover -s tests/hedge_spec -v",
+        "python": "/usr/bin/python 3.11.2",
+        "torch": "2.7.1 (torch.version.cuda=12.6)",
+        "result": "PASS; Ran 33 tests in 0.148s"
+      },
+      {
+        "command": "PYTHONHASHSEED=0 /home/tiger/venvs/deepspec-dspark/bin/python -m unittest discover -s tests/hedge_spec -v",
+        "python": "/home/tiger/venvs/deepspec-dspark/bin/python 3.11",
+        "torch": "2.11.0+cu130",
+        "result": "PASS; Ran 33 tests in 0.159s"
+      },
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 /home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_spec -v",
+        "python": "/home/tiger/venvs/hedge-v4-dspark/bin/python 3.11.2",
+        "torch": "2.11.0+cu130 (torch.version.cuda=13.0)",
+        "result": "PASS; Ran 33 tests in 0.173s"
+      }
+    ],
+    "hedge_v4_dspark_venv_status": "P00 PASS; formal CPU-only P02 suite PASS at 2026-07-28T21:49:28Z"
+  }
+}
