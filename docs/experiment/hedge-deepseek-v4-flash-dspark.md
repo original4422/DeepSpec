@@ -3,18 +3,21 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T02:48:50Z`
+- 记录更新时间：`2026-07-29T03:36:16Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：P04 单请求 smoke `PASS`；P05 32 条 `NOT_RUN`
-- 结论/首要事项：P00–P04 已 PASS。P05 native r1 的 32 条输出、TP8、请求期八卡、
-  cleanup 与 archive 均完整，但主 Agent验收发现 strict trace 混入 4 行启动
-  warmup evidence，且 sampler 在定向停止边界误记 FAIL；因此 r1 明确记为
-  `FAIL_TRACE_SCOPE`，其 q25 不采用。两个非 decode recovery 已 test-first 修复并
-  commit/push；下一步只重跑新的 native calibration，再验收后运行 P05 B0。
+- 结论/首要事项：P00–P04 已 PASS。P05 native r1 因 strict trace 混入启动
+  warmup RID 记为 `FAIL_TRACE_SCOPE`，其 q25 不采用。scope recovery 后的 native
+  r2 在 0/32 请求处发现 startup warmup 尚有一个 live request state，按门禁记为
+  `FAIL_PRE_COHORT_QUIESCENCE`。现已 test-first 加入有界
+  `wait quiescent → clear → exact-zero verify`，不清除 live state；121/121
+  fresh-process 回归 PASS，commit/push `fe0aea0`。下一步仅运行 native r3，验收后
+  才运行 P05 B0。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / P04 native+B0 `PASS`；P05 r1 live
-  evidence `PASS` 但阶段为 `FAIL_TRACE_SCOPE`；keepalive 8/8 gate `PASS`
+  evidence `PASS` 但阶段为 `FAIL_TRACE_SCOPE`；r2 TP8/model load `PASS`、0 个
+  cohort 请求；keepalive 8/8 gate `PASS`
 - model / checkpoint：固定目标
   `deepseek-ai/DeepSeek-V4-Flash-DSpark@62af8fffb2f7030cac4de2f0169f5b8d1101b646`；
   P00 checkpoint r1 PASS，canonical identity 记录 75 files / 48 shards /
@@ -26,21 +29,22 @@
 - native TPS / HEDGE TPS / delta：`NOT_RUN` / `NOT_RUN` / —
 - native accepted length / HEDGE accepted length / delta：`NOT_RUN` / `NOT_RUN` / —
 - native GSM match / HEDGE GSM match：`NOT_RUN` / `NOT_RUN`
-- artifact root：P05 failed evidence
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T020144Z-p05-native-calibration-r1`
+- artifact root：最新 P05 failed evidence
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T025543Z-p05-native-calibration-r2`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；
   integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result
   `3e10b780264557e84a3cab5c1a196dc7c2a00496`；P05 tooling `ce5d672`；
   sampler recovery `6b7145d`；trace-scope recovery `eb4962f`；
-  calibration config / result 尚未创建
+  r1 failure docs `fd88b69`；r2 progress `64e6be7`；quiescence recovery
+  `fe0aea0`；calibration config / result 尚未创建
 - DeepSpec worktree / branch / accepted integration commit：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
-  `eb4962f49a16ec88721c9fc96be5daffcc1367d1`
-- 下一步：P05 重跑 32 条 scoped native calibration/trace；主验收 PASS 后才运行
+  `fe0aea00b74638847b264b03480b18b29a02ce9d`
+- 下一步：P05 运行 32 条 scoped native r3 calibration/trace；主验收 PASS 后才运行
   B0 并自动计算、冻结 q25
 
 ## 当前阶段
@@ -52,7 +56,7 @@
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
-| P05 | `IN_PROGRESS` | native r1 保留为 `FAIL_TRACE_SCOPE`；sampler/trace-scope recovery `6b7145d`、`eb4962f` 已 push；118/118 回归 PASS | scoped native r2、B0 32、q25/config freeze |
+| P05 | `IN_PROGRESS` | r1 `FAIL_TRACE_SCOPE`；r2 `FAIL_PRE_COHORT_QUIESCENCE` 且 0/32；quiescence recovery `fe0aea0` 已 push；121/121 回归 PASS | scoped native r3、B0 32、q25/config freeze |
 | P06–P08 | `NOT_STARTED` | — | P05 门禁 |
 
 ## 固定实验协议
@@ -115,6 +119,8 @@
 | `20260729T020144Z-p05-native-calibration-r1` | 首个 32 条 native trace attempt | `FAIL_TRACE_SCOPE`：32/32 输出成功且 live/shutdown/archive 完整；trace 含 1 个非 cohort warmup RID 的 4 行，sampler terminal status 在停止边界为 FAIL | immutable HDFS attempt；原 488 行 trace 与 artifact 不修改 |
 | P05 sampler recovery | 只修正 stop 信号打断活跃 `nvidia-smi` query 的清理语义，并把 terminal status/count 纳入 artifact gate | PASS：真实 query error 仍失败；P04/P05 gate fail-closed；118/118 总回归；commit/push `6b7145d` | 旧 r1 被新 gate 精确拒绝；P04 两个 clean 对照通过 |
 | P05 trace-scope recovery | cohort 前 clear+验零，post/reducer 以 32 个 response RID 封闭 trace | PASS：旧 r1 extra RID `505959…` 被精确拒绝；全量 q25 2.083333 与 cohort-only 2.0625 的差异证明影响实质；commit/push `eb4962f` | output directory 未创建；必须重跑 native |
+| `20260729T025543Z-p05-native-calibration-r2` | scope recovery 后首个 native 重跑；decode 配置不变 | `FAIL_PRE_COHORT_QUIESCENCE`：clear 返回 `[true]` 后仍有一个 startup warmup live state；门禁在第一个 cohort 请求前失败，0/32、0 trace | immutable HDFS attempt；TP8/model load、sampler、cleanup、archive、keepalive 均完整 |
+| P05 quiescence recovery | 仅在客户端有界等待 startup warmup 自然结束，再 clear+验 exact zero | PASS：永久 active 超时且 0 cohort；identity/HTTP 立即失败；verify race 有界重试；121/121；commit/push `fe0aea0` | 成功/失败均保留 poll/clear 轨迹；不清 live state、不改 SGLang/wheel/decode |
 
 ## P04 integration smoke 当前状态
 
@@ -255,12 +261,28 @@
   随后 GET `/server_info` 验全部 HEDGE counters、request state 与 trace 归零。
   post snapshot 和 formal reducer CLI 再分别以 32 个唯一 raw response ID
   fail-closed 限定 trace；某请求没有正 barrier 被允许，任何 extra RID 被拒绝。
+- native r2 `20260729T025543Z-p05-native-calibration-r2` 的 server ready 后，
+  POST clear 精确返回 `[true]`，但随后的 `/server_info` 为
+  `active_request_states=1`、`state_leaks=1`。这定位为 SGLang startup warmup
+  仍在自然运行；clear 的固定语义只清 arm metrics，不重置 live request
+  budget/map。严格门禁因此在首个 cohort 请求前退出：0/32 输出、0 trace，不能称作
+  calibration 数据。
+- r2 不是模型或生命周期失败：target/draft TP rank 0–7、两次 48/48 load marker、
+  固定后端均成立，无 CUDA/NCCL/OOM/worker crash。sampler recovery 实际通过：
+  `status=stopped`、923 ordinals 与 sample_count 相同、7,384 CSV rows。登记
+  server/sampler 定向清理、contexts none；keepalive 恢复为
+  `57902/57902/57902`，8×10 全卡 100%；34 项 archive size/hash 全匹配。
+- quiescence recovery `fe0aea0` 把 formal CLI 固定为总计 120 秒、每秒 poll、
+  单 control HTTP 最多 10 秒的有界握手。只有
+  `active_request_states=state_leaks=0` 后才 clear，再要求 exact zero；verify
+  race 先 sleep 再重新 wait/clear。永久 active、identity/config/HTTP 错误均
+  fail-closed，且失败 summary 保存 poll/clear evidence；不删除 live state。
 - executor 与主 Agent分别完成全部相关 fresh-process 回归；最终主复验为
-  P05 21/21、P04 29/29、protocol+core 46/46、integration 22/22，合计
-  118/118 PASS，另有 shell、in-memory compile 与 diff checks PASS。两个修复
-  均不改变 SGLang wheel、checkpoint 或 decode 配置。
-- 下一步只允许基于 HEAD `eb4962f49a16ec88721c9fc96be5daffcc1367d1`
-  动态创建新的 native-trace attempt；主 Agent独立验收 scoped trace 与 clean
+  P05 24/24、P04 29/29、protocol+core 46/46、integration 22/22，合计
+  121/121 PASS，另有 shell、compile 与 diff checks PASS。所有 recovery 均不改变
+  SGLang wheel、checkpoint 或 decode 配置。
+- 下一步只允许基于 HEAD `fe0aea00b74638847b264b03480b18b29a02ce9d`
+  动态创建新的 native-trace r3；主 Agent独立验收 scoped trace 与 clean
   sampler terminal status 后，才可启动 P05 B0。
 
 ## P03 integration 当前证据
@@ -337,15 +359,20 @@
   mean/min/max 100%。
 - B0 r1 结束后 contexts none，dedicated keepalive 更新为
   `32894/32894/32894`，8×10 全卡 mean/min/max 100%；worker 保持在线。
+- P05 native r2 定向 cleanup 后 contexts none；dedicated keepalive 更新为
+  `57902/57902/57902`。attempt gate 与主 Agent `03:29Z` 独立 status 均为
+  8×10 全卡 mean/min/max 100%，每卡 815 MiB；当前无模型 server。
 
 ## 限制与复现状态
 
 - P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 native r4 已由原始证据
   与修复后只读 validator replay 记为 `RECOVERED_PASS`，原 FAIL artifact 未修改。
-- B0 单请求 smoke 已 PASS；P05 native r1 已运行但因 trace scope 失败，不计作
-  calibration PASS；32 条 P05 B0、native 500 与 HEDGE B>0 500 尚未运行。
+- B0 单请求 smoke 已 PASS；P05 native r1 因 trace scope 失败，r2 因 startup
+  warmup 尚未 quiescent 而在 0/32 请求处失败，二者都不计作 calibration PASS；
+  32 条 P05 B0、native 500 与 HEDGE B>0 500 尚未运行。
 - 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
 - native r4 已完成定向 shutdown、contexts none 和 keepalive 恢复；其 rc=1 是
   validator 工具误报，不是 CUDA/NCCL/worker crash。
 - P05 native r1 的 32 条 output/live GPU evidence 可复核，但 q25 不可采用；
-  sampler/trace recovery 已提交，必须由新的 scoped native attempt 重新采集。
+  r2 没有 cohort output；sampler/trace/quiescence recovery 已提交，必须由新的
+  scoped native r3 重新采集。
