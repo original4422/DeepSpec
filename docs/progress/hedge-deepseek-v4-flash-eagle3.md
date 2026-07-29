@@ -1,9 +1,11 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_05_NATIVE_FORMAL_RETRY_READY`
+> 当前状态：`PHASE_05_NATIVE_FORMAL_ACCEPTED_PASS`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
+> 该窗口现仅作历史记录；用户于 `2026-07-29T07:47Z` 明确取消后续截止时间，
+> Phase 06/07 继续执行到目标完成。
 
 | 时间（UTC） | elapsed | 9h 剩余 | 12h 剩余 | Phase / executor | Worker / keepalive | 里程碑或 blocker | Artifact / 下一步 |
 | --- | ---: | ---: | ---: | --- | --- | --- | --- |
@@ -42,6 +44,7 @@
 | 2026-07-29T06:09:00Z | 9h12m33s | passed | 2h47m27s | Phase 05 native attempt 01 incomplete / bounded correction | 新服务曾达到 TP0–7、八卡约 60 GiB context 和 HTTP ready；失败后 registered SIGTERM、无 KILL fallback、0 context；keepalive owner `354555` 恢复，8×10 每卡 100% | runner 在 warmup 前因 repo 外 cwd 缺少 import bootstrap 报 `ModuleNotFoundError: deepspec`；0 warmup/0 formal、正式计时未开始。单变量加入 Phase04 同款 bootstrap，repo外cwd测试 RED→GREEN；4/4 PASS。freeze04 SHA `e4a9bd2e…40240` 经根线程自校验；accepted marker absent | invalid `.../20260729T055400Z-phase-05-native-formal-01`；freeze04 `.../20260729T060800Z-phase-05-tooling-freeze-04`；提交/push correction 后只启动新服务完整重跑 |
 | 2026-07-29T06:32:21Z | 9h35m54s | passed | 2h24m06s | Phase 05 native formal retry 02 live / `eagle3_phase05` | TP0–7 alive、准确 8 个 CUDA context；GPU sampler 7,345 行且持续增长；keepalive 已按协议暂停 | warmup 10/10、formal 58/500 已完成；chat HTTP non-200=0、hard error=0；trace clear 69 次对应 68 次完成请求和 1 次在途请求，无 retry 征象。一次只读 probe 的 Bash 计数语法错误已立即修正，未触碰 workload | active scratch `/tmp/deepspec-hedge-v4-eagle3/20260729T061100Z-phase-05-native-formal-02`；继续 60 秒监控，完成后定向清理、0-context gate、恢复 8 卡 keepalive 并封存 HDFS candidate |
 | 2026-07-29T07:02:08Z | 10h05m41s | passed | 1h54m19s | Phase 05 native formal retry 02 live / `eagle3_phase05` | TP0–7 alive、准确 8 个 CUDA context；GPU sampler 19,593 行且持续增长；keepalive 仍按协议暂停 | warmup 10/10、formal 271/500 已完成；chat HTTP non-200=0、hard error=0；trace clear 282 次对应 281 次完成请求和 1 次在途请求，无 retry 征象；启动时 14-file immutable tooling verify PASS | active scratch `/tmp/deepspec-hedge-v4-eagle3/20260729T061100Z-phase-05-native-formal-02`；继续 60 秒监控，完成后执行同一 wrapper 的定向清理、0-context gate、8 卡 keepalive 恢复与 HDFS candidate 封存 |
+| 2026-07-29T07:45:12Z | 10h48m45s | passed | 1h11m15s | Phase 05 native formal ACCEPTED/PASS / `eagle3_phase05` | TP0–7 target/draft load 与 aux trace 完整；正式窗口八卡参与；registered SIGTERM、无 KILL fallback、0 model context；keepalive owner `364528` 恢复，8×10 每卡 100% | 10 warmup + 500/500 formal success，0 failure/retry/trace retry；74,580 tokens / 4,411.045604754s / 16.9075558683 TPS；488 match、0 parse failure；31,603 proposals、42,477 accepted drafts、mean length 2.3440812581；39 hashes、flatten trace 与 summary 独立重算 PASS | accepted artifact `.../20260729T061100Z-phase-05-native-formal-02`；accepted marker 已由根线程于 07:42:58Z 原子发布；Phase 05 executor handoff，未 commit/push，未进入 Phase 06 |
 
 ## 当前依赖
 

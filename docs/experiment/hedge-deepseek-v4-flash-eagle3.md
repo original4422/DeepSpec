@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_05_NATIVE_FORMAL_RETRY_READY`。**
+> **状态：`PHASE_05_NATIVE_FORMAL_ACCEPTED_PASS`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -66,10 +66,22 @@
 > 8×10 每卡 100%。单变量修复只加入与 Phase 04 相同的 import bootstrap；
 > repo 外 cwd 回归已 RED→GREEN。新 freeze 04 manifest SHA-256 为
 > `e4a9bd2e25c959a449577889b504e1d9a7c3cc71e7fd6710ef815812f7640240`，
-> 根线程 self-verify 无差异；accepted marker 仍不存在。
+> 根线程 self-verify 无差异。retry 02 在同一冻结 source/config 上完成
+> 10/10 warmup 与 500/500 formal：0 failure、0 generation retry、0 trace retry，
+> 共 74,580 completion tokens，正式单调时钟 4,411.045604754 秒，
+> output TPS `16.9075558683`；488/500 答案匹配、0 parse failure。31,603 个
+> proposals 接受 42,477 个 draft tokens，accepted/proposal `1.3440812581`，
+> mean acceptance length `2.3440812581`。TP0–7 target/draft load、aux trace
+> 与正式窗口八卡参与证据完整；无未处理 crash。39 个 artifact hash 独立重算
+> 一致，登记 SIGTERM、无 KILL fallback、0 model context 后 keepalive owner
+> `364528` 恢复并通过 8×10 每卡 100%。根线程于
+> `2026-07-29T07:42:58Z` 发布唯一 accepted marker，Phase 05 判定
+> `ACCEPTED/PASS`。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
+> 上述为原始计划窗口；用户于 `2026-07-29T07:47Z` 明确取消后续截止时间，
+> 授权继续朝完整目标执行，因此 Phase 06/07 不再受该硬停止约束。
 >
 > **权威 Phase 00 artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T205627Z-phase-00-bootstrap-01`
@@ -121,17 +133,23 @@
 >
 > **权威 Phase 05 tooling freeze 04：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T060800Z-phase-05-tooling-freeze-04`
+>
+> **权威 Phase 05 native formal artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02`
+>
+> **Phase 05 accepted marker：**
+> `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-native-formal.complete.json`
 
 ## 快速结果
 
 | 快速结果 | Native | HEDGE B+ |
 | --- | ---: | ---: |
-| Status | calibration PASS；formal pending | Phase 04 bounded smoke PASS；formal pending |
-| Requests terminal | 32/32 calibration | 3/3 bounded smoke |
-| Output TPS | — | — |
-| Mean accept length | — | — |
-| GSM8K matches | — | 3/3（smoke only） |
-| Parse failures | — | 0 |
+| Status | formal `ACCEPTED/PASS` | Phase 04 bounded smoke PASS；formal pending |
+| Requests terminal | 500/500 formal；0 failure/retry | 3/3 bounded smoke |
+| Output TPS | `16.9075558683` | — |
+| Mean accept length | `2.3440812581` | — |
+| GSM8K matches | 488/500 | 3/3（smoke only） |
+| Parse failures | 0 | 0 |
 
 | 配置 | 值 |
 | --- | --- |
@@ -148,7 +166,7 @@
 | Target | `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1`; 73 regular files，`159630041626` bytes，manifest `af6f274af9b0b257a6b910ae9b8ac4d0e1dd0a0bbcd96898fc6772c7e158facd`，published |
 | Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; 7 regular files，`1858538499` bytes，manifest `dfa6b2de48c46f4fda0cf7070466d35e6bd3df44b84ba0363616cc0f1f6020a0`，published |
 | HEDGE core | source `9fb903d676254ea5f5d171051fb15c54f331111c`；DSpark publisher `4d96f44065c07030ede67484a262006ec149626a`；Eagle3 import `4cefd0a36ea254e4c14a83f35dc8db15b37a3384`；10-file byte identity 与 33 tests PASS |
-| Formal artifacts | pending |
+| Formal artifacts | native `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02`；manifest `f9759d5e1826a752221b55367bb873db2ea1d72959092d52112675566105f8c1`；accepted marker SHA-256 `0ce403530e58cdebb1cbbe9dd0d3c0ae534ecd697947f4348ea4e66d9aa7aea4` |
 | Phase 01B runtime | Python 3.11；Torch `2.11.0+cu130`；CUDA `13.0`；NCCL `2.28.9`；FlashInfer `0.6.14`；Triton `3.6.0`；sglang-kernel `0.4.5+cu130`；201 packages，`uv pip check` PASS |
 | Dataset split | GSM8K revision `740312add88f781978c0658806c59bc2815b9866`，fingerprint `59ec1b7f9357c7a2`；seed `980406`；32 calibration + 500 formal，overlap 0 |
 | Runner fixture | 10 warmup + 500 formal，500 terminal/500 success/5 generation retries，最大 in-flight 1；Phase 03 另覆盖 generation 前 clear、成功后 drain、trace-only retry、不重发成功 generation、精确 response ID 归属和正式 timing 边界 |
