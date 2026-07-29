@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T05:53:06Z`
+- 记录更新时间：`2026-07-29T06:24:05Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：P04 单请求 smoke `PASS`；P05 32 条完整 token IDs `PASS`（32/32）
 - 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
@@ -50,8 +50,9 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `ada66253e719cd021cdec369914245b51ff46b61`
-- 下一步：P06 独立执行者正在用 TDD 实现 formal runner；主审 tooling PASS 后
-  才运行 native 10 warmup + 唯一 500 条正式计时，不得修改已冻结 source/config
+- 下一步：P06 formal tooling `6a74186` 已主审/push；唯一 native formal executor
+  正在 live preflight，通过后运行 10 warmup + 500 条正式计时，不得修改已冻结
+  source/config
 
 ## 当前阶段
 
@@ -63,7 +64,7 @@
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
-| P06 | `IN_PROGRESS` | P05 freeze `c244651`；独立 executor 正在 RED→GREEN formal tooling，尚未登录 worker | tooling 主审；native 10 warmup + 500 formal |
+| P06 | `IN_PROGRESS` | formal tooling `6a74186` 已主审/push，138/138；唯一 live executor 正在 preflight，尚未 pause keepalive | native 10 warmup + 500 formal |
 | P07–P08 | `NOT_STARTED` | — | P06 门禁 |
 
 ## 固定实验协议
@@ -134,7 +135,7 @@
 | `20260729T044309Z-p05-native-calibration-r4` | lifecycle-repaired wheel 后唯一 native 重跑 | `PASS`：pre-cohort quiescent/clear/exact-zero；32/32、0 retry、5183 tokens；484 scoped rows/32 RID、q25=`2.0625`；TP8/GPU/shutdown/archive/keepalive 全 PASS | immutable HDFS attempt；outputs `b5550312…78b23`、trace `8ffa9e45…130f6` |
 | `20260729T051340Z-p05-b0-calibration-r1` | 唯一 P05 B0 32 条；只切换固定 HEDGE B0 config | `PASS`：32/32、0 retry、5183 tokens；1097 proposals、strict=HEDGE accepted 4081、relaxed/regret/leak/trace=0；TP8/GPU/shutdown/archive/keepalive PASS | immutable HDFS attempt；outputs `d59b0e17…3a434` |
 | P05 reducer/config freeze | 精确读取 native r4 与 B0 r1；单次 CPU reducer | `PASS`：完整 token IDs equal 32/32；484 positive finite；q25=`g=B=2.0625`、m=1；无 counterexample | `artifacts/hedge-dspark/p05-calibration/` |
-| P06 formal tooling | 固定 warmup/500/timing/retry/summary/identity/lifecycle 契约 | `IN_PROGRESS`：bounded executor 已创建 tests/prepare 草案；无 worker/GPU/model 操作 | worktree P06 untracked files |
+| P06 formal tooling | 固定 warmup/500/timing/retry/summary/identity/lifecycle 契约 | `PASS_COMMITTED`：executor 138/138；主 Agent targeted/regression/syntax/contract PASS；真实 r4 spec replay PASS | commit/push `6a74186` |
 
 ## P04 integration smoke 当前状态
 
