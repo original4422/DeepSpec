@@ -3,16 +3,16 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T05:22:26Z`
+- 记录更新时间：`2026-07-29T05:45:29Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- B0：P04 单请求 smoke `PASS`；P05 32 条唯一 attempt `IN_PROGRESS`
+- B0：P04 单请求 smoke `PASS`；P05 32 条完整 token IDs `PASS`（32/32）
 - 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
   `FAIL_TRACE_SCOPE`、`FAIL_PRE_COHORT_QUIESCENCE` 与
   `FAIL_PREFILL_TERMINAL_LIFECYCLE`。生命周期修复后的唯一 native r4 已主审
   `PASS`：32/32、0 retry、5183 completion tokens，trace 精确覆盖 32 个 response
-  RID，484 个正且有限的 barrier 值独立复算候选 q25=`2.0625`。参数尚未冻结；
-  唯一 P05 B0 已通过 preflight 并在 TP=8 冷加载；完成 32 条完整 token-ID
-  等价核查后再运行 reducer。
+  RID，484 个正且有限的 barrier 值得到 q25=`2.0625`。唯一 P05 B0 32/32
+  完整 token-ID 列表与 native 相同；reducer 已冻结
+  `g=B=2.0625,m=1`，P05 `PASS`。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / P04 native+B0 `PASS`；P05 native
@@ -26,12 +26,15 @@
   `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`；当前 integration patch
   `a4077b9f…10c52`、clean replay 10-file tree `69e80df9…2422`；formal wheel
   `a5c14bd7…71f9` 已发布/uv 安装，旧 `f2054c…` 保留为历史实体
-- g / B / m：`NOT_CALIBRATED` / `NOT_CALIBRATED` / 固定目标 `1`
+- g / B / m：`2.0625` / `2.0625` / `1`
 - native TPS / HEDGE TPS / delta：`NOT_RUN` / `NOT_RUN` / —
 - native accepted length / HEDGE accepted length / delta：`NOT_RUN` / `NOT_RUN` / —
 - native GSM match / HEDGE GSM match：`NOT_RUN` / `NOT_RUN`
-- artifact root：最新 P05 PASS evidence
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`
+- artifact root：native
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`；
+  B0
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T051340Z-p05-b0-calibration-r1`；
+  freeze `artifacts/hedge-dspark/p05-calibration/`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；
   integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result
@@ -40,16 +43,15 @@
   r1 failure docs `fd88b69`；r2 progress `64e6be7`；quiescence recovery
   `fe0aea0`；r2/recovery experiment `3c37a41`；r3 heartbeat `9e4aceb`；
   prefill lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration
-  config / result 尚未创建
+  freeze 本 Git 节点
 - DeepSpec worktree / branch / accepted integration commit：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `ada66253e719cd021cdec369914245b51ff46b61`
-- 下一步：让唯一 P05 B0 attempt 完成 ready、32 条、清理与归档；归档 PASS 后
-  逐样本比较完整 token IDs，再由 reducer 以 native r4 scoped trace 自动计算并
-  冻结 `g=B=2.0625,m=1`
+- 下一步：P06 独立执行者实现/验收 formal runner 后，运行 native 10 warmup +
+  唯一 500 条正式计时；不得修改已冻结 source/config
 
 ## 当前阶段
 
@@ -60,8 +62,9 @@
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
-| P05 | `IN_PROGRESS` | r1/r2/r3 均保留失败；native r4 主审 PASS，候选 q25=`2.0625`；唯一 B0 `20260729T051340Z-p05-b0-calibration-r1` preflight PASS、TP=8 `wait_ready` | B0 32、token-ID 等价、q25/config freeze |
-| P06–P08 | `NOT_STARTED` | — | P05 门禁 |
+| P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
+| P06 | `READY` | P05 source/config freeze 完成；lane keepalive PASS | native 10 warmup + 500 formal |
+| P07–P08 | `NOT_STARTED` | — | P06 门禁 |
 
 ## 固定实验协议
 
@@ -129,7 +132,8 @@
 | P05 prefill lifecycle recovery | prefill 终态、KV release 前补齐与 decode 相同的 speculative finish hook | PASS：精确 RED→GREEN；主 Agent 23+33+13=69 tests；独立 replay manifest/tree 与 executor 相同；commit/push `e028d2c` | patch/tree 已更新；旧 wheel真实保留但 superseded；新 wheel见下一行 |
 | P05 lifecycle wheel rebuild | 从 fixed base + `e028d2c` 重放、locked build、HDFS no-clobber publish、uv install | PASS：wheel `a5c14bd7…71f9` / 14,646,093 bytes；10-file/RECORD/import/runtime identity；主 Agent 53/53 + probe PASS；commit/push `ada6625` | 旧 wheel保留；后续 arm 只用新 wheel |
 | `20260729T044309Z-p05-native-calibration-r4` | lifecycle-repaired wheel 后唯一 native 重跑 | `PASS`：pre-cohort quiescent/clear/exact-zero；32/32、0 retry、5183 tokens；484 scoped rows/32 RID、q25=`2.0625`；TP8/GPU/shutdown/archive/keepalive 全 PASS | immutable HDFS attempt；outputs `b5550312…78b23`、trace `8ffa9e45…130f6` |
-| `20260729T051340Z-p05-b0-calibration-r1` | 唯一 P05 B0 32 条；只切换固定 HEDGE B0 config | `IN_PROGRESS`：exact lane/identity/path/port/keepalive preflight PASS；唯一 launcher/server/sampler 已登记，TP=8 `wait_ready` | active HDFS run；launcher `82254`、server `82443`、sampler `82450` |
+| `20260729T051340Z-p05-b0-calibration-r1` | 唯一 P05 B0 32 条；只切换固定 HEDGE B0 config | `PASS`：32/32、0 retry、5183 tokens；1097 proposals、strict=HEDGE accepted 4081、relaxed/regret/leak/trace=0；TP8/GPU/shutdown/archive/keepalive PASS | immutable HDFS attempt；outputs `d59b0e17…3a434` |
+| P05 reducer/config freeze | 精确读取 native r4 与 B0 r1；单次 CPU reducer | `PASS`：完整 token IDs equal 32/32；484 positive finite；q25=`g=B=2.0625`、m=1；无 counterexample | `artifacts/hedge-dspark/p05-calibration/` |
 
 ## P04 integration smoke 当前状态
 
@@ -233,9 +237,10 @@
 
 ## P05 calibration 当前状态
 
-- 状态：`IN_PROGRESS`。首个 native-trace attempt
-  `20260729T020144Z-p05-native-calibration-r1` 保留为
-  `FAIL_TRACE_SCOPE`；它不是可用于冻结参数的 calibration PASS，P05 B0 尚未运行。
+- 状态：`PASS`。native r4 scoped trace、唯一 B0 32/32 完整 token-ID 等价与
+  reducer/config freeze 均通过；P06 可进入。首个 native-trace attempt
+  `20260729T020144Z-p05-native-calibration-r1` 仍保留为
+  `FAIL_TRACE_SCOPE`，不参与正式 q25。
 - r1 固定身份与模型主链路成立：DeepSpec 运行前 HEAD `ce5d672`、SGLang base
   `fdebc938…`、formal wheel `f2054c…`、worker `4106666`、TP=8、DSpark width=5、
   target/draft `flashinfer_mxfp4`。TP/target/draft ranks 均为 0–7，两次 48/48
@@ -331,7 +336,25 @@
   clean、worker `4106666` exact 8×H20、HDFS/NVMe 新路径 ENOENT、port 31066
   可用、engine probe 无 false check；启动前 keepalive `80819` 的 8×10 全卡
   100%。launcher 已按生命周期暂停 keepalive并登记唯一 launcher `82254`、
-  server `82443`、sampler `82450`，当前 `wait_ready`；没有第二服务或重试。
+  server `82443`、sampler `82450`；没有第二服务或重试。服务于
+  `05:34:55Z` ready，32 条从 `05:34:57Z` 到 `05:37:38Z` 全部首次成功，
+  0 failed/retry、5183 completion tokens。
+- B0 唯一 clear 返回 `[true]` 且 verified exact zero；1097 proposals，
+  `hedge_accepted_draft_tokens=strict_accepted_draft_tokens=4081`，
+  relaxed mismatch、regret charged、active state/state leak 和 trace
+  seen/stored/dropped 全为 0。TP/target/draft ranks 0–7、八卡各 134 个请求期
+  samples、无 crash marker。server/sampler 定向停止、contexts none，keepalive
+  恢复为 `93521/93521/93521`，8×10 全卡 100%；四类 validator/archive PASS。
+- 主 Agent与 reducer 均逐 cohort position 直接比较两臂完整 `output_token_ids`，
+  不重新 tokenize：32/32 equal、mismatch=0。B0 outputs SHA-256
+  `d59b0e17483c1415dddd9ccee8ed41c22f26ab6fbfb47d4fd3a0d4f9fec3a434`。
+- 唯一 CPU reducer 在事先不存在的
+  `artifacts/hedge-dspark/p05-calibration/` 创建四个小型文件，无
+  counterexample。484 个正且有限值按线性 q25 得 `2.0625`，冻结 config 为
+  `{"B":2.0625,"block_size":5,"g":2.0625,"m":1,"value_scheme":"normalized_suffix"}`，
+  fingerprint
+  `6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921`。
+  executor reducer tests 6/6、主 Agent P05 24/24 与 syntax/diff gates PASS。
 
 ## P03 integration 当前证据
 
@@ -413,16 +436,18 @@
 - P05 native r4 定向 cleanup 后 contexts none；dedicated keepalive 更新为
   `80819/80819/80819`，attempt 内 8×10 全卡 mean/min/max 100%。r4 的八卡
   request-window participation 与 TP rank 0–7 均 PASS。
+- P05 B0 定向 cleanup 后 contexts none；dedicated keepalive 更新为
+  `93521/93521/93521`，attempt 内 8×10 全卡 mean/min/max 100%。B0 请求窗口
+  八卡各有 134 个 samples，TP/target/draft ranks 0–7 均 PASS。
 
 ## 限制与复现状态
 
 - P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 native r4 已由原始证据
   与修复后只读 validator replay 记为 `RECOVERED_PASS`，原 FAIL artifact 未修改。
-- B0 单请求 smoke 已 PASS；P05 native r1/r2/r3 的失败证据保持不可变。修复后的
-  native r4 已成为 32 条 scoped calibration PASS；唯一 32 条 P05 B0 正在加载，
-  尚无结果。native 500 与 HEDGE B>0 500 尚未运行。
+- B0 单请求 smoke 与 P05 32 条 B0 均 PASS；P05 native r1/r2/r3 的失败证据保持
+  不可变。native 500 与 HEDGE B>0 500 尚未运行。
 - 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
 - native r4 已完成定向 shutdown、contexts none 和 keepalive 恢复；其 rc=1 是
   validator 工具误报，不是 CUDA/NCCL/worker crash。
-- P05 native r4 的候选 q25=`2.0625` 只来自 fixed calibration scoped trace；
-  在 B0 完整 token-ID 等价与 reducer 输出落盘前仍不写成已冻结正式参数。
+- P05 参数只来自 fixed calibration scoped trace，已经 B0 完整 token-ID 等价与
+  reducer 落盘冻结；正式 500 条结果不得反向修改 `g/B/m`。

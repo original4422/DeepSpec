@@ -1,0 +1,39 @@
+{
+  "B": 2.0625,
+  "authorized_phase": "P05",
+  "b0_status": "PASS",
+  "block_size": 5,
+  "cohort_response_id_count": 32,
+  "config": {
+    "B": 2.0625,
+    "block_size": 5,
+    "g": 2.0625,
+    "m": 1,
+    "value_scheme": "normalized_suffix"
+  },
+  "config_fingerprint": "6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921",
+  "g": 2.0625,
+  "m": 1,
+  "native_acceptance_preserved": true,
+  "positive_value_count": 484,
+  "q25": 2.0625,
+  "q25_method": "linear interpolation with h=(n-1)*0.25",
+  "schema_version": 1,
+  "source_artifacts": {
+    "b0_equivalence_sha256": "63ea87842ab2d576e3419f8c9de521954200609e78fb10b6c109643522784b5f",
+    "b0_outputs_sha256": "d59b0e17483c1415dddd9ccee8ed41c22f26ab6fbfb47d4fd3a0d4f9fec3a434",
+    "calibration_values_sha256": "4c3fce054619606f98813c0c2acd4d99178b77a3311c64f5b533236efb49c9cf",
+    "hedge_config_sha256": "760128b85b8c3dd67e3b4dee512cc302ee59bd2e2a1b3ab3390fd186ade36b71",
+    "native_counters_sha256": "dc4812a7e567ddf0e1bda87317f25b1022c7c9b6226728f0c56da8a0c27444ab",
+    "native_outputs_sha256": "b5550312da76c86dc68f3b7f0685f4eb1009f7f778be8c24e1d400b382e78b23",
+    "native_trace_sha256": "8ffa9e45214c6a40520448c5d7dda098182e66134e809a92e20530fd9a5130f6"
+  },
+  "status": "PASS",
+  "trace_capacity": 65536,
+  "trace_response_id_count": 32,
+  "trace_rows_dropped": 0,
+  "trace_rows_seen": 1097,
+  "trace_rows_stored": 484,
+  "trace_scope_proven": true,
+  "value_scheme": "normalized_suffix"
+}

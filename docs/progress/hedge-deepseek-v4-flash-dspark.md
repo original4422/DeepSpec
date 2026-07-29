@@ -3,10 +3,10 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T05:22:26Z`（510 分钟 checkpoint 提前 2 分 15 秒）
+- 快照时间：`2026-07-29T05:45:29Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`08:27:45` / `2026-07-29T08:54:41Z`
-- 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
+- elapsed / deadline：`08:50:48` / `2026-07-29T08:54:41Z`
+- 当前 phase：P00–P05 均已 PASS；P06 `READY`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
   - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
@@ -16,14 +16,14 @@
   - P05：native r1/r2/r3 的三类失败证据保持；最小 engine recovery
     `e028d2c31658a06b4f5a5ee072d7e21c79d51c36` 与新 formal wheel
     `a5c14bd7…71f9` 已主审/push；唯一 native r4 已 32/32、scoped trace、
-    TP8/GPU/cleanup/archive 主审 `PASS`，候选 q25=`2.0625`；唯一 B0 已通过
-    preflight 并处于 TP=8 `wait_ready`
+    TP8/GPU/cleanup/archive 主审 `PASS`；唯一 B0 32/32 完整 token IDs
+    等价 PASS；reducer 冻结 `g=B=2.0625,m=1`
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：B0 启动前 keepalive `80819/80819/80819` 的 8×10
-  全卡 100%；已按生命周期暂停并启动唯一 launcher `82254`、server `82443`、
-  sampler `82450`，TP0–7 scheduler 均属于同一 server PGID
-- 最新 attempt：`20260729T051340Z-p05-b0-calibration-r1`；preflight PASS，
-  当前 `wait_ready`，尚未 handshake 或发送 32 条请求
+- keepalive / server / PID：B0 登记 server `82443`、sampler `82450` 已定向
+  退出，contexts none；dedicated keepalive 恢复为 `93521/93521/93521`，
+  8×10 全卡 100%
+- 最新 attempt：`20260729T051340Z-p05-b0-calibration-r1`；32/32、0 retry、
+  5183 tokens，live/artifact/shutdown/archive PASS
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
@@ -34,13 +34,13 @@
   P05 tooling `ce5d672`；sampler recovery `6b7145d`；trace-scope recovery
   `eb4962f`；failure docs `fd88b69`；quiescence recovery `fe0aea0`；
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
-  lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration config /
-  result 尚未创建
-- 首要事项：等待唯一 B0 ready，依次完成 handshake、32 条、cleanup、archive；
-  主审等价 PASS 后才由 reducer 冻结 `g=B=2.0625,m=1`
+  lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
+  本 Git 节点
+- 首要事项：提交 P05 freeze 节点并派发独立 P06 executor；先完成 formal runner
+  TDD/身份门禁，再运行 native 10 warmup + 唯一 500 正式计时
 - 下一检查点：`2026-07-29T05:54:41Z`
-- 下一 30 分钟动作：完成唯一 B0 attempt 与主审；若 PASS，运行唯一 CPU reducer
-  并提交 calibration freeze 节点
+- 下一 30 分钟动作：P05 commit/push；P06 formal tooling 主审后启动唯一 native
+  500 attempt
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -636,3 +636,27 @@
 - 当前 stage 为 `wait_ready`；尚未执行 quiescent→clear→exact-zero handshake，
   也尚未发送 32 条请求。没有 retry、第二 launcher/server/sampler 或 reducer。
   q25=`2.0625` 仍只是 native 候选值。
+
+### 2026-07-29T05:45:29Z — P05 B0、reducer 与阶段主验收
+
+- 唯一 P05 B0
+  `20260729T051340Z-p05-b0-calibration-r1` launcher rc=0。服务
+  `05:34:55Z` ready；32 条于 `05:34:57Z`–`05:37:38Z` 全部首次成功，
+  0 failed/retry、5183 completion tokens。
+- pre-cohort 唯一 clear 返回 `[true]` 并 verified exact zero。最终
+  1097 proposals，HEDGE accepted 4081 与 strict accepted 4081 相同；
+  relaxed mismatch、regret、active state/state leak、trace
+  seen/stored/dropped 全为 0。
+- B0 TP/target/draft rank 0–7、八卡各 134 个 request-window samples、无 crash。
+  server `82443`、sampler `82450` 定向停止，contexts none；keepalive 恢复为
+  `93521/93521/93521`，8×10 全卡 100%。live/artifact/shutdown/archive PASS。
+- 主 Agent与唯一 reducer 对 native r4/B0 r1 的完整 token-ID 列表比较均为
+  32/32 equal、mismatch=0；两臂 completion-token sum 都是 5183。B0 outputs
+  SHA-256 `d59b0e17…3a434`。
+- reducer 只运行一次，在 absent directory 创建四个小型 artifact。484 个正且
+  有限值、1097 seen/484 stored/0 dropped，线性 q25=`2.0625`。正式冻结
+  `B=g=2.0625,m=1,normalized_suffix,block_size=5`，fingerprint
+  `6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921`；
+  无 counterexample。
+- executor reducer tests 6/6 PASS；主 Agent独立 P05 24/24、syntax/diff gates
+  PASS。P05 主验收 `PASS`，下一 eligible phase 为 P06 native formal。

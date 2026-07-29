@@ -1,0 +1,14 @@
+{
+  "authorized_phase": "P05",
+  "b0_outputs_sha256": "d59b0e17483c1415dddd9ccee8ed41c22f26ab6fbfb47d4fd3a0d4f9fec3a434",
+  "b0_status": "PASS",
+  "comparison": "complete output_token_ids lists, no re-tokenization",
+  "first_mismatch_cohort_position": null,
+  "full_token_id_lists_equal": 32,
+  "mismatch_cohort_positions": [],
+  "mismatch_count": 0,
+  "native_outputs_sha256": "b5550312da76c86dc68f3b7f0685f4eb1009f7f778be8c24e1d400b382e78b23",
+  "sample_count": 32,
+  "schema_version": 1,
+  "status": "PASS"
+}
