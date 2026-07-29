@@ -1,17 +1,17 @@
 # DFlash × HEDGE 进展
 
-当前标签：`BEST_EFFORT_BLOCKED_IMPLEMENTATION — D7 MAIN AUDIT`
+当前标签：`BEST_EFFORT_BLOCKED_IMPLEMENTATION — FINAL`
 
 - Timebox：`2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；若 B0 未完成，`2026-07-29T05:55:58Z` 停止实现。
-- 已用/剩余：约 `9h16m`；T+9 实现停止点已过约 `16m`，距 12 小时硬停止约 `2h44m`。
-- 当前 phase：D7 executor 已交付 final audit/handoff，主 Agent 正在独立验收。D4-C short live `B=0` infrastructure smoke 已由主 Agent 验收并以 `a18655a` push；计划定义的 32 条 protocol B0、q25/B/g 与 D6 两个 500 条 formal arm 均为 `NOT_RUN`。D5 tooling/blocker 已以 `af6e4a6` push；T+9 后没有新增实现或 GPU attempt。
+- 已用/剩余：约 `9h22m`；T+9 实现停止点已过约 `22m`，在 T+12 前约 `2h38m` 完成收尾。
+- 当前 phase：D7 final audit 与主 Agent 验收均已完成并 push，commit 分别为 `711747a` 与 `324684b`。D4-C short live `B=0` infrastructure smoke 已由主 Agent 验收并以 `a18655a` push；计划定义的 32 条 protocol B0、q25/B/g 与 D6 两个 500 条 formal arm 均为 `NOT_RUN`。T+9 后没有新增实现或 GPU attempt。
 - Worker：`4099543`，`g340-cd51-4b00-4d69-9088-7ae6-6253`，8×H20。
 - Keepalive：D7 `06:07Z` final remote audit 证明 fresh PID/PGID/SID `123914` 的 argv、hostname、CVD 与八卡 UUID 全匹配；8×10×1 秒均值全部 100%，无 pause marker，端口 `31457` 空闲，无 owned model process/context，只有逐卡约 804 MiB operational keepalive context。
 - Eagle target marker：`READY`；23:04:53Z 发布的 immutable marker、provider commit/OID、manifest SHA、formal entity、46-shard index、config/tokenizer、73 files/159,630,041,626 bytes 与零 symlink/hardlink 已由主 Agent 只读复核 PASS。
 - Draft：`READY`；primary D1A attempt `dflash-d1a-primary-20260728T213507Z` 的同一 curl second pass 自然完成，6 files / 3,607,606,957 bytes 经 NVMe/HDFS 独立实体核查与原子发布 PASS；`.complete` SHA `f26d5899…338b`、pointer SHA `d2b43994…1add`。首次约 3.40 GB 后的 reset 已归因为 `curl-internal-retry-restarts-from-invocation-offset-zero`，fallback 未启用。
 - DSpark pure-core pointer：`ADOPTED`；主 Agent 已验证 `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/hedge-core.json`、canonical commit `4d96f44065c07030ede67484a262006ec149626a`、parent `77053dd3ea84bb1c8dde7971f5f12759c1375e1f`、HEDGE source `9fb903d676254ea5f5d171051fb15c54f331111c`、10 个逐文件 hash 与 33 tests，并以 DFlash commit `86231e5` 提交同一内容。SGLang 注入的 5 个 core 文件逐字节一致。
-- 当前 blocker：D7 纠正了 D5 当时的陈旧 inventory：`preflight.json` 实际在 `05:40:13Z` 写出 PASS，但 mlx PTY 未向 orchestrator surfaced 可恢复 rc/stdout；scratch 最终为 14 个 preflight-only 文件、0 requests，仍无 pause/server/API/HDFS。剩余 T+9 窗口不足以安全完成冷启动、32 请求、cleanup 与 seal，因此实验结果保持 best-effort incomplete。
-- 下一检查点：主 Agent 完成 D7 JSON/manifest/canonical experiment 主验，按 `$git-commit-message` 工作流提交/push D7 小文件；随后做最终 progress 与 fresh keepalive 复核。D6 不启动。
+- 最终缺口：D7 纠正了 D5 当时的陈旧 inventory：`preflight.json` 实际在 `05:40:13Z` 写出 PASS，但 mlx PTY 未向 orchestrator surfaced 可恢复 rc/stdout；scratch 最终为 14 个 preflight-only 文件、0 requests，仍无 pause/server/API/HDFS。剩余 T+9 窗口不足以安全完成冷启动、32 请求、cleanup 与 seal，因此实验结果是 best-effort incomplete，formal result 为 `NONE`。
+- 下一步：本 timebox 内无后续实验；保持 worker `4099543` owned keepalive。未来若续跑，须有新授权窗口并从 native calibration 开始，不能把 D4-C short smoke 外推为 protocol B0。
 
 | UTC | Phase | 动作 | 结论 | Artifact | 下一步 |
 | --- | --- | --- | --- | --- | --- |
@@ -39,3 +39,4 @@
 | 2026-07-29T05:04:00Z | D4-C | 8.1 小时 checkpoint：修正 patch artifact 门禁并提交 source freeze；审计 preflight/tool-yield 编排偏差后继续同一 short B0 attempt | zero-context patch `1788696e…`、tree rebuild、双重 CPU seal PASS，`a80031a` 已 push；attempt preflight 04:56:25Z PASS。提前发出的首次 pause-launch 在 pause/server/HDFS 前退出，八卡始终只有 PID `110847` keepalive 且100%；零 GPU side effect 可验证，故同一 attempt继续唯一 lifecycle | `a80031a`；`dflash-d4-b0-20260729T045317Z-a01` preflight/recovery audit | 等待 TP8 ready/API/HEDGE counters，随后定向 cleanup、HDFS seal、keepalive gate与主 Agent验收；T+9前力争进入并完成 D5 |
 | 2026-07-29T05:42:00Z | D4-C/D5 | 8.8 小时 checkpoint：主验并提交 D4-C；完成 D5 native tooling GO 后审计 preflight stall与剩余时间，执行 best-effort early stop | D4-C `a18655a` 已 push；short B0 infra PASS但 protocol B0仍NOT_RUN。D5 tooling主验7/7，a01在pause前的SGLang import停滞，仅有2个CUDA-view JSON；a02/a03为只读诊断，worker/source/CUDA/Python均PASS。没有模型/GPU side effect，keepalive PID `123914` 保持八卡100%；剩余时间不足以安全完成native+B0 | `a18655a`；D5 a01 preflight scratch；D5 tooling（待提交） | 禁止新模型/D6；封存D5 blocker、fresh keepalive证据、handoff/experiment并进入D7最终审计 |
 | 2026-07-29T06:12:00Z | D7 | T+9 后只读最终审计：复核 Git/source/checkpoint/dataset、D4-C HDFS 39/39、D5 scratch、67 个 CPU cases 与 fresh worker/keepalive；纠正 D5 inventory | D7 audit PASS，但实验 `BEST_EFFORT_EARLY_STOP_INCOMPLETE`、formal result NONE。D5 preflight 实际 05:40:13Z PASS 但未及时 surfaced；14 个文件均为 preflight-only、0 requests、zero GPU side effect。keepalive `123914` 八卡100%，无 model context | `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json`；D7 handoff/manifest/reproduction commands | 主 Agent 独立验收 D7，提交/push final audit；随后最终 progress 与 keepalive gate |
+| 2026-07-29T06:18:00Z | D7 final | 主 Agent完成 staged diff、语义、67 cases、HDFS identity/manifest 与 fresh remote keepalive 复核；提交并回填验收 | D7 evidence `711747a`、main acceptance `324684b` 均已 push；D7 manifest `2ca89175…aef3` 3/3 PASS；branch/origin 同步。完成标签 `BEST_EFFORT_BLOCKED_IMPLEMENTATION`，formal result NONE | `711747a`；`324684b`；canonical experiment 与 D7 final audit | 本 timebox 收尾；保持八卡 keepalive，未来续跑需新授权 |

@@ -46,7 +46,8 @@ D7 final audit
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json`
 
 Git commit: D7 final audit `711747ad2e80d69de38fa93c10a42e78569413c0`；
-latest pushed progress `fc71d0c`；D5 tooling/blocker `af6e4a6`；D4
+D7 main acceptance `324684bc55d6255b4d87dbea845d9e50f8f21a57`；06:12 progress
+checkpoint `fc71d0c`；D5 tooling/blocker `af6e4a6`；D4
 source/evidence `a80031a`；D4-C live evidence `a18655a`；DeepSpec canonical core
 `86231e536573ccc43cda732b4eca920d5ce0a28a`；SGLang HEDGE-final
 `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`
