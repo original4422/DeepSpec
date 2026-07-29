@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`COMPLETE`
-- 记录更新时间：`2026-07-29T10:45:54.693Z`
+- 记录更新时间：`2026-07-29T10:50:37.535Z`
 - 读者版结果报告：
   [`docs/results/hedge-deepseek-v4-flash-dspark.md`](../results/hedge-deepseek-v4-flash-dspark.md)
 - 复现索引：
@@ -68,16 +68,16 @@
   `fe0aea0`；r2/recovery experiment `3c37a41`；r3 heartbeat `9e4aceb`；
   prefill lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration
   freeze `c244651`；P06 tooling `6a74186`；P06 result `9134825`；
-  P07 tooling `3253062`；P07 result `966823e`；P08 最终结果节点为本次待提交
-  变更
+  P07 tooling `3253062`；P07 result `966823e`；P08 最终结果/审计
+  `dd9939ff1c5375c106f9ade16f81e7d744e9082f`
 - DeepSpec worktree / branch / accepted integration commit：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
-- P08 输入/latest pushed HEAD：
-  `966823eb2c8f9fe26aa8039f30e4c210beea47a6`
-- 下一步：不再启动模型。主 Agent验收已 `PASS`；只需按
-  `$git-commit-message` 提交并 push 本次最终结果节点
+- P08 输入 / 最终已 push 结果节点：
+  `966823eb2c8f9fe26aa8039f30e4c210beea47a6` /
+  `dd9939ff1c5375c106f9ade16f81e7d744e9082f`
+- 下一步：无；不再启动模型，路线与仓库结果节点均已闭环
 
 ## 当前阶段
 
@@ -87,11 +87,11 @@
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
-| P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
-| P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
-| P06 | `PASS` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS | — |
+| P04 | `PASS_COMMITTED` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同；result commit `3e10b780` | — |
+| P05 | `PASS_COMMITTED` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f`；freeze commit `c244651` | — |
+| P06 | `PASS_COMMITTED` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS；result commit `9134825` | — |
 | P07 | `PASS_COMMITTED` | 唯一 HEDGE formal 500/500、0 retry、75819 tokens、2263.710352404s、33.493242595936465 TPS；HEDGE/runtime/TP8/GPU/cleanup/archive 主审全 PASS；result commit `966823e` | — |
-| P08 | `PASS / COMPLETE` | 主 Agent独立重算 dataset、P00–P07 identity/results、153 tests 与 39+6 manifest 全 PASS；最终 JSON/Markdown 已生成 | 最终 commit/push |
+| P08 | `PASS_COMMITTED / COMPLETE` | 主 Agent独立重算 dataset、P00–P07 identity/results、153 tests 与 39+6 manifest 全 PASS；最终 JSON/Markdown 已生成并由 `dd9939f` commit/push | — |
 
 ## 固定实验协议
 
@@ -589,8 +589,9 @@
   [`final_audit.json`](../../artifacts/hedge-dspark/p08-final/final_audit.json)、
   [`artifact_manifest.json`](../../artifacts/hedge-dspark/p08-final/artifact_manifest.json)、
   [`reproduction.md`](../../artifacts/hedge-dspark/p08-final/reproduction.md)。
-- audit status 与主 Agent acceptance 均为 `PASS`；路线发布为 `COMPLETE`。
-  只剩最终 commit/push 仓库动作，不需要再启动模型。
+- audit status 与主 Agent acceptance 均为 `PASS`；路线发布为 `COMPLETE`，
+  最终结果/审计已由 `dd9939ff1c5375c106f9ade16f81e7d744e9082f`
+  commit/push；不需要再启动模型。
 
 ## 限制与复现状态
 

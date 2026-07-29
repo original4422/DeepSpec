@@ -3,7 +3,7 @@
 ## 最新快照
 
 - 状态：`COMPLETE`
-- 快照时间：`2026-07-29T10:45:54.693Z`（P08 主 Agent最终验收）
+- 快照时间：`2026-07-29T10:50:37.535Z`（P08 结果节点已 commit/push）
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
   `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
 - elapsed / deadline：持续执行 / `NONE`
@@ -28,7 +28,8 @@
   - P08：dataset 18/18、P05 reducer byte replay、P06/P07 formal summary/
     identity/TP8/GPU/shutdown/keepalive 与两个 39-file archive manifest 均
     `PASS`；主 Agent另行复核 P00–P03 identity、P04 replay、1000 条 formal
-    raw results、153/153 tests 与 39+6 manifest 全通过，route `COMPLETE`
+    raw results、153/153 tests 与 39+6 manifest 全通过；最终结果/审计
+    commit/push `dd9939ff1c5375c106f9ade16f81e7d744e9082f`，route `COMPLETE`
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
 - keepalive / server / PID：P07 server/sampler 已按登记 PID/PGID 定向退出；
   `cuda_contexts_after.txt` 为 contexts none；dedicated keepalive 已恢复为
@@ -38,7 +39,8 @@
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T084544Z-p07-hedge-formal-r1`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；P08 输入/上一已 push 节点 `966823e`
+  branch `exp/hedge-v4-dspark`；P08 输入 `966823e`；最终结果/审计节点
+  `dd9939ff1c5375c106f9ade16f81e7d744e9082f` 已 push
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -47,10 +49,10 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`；P06 result `9134825`；P07 tooling
-  `3253062`；P07 result `966823e`；P08 最终节点为本次待提交变更
-- 首要事项：主 Agent验收已经 `PASS`；完成最终 commit/push，不再启动模型
+  `3253062`；P07 result `966823e`；P08 result/audit `dd9939f`
+- 首要事项：无；主 Agent验收及最终结果节点均已 `PASS_COMMITTED`
 - 下一检查点：无运行检查点
-- 下一动作：只做 staged diff gate 与最终提交，不触碰 worker
+- 下一动作：无；不触碰 worker
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -879,3 +881,12 @@
   mean/min/max 100%、815 MiB；没有启动模型。
 - `final_audit.main_agent_acceptance=PASS`；路线按计划发布为 `COMPLETE`。
   唯一剩余动作是最终 commit/push。
+
+### 2026-07-29T10:50:37.535Z — P08 结果节点提交并推送
+
+- 主 Agent按 staged status/full diff/`git diff --cached --check`/recent log
+  门禁提交并推送最终结果、审计、manifest、复现文档及补录 handoff。
+- 最终结果/审计节点：
+  `dd9939ff1c5375c106f9ade16f81e7d744e9082f`；P00–P08 全部
+  `PASS_COMMITTED`，路线与仓库结果节点闭环。
+- 未登录 worker、未启动模型、未改变 keepalive 或 HDFS raw artifacts。
