@@ -181,8 +181,16 @@ def validate_native_run(native_run: Path) -> dict[str, Any]:
     return config
 
 
+def b0_config(native_run: Path) -> dict[str, Any]:
+    """Derive the protocol B=0 config without mutating the frozen B+ config."""
+
+    config = dict(validate_native_run(native_run))
+    config["B"] = 0
+    return config
+
+
 def emit_config(args: argparse.Namespace) -> int:
-    print(canonical(validate_native_run(args.native_run)))
+    print(canonical(b0_config(args.native_run)))
     return 0
 
 
@@ -206,6 +214,76 @@ def _install_deadline(hard_stop_utc: str) -> None:
     signal.setitimer(signal.ITIMER_REAL, remaining)
 
 
+def compare_b0_outputs(
+    native_rows: list[dict[str, Any]],
+    b0_rows: list[dict[str, Any]],
+    hedge_snapshot: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Compare full token IDs after proving both cohorts have identical identity."""
+
+    if len(native_rows) != 32 or len(b0_rows) != 32:
+        raise ValueError(
+            "B0 comparison requires exactly 32 native and 32 B0 rows: "
+            f"native={len(native_rows)} b0={len(b0_rows)}"
+        )
+    comparisons = []
+    for index, (native, b0) in enumerate(zip(native_rows, b0_rows)):
+        for field in ("request_index", "cohort_position", "dataset_index", "prompt"):
+            if native.get(field) != b0.get(field):
+                raise ValueError(
+                    f"B0 sample identity/order mismatch at row {index}: {field}"
+                )
+        left = [int(token) for token in native["output_token_ids"]]
+        right = [int(token) for token in b0["output_token_ids"]]
+        divergence = next(
+            (i for i, pair in enumerate(zip(left, right)) if pair[0] != pair[1]),
+            min(len(left), len(right)) if len(left) != len(right) else None,
+        )
+        comparisons.append(
+            {
+                "request_index": index,
+                "cohort_position": native["cohort_position"],
+                "dataset_index": native["dataset_index"],
+                "prompt_sha256": hashlib.sha256(
+                    native["prompt"].encode("utf-8")
+                ).hexdigest(),
+                "identical": left == right,
+                "first_divergence_token_position": divergence,
+                "native_output_token_ids": left,
+                "b0_output_token_ids": right,
+            }
+        )
+    mismatches = [row for row in comparisons if not row["identical"]]
+    comparison = {
+        "schema_version": 1,
+        "status": "PASS" if not mismatches else "FAIL",
+        "compared": len(comparisons),
+        "identical": len(comparisons) - len(mismatches),
+        "mismatches": len(mismatches),
+        "samples": comparisons,
+    }
+    if not mismatches:
+        counterexample = {"schema_version": 1, "status": "NOT_APPLICABLE"}
+    else:
+        first = mismatches[0]
+        row_index = int(first["request_index"])
+        native = native_rows[row_index]
+        b0 = b0_rows[row_index]
+        counterexample = {
+            "schema_version": 1,
+            "status": "B0_TOKEN_ID_MISMATCH",
+            **first,
+            "prompt": native["prompt"],
+            "question": native.get("question"),
+            "native_model_text": native.get("model_text"),
+            "b0_model_text": b0.get("model_text"),
+            "native_terminal_state": native.get("terminal_state"),
+            "b0_terminal_state": b0.get("terminal_state"),
+            "hedge_snapshot": hedge_snapshot,
+        }
+    return comparison, counterexample
+
+
 def run_arm(args: argparse.Namespace) -> int:
     scratch: Path = args.scratch
     result = {
@@ -222,7 +300,7 @@ def run_arm(args: argparse.Namespace) -> int:
     marker = scratch / "request.active"
     try:
         if args.arm == "b0":
-            expected_config = validate_native_run(args.native_run)
+            expected_config = b0_config(args.native_run)
             for name in (
                 "native_calibration_outputs.jsonl",
                 "first_rejection_trace.jsonl",
@@ -287,40 +365,14 @@ def run_arm(args: argparse.Namespace) -> int:
                 .splitlines()
             ]
             b0_rows = [json.loads(line) for line in output_path.read_text().splitlines()]
-            comparisons = []
-            for index, (native, b0) in enumerate(zip(native_rows, b0_rows)):
-                left, right = native["output_token_ids"], b0["output_token_ids"]
-                divergence = next(
-                    (i for i, pair in enumerate(zip(left, right)) if pair[0] != pair[1]),
-                    min(len(left), len(right)) if len(left) != len(right) else None,
-                )
-                comparisons.append(
-                    {
-                        "request_index": index,
-                        "dataset_index": native["dataset_index"],
-                        "identical": left == right,
-                        "first_divergence_token_position": divergence,
-                        "native_output_token_ids": left,
-                        "b0_output_token_ids": right,
-                    }
-                )
-            mismatches = [row for row in comparisons if not row["identical"]]
-            write_json(
-                scratch / "b0_comparison.json",
-                {
-                    "schema_version": 1,
-                    "status": "PASS" if not mismatches else "FAIL",
-                    "compared": len(comparisons),
-                    "identical": len(comparisons) - len(mismatches),
-                    "mismatches": len(mismatches),
-                    "samples": comparisons,
-                },
+            comparison, counterexample = compare_b0_outputs(
+                native_rows,
+                b0_rows,
+                snapshot,
             )
-            write_json(
-                scratch / "b0_minimal_counterexample.json",
-                {"status": "NOT_APPLICABLE"} if not mismatches else mismatches[0],
-            )
-            arm_pass = len(comparisons) == 32 and not mismatches
+            write_json(scratch / "b0_comparison.json", comparison)
+            write_json(scratch / "b0_minimal_counterexample.json", counterexample)
+            arm_pass = comparison["status"] == "PASS"
             b0_status = "PASS" if arm_pass else "FAIL"
         write_json(
             scratch / "hedge_counters.json",

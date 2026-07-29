@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "phase": "CONTINUATION_C2",
+  "status": "PASS",
+  "assembled_at_utc": "2026-07-29T09:06:30Z",
+  "scope": "32-row protocol B=0 arm and full output token-ID comparison only; no formal arm started",
+  "attempt_policy": {
+    "maximum_live_attempts": 3,
+    "live_attempt_boundary": "owned keepalive pause begins",
+    "attempts_used": 1,
+    "successful_attempt": "dflash-d5-b0-20260729T083442Z-a01",
+    "a02_started": false,
+    "a03_started": false
+  },
+  "tooling": {
+    "red_test_observed": true,
+    "red_test_result": "missing b0_config helper plus B=12.5 contract mismatch",
+    "changed_runtime_file": "scripts/dflash_d5_api.py",
+    "read_only_progress_helper": "scripts/dflash_d5_progress.sh",
+    "test_file": "tests/hedge_dflash_integration/test_dflash_d5_tooling.py",
+    "d5_and_d4c_tests_passed": 11,
+    "bash_syntax": "PASS",
+    "api_py_compile": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "identity": {
+    "worker_id": "4099543",
+    "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+    "gpu_count": 8,
+    "gpu_model": "NVIDIA H20",
+    "tp_size": 8,
+    "port": 31457,
+    "sglang_head": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+    "sglang_tree": "53fc45b1b04963736254dc7ed582047313b8075a",
+    "target_revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+    "draft_revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+    "dataset_revision": "740312add88f781978c0658806c59bc2815b9866",
+    "dataset_seed": 980406,
+    "dataset_fingerprint": "59ec1b7f9357c7a2",
+    "native_attempt_id": "dflash-d5-native-20260729T073139Z-a01"
+  },
+  "configuration": {
+    "hedge_enabled": true,
+    "calibration_trace": false,
+    "b0_config": {
+      "B": 0,
+      "block_size": 7,
+      "g": 12.5,
+      "m": 1,
+      "value_scheme": "normalized_suffix"
+    },
+    "b0_config_canonical_json": "{\"B\":0,\"block_size\":7,\"g\":12.5,\"m\":1,\"value_scheme\":\"normalized_suffix\"}",
+    "b0_config_sha256": "09fd47e2aca30c8ec558662f0f3e4ddbaea1894664219343248ca1fedc52b3ef",
+    "runtime_config_fingerprint": "eeacf4242d4d12eb28c468fdc470055afee3f10c06a6c8149c6e807c99d18f85",
+    "frozen_bplus_config_sha256": "ef9003cd37d475b44ed256d91036808f38bedd2e7ea40a90f26232a939fe7746",
+    "dflash_block_size": 8,
+    "proposal_width": 7
+  },
+  "lifecycle": {
+    "keepalive_pause_contexts_clear_at_utc": "2026-07-29T08:44:52Z",
+    "server_pid": 169134,
+    "server_pgid": 169134,
+    "server_sid": 169134,
+    "server_started_at_utc": "2026-07-29T08:44:52.896199Z",
+    "server_ready_at_utc": "2026-07-29T08:51:43.591808Z",
+    "request_wall_started_at_utc": "2026-07-29T08:51:46.222892Z",
+    "request_wall_ended_at_utc": "2026-07-29T09:02:58.928041Z",
+    "model_contexts_clear_after_cleanup_at_utc": "2026-07-29T09:03:32Z"
+  },
+  "cohort": {
+    "request_count": 32,
+    "terminal_success": 32,
+    "request_failures": 0,
+    "retries": 0,
+    "completion_tokens": 5016,
+    "match": 31,
+    "mismatch": 1,
+    "parse_failure": 0,
+    "wall_time_seconds": 672.705146071,
+    "e2e_output_tps": 7.456461466507931,
+    "benchmark": false
+  },
+  "b0_comparison": {
+    "status": "PASS",
+    "native_rows": 32,
+    "b0_rows": 32,
+    "sample_identity_and_order_equal": 32,
+    "full_output_token_ids_identical": 32,
+    "mismatches": 0,
+    "first_divergent_sample": null,
+    "first_divergent_token_position": null,
+    "minimal_counterexample_status": "NOT_APPLICABLE"
+  },
+  "hedge_counters": {
+    "mode": "enabled",
+    "proposals": 4991,
+    "draft_tokens_verifiable": 34937,
+    "strict_accepted_draft_tokens": 0,
+    "hedge_accepted_draft_tokens": 0,
+    "accepted_draft_tokens_by_position": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "accept_length_histogram": [
+      4991,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "relaxed_mismatches": 0,
+    "regret_charged": 0.0,
+    "budget_exhaustion_events": 0,
+    "requests_initialized": 34,
+    "requests_finished": 33,
+    "slot_reuse_resets": 1,
+    "requests_non_natural": 1,
+    "active_request_states": 0,
+    "state_leaks": 0,
+    "request_state": []
+  },
+  "gpu_evidence": {
+    "tp_ranks_initialized": 8,
+    "request_samples_per_gpu": 1429,
+    "all_gpus_have_request_samples": true,
+    "per_gpu_peak_request_utilization_percent": {
+      "0": 99,
+      "1": 99,
+      "2": 99,
+      "3": 99,
+      "4": 99,
+      "5": 99,
+      "6": 99,
+      "7": 99
+    },
+    "ready_memory_used_mib_range": [
+      92843,
+      93083
+    ],
+    "unhandled_cuda_nccl_worker_crash": false
+  },
+  "cleanup": {
+    "status": "PASS",
+    "model_contexts_clear": true,
+    "port_31457_free": true,
+    "keepalive_resume_returncode": 0,
+    "keepalive_pid": 206956,
+    "keepalive_pgid": 206956,
+    "keepalive_sid": 206956,
+    "keepalive_identity_recorded_at_utc": "2026-07-29T09:04:08.414159Z",
+    "resume_gate_samples_per_gpu": 10,
+    "resume_gate_minimum_mean_utilization_percent": 40.0,
+    "fresh_observation_per_gpu_utilization_percent": 100,
+    "keepalive_healthy": true
+  },
+  "artifact": {
+    "hdfs_run": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d5-b0-20260729T083442Z-a01",
+    "completion_marker_status": "PASS",
+    "manifest_records": 47,
+    "manifest_check": "47/47 PASS",
+    "manifest_sha256": "321ab6047fe22795e1c4c1a697e1742ba556618fe7900de1ef4a7a6f820426d5"
+  },
+  "next": "main-agent acceptance, then a separately assigned C3 native-formal executor; C2 stops"
+}
