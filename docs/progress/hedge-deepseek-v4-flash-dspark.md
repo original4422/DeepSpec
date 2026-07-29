@@ -325,3 +325,31 @@
   定向停止 server 与 sampler，证明 CUDA contexts none；无外部 signal。随后恢复
   dedicated keepalive，新 PID/PGID/SID `21792/21792/21792`，8 卡各 10 个样本
   mean/min/max 均为 100%。`archive_manifest.json` PASS。
+
+### 2026-07-29T01:02:57Z — P04 native r4 validator recovery
+
+- archived CSV 的只读量化证明 1419 个 ordinal 从 0 连续到 1418，共 11352 行；
+  每组精确 8 行/8 个固定 UUID，monotonic timestamp 严格递增。旧 cadence gate
+  失败只来自全局 10 个间隔略大于 2.5 秒，最大 2.687626856 秒。
+- 固定 API 请求窗口有 9 组完整样本，最大间隔 1.199117809 秒；八卡都有约
+  79.6–80.1 GiB 模型显存，最大利用率 85%–99%。因此根因收敛为全局冷 JIT/
+  cleanup 调度抖动触发了计划外 validator 硬门槛，不是漏 ordinal、漏 GPU、模型
+  或请求失败。
+- recovery executor 先以完整 8-row fixture 得到 exact RED，再只把 cadence
+  hard-fail 改为 global/request-window 诊断统计；连续 ordinal、exact UUID/row、
+  strict timestamp、request bracket/sample 与八卡活动/显存门禁全部保留。缺
+  ordinal/row、非单调、无 request sample、未 bracket 五类反例仍 fail-closed。
+- executor 与主 Agent各自得到 33+13+22+24=92/92 tests PASS；修复后对 r4
+  临时只读副本 replay 为 PASS。原 HDFS `live_validation.json`/shutdown FAIL
+  保持不可变；主 Agent将 r4 记为 `RECOVERED_PASS`。非 decode recovery
+  commit/push：
+  `37a8d37470660cca34a5d14efe2e84553fa6ec38`。
+- 主 Agent再次远端核查 worker `4106666` dedicated keepalive：
+  `21792/21792/21792`，8×10 全卡 mean/min/max 100%。唯一 B0 smoke executor
+  已派发；不重跑 native，也不提前进入 P05。
+- B0 executor 首次把 keepalive status/start 误执行在开发机 namespace；本地
+  status 为 STOPPED，start 因本地 GPU busy 在 idle gate 立即拒绝，没有 PID、
+  signal 或远端状态变化。主 Agent纠偏后，executor 经
+  `mlx worker login 4106666 -- bash <absolute-script>` 复核远端仍为
+  `21792/21792/21792`、8×10 全 100%，随后才启动唯一 B0 attempt
+  `20260729T010603Z-p04-b0-r1`。

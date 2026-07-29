@@ -3,16 +3,18 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T00:16:20Z`
+- 记录更新时间：`2026-07-29T01:02:57Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- B0：`NOT_RUN`
-- 结论/首要事项：P00–P03 与 P04 静态 tooling 已 PASS/commit/push。native r2
-  的 pre-pause blocker 已完成单变量恢复：exact formal wheel 已原子发布到 HDFS，
-  runtime 强制哈希 persistent entity 且不回退 build `/tmp`。RED→GREEN、22/22
-  tests 与两次 worker read-only probe 均 PASS；下一步是新的 native attempt。
+- B0：`IN_PROGRESS`
+- 结论/首要事项：P00–P03 已 PASS。P04 native r4 的 TP8/模型/API/八卡参与证据
+  全部成立；原 attempt 唯一失败是 validator 对完整 28 分钟采样施加了计划外的
+  2.5 秒全局 cadence 硬门槛。真实归档与最小 fixture 均证明这是工具误报；
+  validator recovery `37a8d37` 已 RED→GREEN、92/92 tests、只读 r4 replay PASS
+  并 push。原 FAIL 证据保持不变，native 当前记为 `RECOVERED_PASS`；正在运行
+  唯一 B0 smoke。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
-- worker / TP / GPU 参与：`4106666` / 8 / 模型参与 `NOT_RUN`；keepalive 8/8 gate `PASS`
+- worker / TP / GPU 参与：`4106666` / 8 / native r4 `PASS`；keepalive 8/8 gate `PASS`
 - model / checkpoint：固定目标
   `deepseek-ai/DeepSeek-V4-Flash-DSpark@62af8fffb2f7030cac4de2f0169f5b8d1101b646`；
   P00 checkpoint r1 PASS，canonical identity 记录 75 files / 48 shards /
@@ -35,9 +37,8 @@
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
-  `ddc372b5118595d15bfc217e7c3529c0bf86c852`
-- 下一步：重新核对 lane 后运行一个新的 native P04 attempt；其主验收 PASS 前
-  仍不运行 B0
+  `37a8d37470660cca34a5d14efe2e84553fa6ec38`
+- 下一步：完成唯一 B0 P04 smoke、主验收并进入 P05；不重跑 native
 
 ## 当前阶段
 
@@ -47,7 +48,7 @@
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
-| P04 | `IN_PROGRESS` | tooling `210b281`；r2 pre-pause FAIL 已由 persistent-wheel recovery `ddc372b` 修复，worker probes PASS | native smoke、主验收、B0 smoke |
+| P04 | `IN_PROGRESS` | tooling `210b281`；wheel recovery `ddc372b`；native r4 raw evidence + validator replay `37a8d37` 为 `RECOVERED_PASS` | B0 smoke、主验收 |
 | P05–P08 | `NOT_STARTED` | — | P04 门禁 |
 
 ## 固定实验协议
@@ -103,12 +104,15 @@
 | P04 static tooling | 固定 native/B0 lifecycle、client、sampler、process guard 与 validator | 主 Agent验收 PASS：executor 20/20，主复验 20/20，contract/syntax/whitespace PASS；commit/push `210b281` | `artifacts/hedge-dspark/p04-tooling/tooling_test.log` |
 | `20260728T235900Z-p04-native-smoke-r2` | 首次实际 native launcher；无 decode 配置变化 | FAIL：pre-pause engine identity 发现 worker-local formal wheel 缺失；server/model/request 未启动；archive PASS，keepalive 从未暂停且 after PASS | HDFS attempt root；`engine_identity.json`、`shutdown.json`、`archive_manifest.json` |
 | P04 persistent-wheel recovery | 仅把 formal wheel identity 从 build-local `/tmp` 改为 pinned HDFS entity | PASS：RED→GREEN、22/22、no-fallback、两次 worker engine probe 与 keepalive gate；commit/push `ddc372b` | HDFS hash-named wheel；tooling log；probe IDs `...001241Z...r3`、`...001600Z...main` |
+| `20260729T001700Z-p04-native-smoke-r4` | recovery 后首个 native live attempt；decode 配置不变 | `RECOVERED_PASS`：TP8/48 shards/target+draft/API/八卡参与成立；原 live validator 因全局 cadence 硬门槛 rc=1，cleanup/contexts/keepalive 均成立 | immutable HDFS attempt；API 91 tokens；1419×8 GPU rows；archive PASS |
+| P04 cadence validator recovery | 只把全局 cadence 硬失败改为诊断统计 | PASS：精确 RED→GREEN、五类反例仍 fail-closed、92/92；只读 r4 replay PASS；commit/push `37a8d37` | 原 HDFS FAIL 不修改；全局 10 个 >2.5s，请求窗口 0 个 |
 
 ## P04 integration smoke 当前状态
 
 - 状态：`IN_PROGRESS`；静态 tooling `PASS_COMMITTED`；native r2
-  `FAIL_PRE_PAUSE_RECOVERED`；recovery `PASS_COMMITTED`；B0 `NOT_RUN`；
-  模型/server 从未启动。
+  `FAIL_PRE_PAUSE_RECOVERED`；persistent-wheel recovery `PASS_COMMITTED`；
+  native r4 `RECOVERED_PASS`；cadence recovery `PASS_COMMITTED`；B0 executor
+  已派发。
 - 首次 read-only preflight artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T230700Z-p04-preflight/worker_inventory.json`。
   worker `4106666` 精确 8×H20、无未知任务、keepalive `4730/4730/4730`、
@@ -161,6 +165,29 @@
   persistent size/hash；两次均未 pause/model，keepalive 8×10 全 100%。
   recovery commit/push：
   `ddc372b5118595d15bfc217e7c3529c0bf86c852`。
+- native r4 immutable artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T001700Z-p04-native-smoke-r4`。
+  服务冷启动 1726.254 秒后 ready；TP0–TP7 均完成 NCCL、target 与
+  `DeepseekV4ForCausalLMDSpark` draft 加载，target/draft 都是
+  `flashinfer_mxfp4`。单次固定请求首次 HTTP 成功，10.353 秒、91 completion
+  tokens、`\boxed{5}` 且匹配；native speculative metadata 为 70/105 accepted
+  drafts、21 verifies。
+- r4 `gpu_samples.csv` 有 1419 个连续 ordinal、11352 行，每组精确 8 个固定
+  UUID 且 monotonic timestamp 严格递增。请求窗口有 9 组；八卡最大利用率
+  85%–99%，模型显存约 79.6–80.1 GiB。全局只有冷 JIT/cleanup 的 10 个间隔
+  略超旧 2.5 秒上限，最大 2.687626856 秒；请求窗口最大 1.199117809 秒。
+- 原 `live_validation.json`、`shutdown.json` 的 FAIL/rc=1 保持不可变；唯一错误
+  是旧 cadence gate。server PID 7941 与 sampler PID 7950 按登记 identity
+  定向停止，cleanup rc=0、contexts none、无外部 signal；keepalive 恢复为
+  `21792/21792/21792`，8×10 全卡 100%，archive PASS。因此主 Agent依据原始
+  证据和修复后只读 replay 把 native r4 记为 `RECOVERED_PASS`，而不是改写原
+  attempt 为 PASS。
+- cadence recovery 精确 fixture 在修复前复现同一错误，修复后转绿；缺 ordinal、
+  缺 GPU row、非单调 timestamp、请求无 sample、请求未 bracket 五类反例仍
+  fail-closed。executor 与主 Agent各自复验 33+13+22+24=92/92 tests PASS；
+  只改变 repo validator/tests，不改变 SGLang wheel 或任何 decode 配置。
+  commit/push：
+  `37a8d37470660cca34a5d14efe2e84553fa6ec38`。
 
 ## P03 integration 当前证据
 
@@ -225,18 +252,21 @@
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T205441Z-p00-bootstrap/operational-heartbeats/20260728T224800Z-p03-locked-rebuild/`；
   worker `4106666` 精确 8×H20，PID/PGID/SID `4730/4730/4730`，
   8 卡 10×1 秒均 100%，无模型 server。该 keepalive 仅是 operational load。
-- 尚未启动 SGLang model server，尚无 TP rank 0–7 初始化、模型显存或请求期间八卡
-  参与证据。
+- native r4 已提供 TP rank 0–7 初始化/target+draft 加载、八卡约 79.6–80.1 GiB
+  模型显存和请求期间逐 UUID 活动证据；日志没有 CUDA/NCCL/worker crash。
 - native r2 在 engine identity preflight 退出；keepalive 未暂停、没有新增 CUDA
   context，结束后 8×10×1 秒门禁仍 PASS。
 - 两次 recovery read-only probe 同样未暂停 keepalive；worker `4106666` 保持在线，
   PID/PGID/SID `4730/4730/4730` 且八卡门禁 PASS。
+- native r4 cleanup 后 dedicated keepalive 更新为 PID/PGID/SID
+  `21792/21792/21792`；attempt 内与主 Agent随后远端独立核查均为 8×10 全卡
+  mean/min/max 100%。
 
 ## 限制与复现状态
 
-- P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 静态 tooling 已完成。
-  native r2 只到 pre-pause identity 门禁，不构成 live GPU smoke 成功。
-- B0、q25 calibration、native 500 与 HEDGE B>0 500 均未运行。
+- P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 native r4 已由原始证据
+  与修复后只读 validator replay 记为 `RECOVERED_PASS`，原 FAIL artifact 未修改。
+- B0 smoke 正在执行；32 条 B0/校准、native 500 与 HEDGE B>0 500 均未运行。
 - 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
-- 尚未发生模型 shutdown；env setup 失败属于依赖获取路径，不是 CUDA/NCCL/worker
-  crash。
+- native r4 已完成定向 shutdown、contexts none 和 keepalive 恢复；其 rc=1 是
+  validator 工具误报，不是 CUDA/NCCL/worker crash。
