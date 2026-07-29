@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import math
 import sys
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -42,6 +45,43 @@ from hedge_dspark_p05_prepare import (  # noqa: E402
 
 ARMS = ("native-trace", "b0")
 JsonGet = Callable[[str, float], Mapping[str, Any]]
+JsonPost = Callable[[str, Mapping[str, Any], float], Any]
+
+
+class _NoProxyJsonPost:
+    """Minimal no-proxy JSON POST transport for SGLang control endpoints."""
+
+    def __init__(self) -> None:
+        self._opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({})
+        )
+
+    def __call__(
+        self, url: str, payload: Mapping[str, Any], timeout: float
+    ) -> Any:
+        request = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with self._opener.open(request, timeout=timeout) as response:
+                raw = response.read()
+                status = response.status
+        except urllib.error.HTTPError as error:
+            raise RuntimeError(
+                f"POST {url} failed with HTTP {error.code}: "
+                + error.read().decode(errors="replace")
+            ) from error
+        except urllib.error.URLError as error:
+            raise RuntimeError(f"POST {url} failed: {error!r}") from error
+        if status < 200 or status >= 300:
+            raise RuntimeError(f"POST {url} returned HTTP {status}")
+        try:
+            return json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise RuntimeError(f"POST {url} returned invalid JSON") from error
 
 
 def _utc_now() -> str:
@@ -52,6 +92,137 @@ def _nonnegative_int(value: Any, *, field: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError(f"{field} must be a non-negative integer")
     return value
+
+
+def validate_cleared_server_snapshot(
+    server_info: Mapping[str, Any], *, arm: str
+) -> int:
+    """Prove every DSpark HEDGE snapshot is empty before the cohort."""
+
+    if arm not in ARMS:
+        raise ValueError("arm must be exactly native-trace or b0")
+    mismatches = {
+        key: {"expected": expected, "observed": server_info.get(key)}
+        for key, expected in SERVER_FIELDS.items()
+        if server_info.get(key) != expected
+    }
+    if mismatches:
+        raise ValueError(f"/server_info decode config mismatch: {mismatches}")
+    internal_states = server_info.get("internal_states")
+    if not isinstance(internal_states, list) or not internal_states:
+        raise ValueError("/server_info internal_states must be non-empty")
+    expected_mode = "calibration" if arm == "native-trace" else "enabled"
+    expected_switches = {
+        "HEDGE_ENABLED": 0 if arm == "native-trace" else 1,
+        "SGLANG_DSPARK_HEDGE_CALIBRATION_TRACE": (
+            1 if arm == "native-trace" else 0
+        ),
+    }
+    expected_config = None if arm == "native-trace" else dict(B0_CONFIG)
+    zero_scalars = {
+        "proposals",
+        "draft_tokens_verifiable",
+        "strict_accepted_draft_tokens",
+        "hedge_accepted_draft_tokens",
+        "relaxed_mismatches",
+        "regret_charged",
+        "cap_trim_lens",
+        "budget_exhaustion_events",
+        "remaining_budget_total",
+        "requests_initialized",
+        "requests_finished",
+        "requests_non_natural",
+        "slot_reuse_resets",
+        "active_request_states",
+        "state_leaks",
+        "trace_rows_seen",
+        "trace_rows_dropped",
+    }
+    for snapshot_index, state in enumerate(internal_states):
+        if not isinstance(state, Mapping):
+            raise ValueError(
+                f"internal_states[{snapshot_index}] is not an object"
+            )
+        info_record = state.get("dspark_info_record")
+        snapshot = (
+            info_record.get("hedge")
+            if isinstance(info_record, Mapping)
+            else None
+        )
+        if not isinstance(snapshot, Mapping):
+            raise ValueError(
+                f"internal_states[{snapshot_index}] has no HEDGE snapshot"
+            )
+        if (
+            snapshot.get("mode") != expected_mode
+            or snapshot.get("experiment_switches") != expected_switches
+            or snapshot.get("config") != expected_config
+            or snapshot.get("gamma") != 5
+            or snapshot.get("verify_num_draft_tokens") != 6
+        ):
+            raise ValueError(
+                f"cleared HEDGE snapshot {snapshot_index} identity mismatch"
+            )
+        nonzero = {
+            field: snapshot.get(field)
+            for field in zero_scalars
+            if (
+                isinstance(snapshot.get(field), bool)
+                or not isinstance(snapshot.get(field), (int, float))
+                or float(snapshot[field]) != 0.0
+            )
+        }
+        if nonzero:
+            raise ValueError(
+                f"cleared HEDGE snapshot {snapshot_index} has nonzero counters: "
+                f"{nonzero}"
+            )
+        if snapshot.get("hedge_accepted_draft_tokens_by_position") != [0] * 5:
+            raise ValueError(
+                f"cleared HEDGE snapshot {snapshot_index} has position counters"
+            )
+        if (
+            snapshot.get("remaining_budget_by_request") != []
+            or snapshot.get("strict_rejection_trace") != []
+        ):
+            raise ValueError(
+                f"cleared HEDGE snapshot {snapshot_index} retains request/trace data"
+            )
+    return len(internal_states)
+
+
+def clear_calibration_evidence(
+    *,
+    arm: str,
+    base_url: str,
+    internal_state_post: JsonPost,
+    server_info_get: JsonGet,
+) -> dict[str, Any]:
+    """Clear ready/preflight evidence and prove the reset took effect."""
+
+    response = internal_state_post(
+        base_url.rstrip("/") + "/set_internal_state",
+        {"server_args": {"dspark_clear_info_records": 1}},
+        300.0,
+    )
+    if response != [True]:
+        raise ValueError(
+            "/set_internal_state must return exact DP=1 success list [true]"
+        )
+    cleared = server_info_get(
+        base_url.rstrip("/") + "/server_info",
+        300.0,
+    )
+    snapshot_count = validate_cleared_server_snapshot(cleared, arm=arm)
+    return {
+        "status": "PASS",
+        "source_endpoint": "/set_internal_state",
+        "request_body": {
+            "server_args": {"dspark_clear_info_records": 1}
+        },
+        "response": [True],
+        "verified_snapshot_count": snapshot_count,
+    }
 
 
 def _trace_row(
@@ -134,13 +305,69 @@ def _trace_row(
     return normalized
 
 
+def calibration_response_ids(
+    records: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    """Extract the 32 unique raw OpenAI response ids for trace association."""
+
+    if len(records) != 32:
+        raise ValueError("calibration outputs must contain exactly 32 records")
+    response_ids: list[str] = []
+    for position, record in enumerate(records):
+        attempts = record.get("attempts")
+        successful = (
+            [
+                attempt
+                for attempt in attempts
+                if isinstance(attempt, Mapping)
+                and attempt.get("status") == "success"
+            ]
+            if isinstance(attempts, list)
+            else []
+        )
+        raw_response = (
+            successful[-1].get("raw_response")
+            if len(successful) == 1
+            else None
+        )
+        response_id = (
+            raw_response.get("id")
+            if isinstance(raw_response, Mapping)
+            else None
+        )
+        if not isinstance(response_id, str) or not response_id:
+            raise ValueError(
+                f"calibration output {position} lacks a raw response id"
+            )
+        response_ids.append(response_id)
+    if len(set(response_ids)) != 32:
+        raise ValueError(
+            "calibration outputs must have 32 unique non-empty response ids"
+        )
+    return response_ids
+
+
 def validate_server_snapshot(
-    server_info: Mapping[str, Any], *, arm: str
+    server_info: Mapping[str, Any],
+    *,
+    arm: str,
+    cohort_response_ids: list[str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Validate the post-cohort DSpark snapshot and extract trace rows."""
 
     if arm not in ARMS:
         raise ValueError("arm must be exactly native-trace or b0")
+    if cohort_response_ids is not None and (
+        len(cohort_response_ids) != 32
+        or len(set(cohort_response_ids)) != 32
+        or any(
+            not isinstance(response_id, str) or not response_id
+            for response_id in cohort_response_ids
+        )
+    ):
+        raise ValueError(
+            "calibration outputs must have 32 unique non-empty response ids"
+        )
     mismatches = {
         key: {"expected": expected, "observed": server_info.get(key)}
         for key, expected in SERVER_FIELDS.items()
@@ -239,6 +466,16 @@ def validate_server_snapshot(
             raise ValueError("native calibration has no positive strict rejection")
     elif proposals <= 0:
         raise ValueError("B0 snapshot does not prove HEDGE verifier execution")
+    if cohort_response_ids is not None:
+        extra_rids = sorted(
+            {row["rid"] for row in trace_rows}
+            - set(cohort_response_ids)
+        )
+        if extra_rids:
+            raise ValueError(
+                "strict rejection trace contains ids outside the calibration "
+                f"cohort: {extra_rids}"
+            )
     counters = {
         "schema_version": 1,
         "authorized_phase": "P05",
@@ -253,6 +490,8 @@ def validate_server_snapshot(
         "trace_rows_stored": len(trace_rows),
         "trace_rows_dropped": trace_dropped,
         "native_acceptance_preserved": arm == "native-trace",
+        "cohort_response_ids": cohort_response_ids,
+        "trace_scope_proven": cohort_response_ids is not None,
     }
     return counters, trace_rows
 
@@ -270,6 +509,8 @@ def run_calibration_arm(
     | None = None,
     server_info_get: JsonGet | None = None,
     sleeper: Callable[[float], None] = time.sleep,
+    require_trace_scope: bool = False,
+    pre_cohort_clear: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the frozen cohort once, then seal the arm-level server snapshot."""
 
@@ -307,12 +548,24 @@ def run_calibration_arm(
         raise ValueError(
             "P05 requires all 32 requests to preserve complete output token IDs"
         )
+    response_ids = (
+        calibration_response_ids(records) if require_trace_scope else None
+    )
     getter = server_info_get or _NoProxyJsonGet()
     server_info = getter(
         base_url.rstrip("/") + "/server_info",
         300.0,
     )
-    counters, trace_rows = validate_server_snapshot(server_info, arm=arm)
+    counters, trace_rows = validate_server_snapshot(
+        server_info,
+        arm=arm,
+        cohort_response_ids=response_ids,
+    )
+    counters["pre_cohort_clear"] = (
+        dict(pre_cohort_clear)
+        if pre_cohort_clear is not None
+        else None
+    )
     write_jsonl(trace_path, trace_rows, immutable=True)
     counters["fetched_at_utc"] = _utc_now()
     write_json(counters_path, counters, immutable=True)
@@ -334,9 +587,51 @@ def run_calibration_arm(
         "trace_rows_seen": counters["trace_rows_seen"],
         "trace_rows_stored": counters["trace_rows_stored"],
         "trace_rows_dropped": counters["trace_rows_dropped"],
+        "trace_scope_proven": counters["trace_scope_proven"],
     }
     write_json(summary_path, result, immutable=True)
     return result
+
+
+def run_scoped_calibration_arm(
+    *,
+    arm: str,
+    base_url: str,
+    dataset: Path,
+    outputs_path: Path,
+    summary_path: Path,
+    counters_path: Path,
+    trace_path: Path,
+    transport: Callable[[str, dict[str, Any], float], Mapping[str, Any]]
+    | None = None,
+    server_info_get: JsonGet | None = None,
+    internal_state_post: JsonPost | None = None,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> dict[str, Any]:
+    """Clear preflight evidence, then run one trace-scoped calibration arm."""
+
+    getter = server_info_get or _NoProxyJsonGet()
+    poster = internal_state_post or _NoProxyJsonPost()
+    clear_evidence = clear_calibration_evidence(
+        arm=arm,
+        base_url=base_url,
+        internal_state_post=poster,
+        server_info_get=getter,
+    )
+    return run_calibration_arm(
+        arm=arm,
+        base_url=base_url,
+        dataset=dataset,
+        outputs_path=outputs_path,
+        summary_path=summary_path,
+        counters_path=counters_path,
+        trace_path=trace_path,
+        transport=transport,
+        server_info_get=getter,
+        sleeper=sleeper,
+        require_trace_scope=True,
+        pre_cohort_clear=clear_evidence,
+    )
 
 
 def main() -> int:
@@ -371,7 +666,7 @@ def main() -> int:
         return 0 if result["status"] == "ready" else 1
     if args.command == "run":
         try:
-            result = run_calibration_arm(
+            result = run_scoped_calibration_arm(
                 arm=args.arm,
                 base_url=args.base_url,
                 dataset=args.dataset,

@@ -24,7 +24,10 @@ from deepspec.hedge_protocol.io import (  # noqa: E402
     write_jsonl,
 )
 from deepspec.hedge_spec import HedgeConfig  # noqa: E402
-from hedge_dspark_p05_client import _trace_row  # noqa: E402
+from hedge_dspark_p05_client import (  # noqa: E402
+    _trace_row,
+    calibration_response_ids,
+)
 from hedge_dspark_p05_prepare import (  # noqa: E402
     TRACE_CAPACITY,
     validate_calibration_dataset,
@@ -285,6 +288,21 @@ def reduce_calibration(
         "trace_rows_stored": len(trace_records),
         "trace_rows_dropped": 0,
         "native_acceptance_preserved": True,
+        "trace_scope_proven": counters.get("trace_scope_proven") is True,
+        "cohort_response_id_count": (
+            len(counters["cohort_response_ids"])
+            if isinstance(counters.get("cohort_response_ids"), list)
+            else None
+        ),
+        "trace_response_id_count": len(
+            {
+                record.get("rid")
+                for record in trace_records
+                if isinstance(record, Mapping)
+                and isinstance(record.get("rid"), str)
+                and record.get("rid")
+            }
+        ),
         "source_artifacts": {
             "native_outputs_sha256": native_sha256,
             "b0_outputs_sha256": b0_sha256,
@@ -303,6 +321,57 @@ def reduce_calibration(
     return summary
 
 
+def reduce_scoped_calibration(
+    *,
+    native_outputs: Path,
+    b0_outputs: Path,
+    native_trace: Path,
+    native_counters: Path,
+    output_dir: Path,
+) -> dict[str, Any]:
+    """Independently prove trace-to-cohort scope, then reduce calibration."""
+
+    dataset = validate_calibration_dataset()
+    expected_indices = dataset["dataset_indices"]
+    native = _validate_outputs(
+        native_outputs, expected_indices=expected_indices, arm="native"
+    )
+    b0 = _validate_outputs(
+        b0_outputs, expected_indices=expected_indices, arm="b0"
+    )
+    native_response_ids = calibration_response_ids(native)
+    calibration_response_ids(b0)
+    trace_records = load_jsonl(native_trace)
+    trace_rids: set[str] = set()
+    for position, record in enumerate(trace_records):
+        rid = record.get("rid") if isinstance(record, Mapping) else None
+        if not isinstance(rid, str) or not rid:
+            raise ValueError(f"native trace row {position} lacks a response rid")
+        trace_rids.add(rid)
+    extra_rids = sorted(trace_rids - set(native_response_ids))
+    if extra_rids:
+        raise ValueError(
+            "native trace contains ids outside the calibration cohort: "
+            f"{extra_rids}"
+        )
+    counters = json.loads(native_counters.read_text(encoding="utf-8"))
+    if (
+        not isinstance(counters, Mapping)
+        or counters.get("trace_scope_proven") is not True
+        or counters.get("cohort_response_ids") != native_response_ids
+    ):
+        raise ValueError(
+            "native counters do not prove the same 32-response trace scope"
+        )
+    return reduce_calibration(
+        native_outputs=native_outputs,
+        b0_outputs=b0_outputs,
+        native_trace=native_trace,
+        native_counters=native_counters,
+        output_dir=output_dir,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--native-outputs", type=Path, required=True)
@@ -311,7 +380,7 @@ def main() -> int:
     parser.add_argument("--native-counters", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
-    result = reduce_calibration(
+    result = reduce_scoped_calibration(
         native_outputs=args.native_outputs,
         b0_outputs=args.b0_outputs,
         native_trace=args.native_trace,
