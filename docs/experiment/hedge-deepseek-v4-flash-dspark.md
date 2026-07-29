@@ -3,18 +3,17 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T01:02:57Z`
+- 记录更新时间：`2026-07-29T01:30:12Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- B0：`IN_PROGRESS`
-- 结论/首要事项：P00–P03 已 PASS。P04 native r4 的 TP8/模型/API/八卡参与证据
-  全部成立；原 attempt 唯一失败是 validator 对完整 28 分钟采样施加了计划外的
-  2.5 秒全局 cadence 硬门槛。真实归档与最小 fixture 均证明这是工具误报；
-  validator recovery `37a8d37` 已 RED→GREEN、92/92 tests、只读 r4 replay PASS
-  并 push。原 FAIL 证据保持不变，native 当前记为 `RECOVERED_PASS`；正在运行
-  唯一 B0 smoke。
+- B0：`PASS`
+- 结论/首要事项：P00–P04 已 PASS。native r4 由原始 TP8/模型/API/八卡证据和
+  修复后只读 validator replay 记为 `RECOVERED_PASS`；原 FAIL artifact 未修改。
+  唯一 B0 r1 rc=0，固定配置、HEDGE verify counter、API、八卡、cleanup、
+  contexts、keepalive 和 archive 全 PASS；91 个完整 token IDs 与 native r4
+  逐项相同。下一步进入 P05 的 32 条 B0 核查、native strict trace 与 q25 冻结。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
-- worker / TP / GPU 参与：`4106666` / 8 / native r4 `PASS`；keepalive 8/8 gate `PASS`
+- worker / TP / GPU 参与：`4106666` / 8 / native+B0 `PASS`；keepalive 8/8 gate `PASS`
 - model / checkpoint：固定目标
   `deepseek-ai/DeepSeek-V4-Flash-DSpark@62af8fffb2f7030cac4de2f0169f5b8d1101b646`；
   P00 checkpoint r1 PASS，canonical identity 记录 75 files / 48 shards /
@@ -38,7 +37,7 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `37a8d37470660cca34a5d14efe2e84553fa6ec38`
-- 下一步：完成唯一 B0 P04 smoke、主验收并进入 P05；不重跑 native
+- 下一步：P05 运行 32 条 native calibration/trace 与 B0，自动计算并冻结 q25
 
 ## 当前阶段
 
@@ -48,8 +47,9 @@
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
-| P04 | `IN_PROGRESS` | tooling `210b281`；wheel recovery `ddc372b`；native r4 raw evidence + validator replay `37a8d37` 为 `RECOVERED_PASS` | B0 smoke、主验收 |
-| P05–P08 | `NOT_STARTED` | — | P04 门禁 |
+| P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
+| P05 | `READY` | P04 PASS；immutable calibration 32 已固定 | native trace、B0 32、q25/config freeze |
+| P06–P08 | `NOT_STARTED` | — | P05 门禁 |
 
 ## 固定实验协议
 
@@ -106,13 +106,14 @@
 | P04 persistent-wheel recovery | 仅把 formal wheel identity 从 build-local `/tmp` 改为 pinned HDFS entity | PASS：RED→GREEN、22/22、no-fallback、两次 worker engine probe 与 keepalive gate；commit/push `ddc372b` | HDFS hash-named wheel；tooling log；probe IDs `...001241Z...r3`、`...001600Z...main` |
 | `20260729T001700Z-p04-native-smoke-r4` | recovery 后首个 native live attempt；decode 配置不变 | `RECOVERED_PASS`：TP8/48 shards/target+draft/API/八卡参与成立；原 live validator 因全局 cadence 硬门槛 rc=1，cleanup/contexts/keepalive 均成立 | immutable HDFS attempt；API 91 tokens；1419×8 GPU rows；archive PASS |
 | P04 cadence validator recovery | 只把全局 cadence 硬失败改为诊断统计 | PASS：精确 RED→GREEN、五类反例仍 fail-closed、92/92；只读 r4 replay PASS；commit/push `37a8d37` | 原 HDFS FAIL 不修改；全局 10 个 >2.5s，请求窗口 0 个 |
+| `20260729T010603Z-p04-b0-r1` | 唯一 B0 smoke；固定 wheel/TP8/width5/backend | PASS rc=0：91 token IDs 与 native 相同；25 proposals；TP8/八卡/API/shutdown/archive 全 PASS | immutable HDFS attempt；ID hash `b7288ead…8649db` |
 
 ## P04 integration smoke 当前状态
 
-- 状态：`IN_PROGRESS`；静态 tooling `PASS_COMMITTED`；native r2
+- 状态：`PASS`；静态 tooling `PASS_COMMITTED`；native r2
   `FAIL_PRE_PAUSE_RECOVERED`；persistent-wheel recovery `PASS_COMMITTED`；
-  native r4 `RECOVERED_PASS`；cadence recovery `PASS_COMMITTED`；B0 executor
-  已派发。
+  native r4 `RECOVERED_PASS`；cadence recovery `PASS_COMMITTED`；B0 r1
+  `PASS`。
 - 首次 read-only preflight artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T230700Z-p04-preflight/worker_inventory.json`。
   worker `4106666` 精确 8×H20、无未知任务、keepalive `4730/4730/4730`、
@@ -188,6 +189,24 @@
   只改变 repo validator/tests，不改变 SGLang wheel 或任何 decode 配置。
   commit/push：
   `37a8d37470660cca34a5d14efe2e84553fa6ec38`。
+- B0 r1 immutable artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T010603Z-p04-b0-r1`。
+  startup 1091.204 秒后 ready；launcher rc=0。固定 config bytes 为
+  `{"B":0,"g":1e30,"m":5,"value_scheme":"normalized_suffix","block_size":5}`，
+  HEDGE mode enabled；25 proposals、`verify_num_draft_tokens=6`、125 verifiable
+  drafts、strict/HEDGE accepted 75/75、relaxed mismatch/regret/state leak 均 0。
+- B0 API 首次成功，3.306 秒、91 completion tokens/IDs、`\boxed{5}` 且匹配；
+  主 Agent逐项比较 native r4 与 B0 token IDs 为 true，canonical JSON SHA-256
+  都是 `b7288ead4694ee70156e7d90c5fd63118b4f46e1347d7f263ddc1472ed8649db`。
+  该单请求相等只验收 P04 smoke，不替代 P05 的 32 条 B0 核查。
+- B0 live validation：TP/target/draft ranks 都是 0–7，两次 48/48 marker，
+  crash markers 为空；请求期每个 UUID 有 3 个 sample，显存
+  79,573–80,053 MiB、最大利用率 82%–99%。最终 CSV 935 个连续 ordinal、
+  7480 行，每组精确 8 卡，严格单调且无 >2.5 秒 cadence outlier。
+- server PID 23064、sampler PID 23071 仅在登记 identity 校验后受控 SIGTERM；
+  main/cleanup rc=0、contexts none、无外部 signal。keepalive 恢复为
+  `32894/32894/32894`，attempt 内与 executor 独立复核均为 8×10 全卡 100%；
+  API/counters/live/artifact/shutdown/archive 全 PASS，33 files 完整封存。
 
 ## P03 integration 当前证据
 
@@ -261,12 +280,14 @@
 - native r4 cleanup 后 dedicated keepalive 更新为 PID/PGID/SID
   `21792/21792/21792`；attempt 内与主 Agent随后远端独立核查均为 8×10 全卡
   mean/min/max 100%。
+- B0 r1 结束后 contexts none，dedicated keepalive 更新为
+  `32894/32894/32894`，8×10 全卡 mean/min/max 100%；worker 保持在线。
 
 ## 限制与复现状态
 
 - P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 native r4 已由原始证据
   与修复后只读 validator replay 记为 `RECOVERED_PASS`，原 FAIL artifact 未修改。
-- B0 smoke 正在执行；32 条 B0/校准、native 500 与 HEDGE B>0 500 均未运行。
+- B0 单请求 smoke 已 PASS；32 条 B0/校准、native 500 与 HEDGE B>0 500 尚未运行。
 - 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
 - native r4 已完成定向 shutdown、contexts none 和 keepalive 恢复；其 rc=1 是
   validator 工具误报，不是 CUDA/NCCL/worker crash。

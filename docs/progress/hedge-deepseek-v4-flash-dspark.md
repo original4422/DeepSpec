@@ -370,3 +370,25 @@
   请求、未产生 B0 counter 或 PASS 结论。日志尾部无 ERROR/Traceback/CUDA/NCCL/
   worker crash；没有第二 attempt 或额外 GPU 负载。keepalive 仍处于 attempt
   生命周期内的预期 `PAUSED`，结束路径负责定向清理并恢复。
+
+### 2026-07-29T01:30:12Z — P04 B0 与阶段验收
+
+- 唯一 B0 `20260729T010603Z-p04-b0-r1` launcher rc=0；HDFS 同名 immutable
+  run 有 33 files，API/counters/live/artifact/shutdown/archive 与 keepalive
+  after 全 PASS。没有重试或第二 attempt。
+- 固定 B0 config bytes、mode enabled 均精确；25 proposals、
+  `verify_num_draft_tokens=6`、strict/HEDGE accepted 75/75，relaxed mismatch、
+  regret charged、state leak 均为 0。API 首次成功返回 91 completion tokens/IDs。
+- 主 Agent独立比较 native r4 和 B0 r1 的 91 个完整 token IDs 逐项相同，
+  canonical JSON SHA-256
+  `b7288ead4694ee70156e7d90c5fd63118b4f46e1347d7f263ddc1472ed8649db`。
+  这只验收单请求 P04 smoke，不替代 P05 的 32 条等价核查。
+- TP/target/draft ranks 均为 0–7，两次 48/48；请求期每个固定 UUID 有 3 个
+  sample，显存 79,573–80,053 MiB、最大利用率 82%–99%，crash markers 为空。
+  最终 CSV 935 个连续 ordinal/7480 行，每组精确 8 卡、strict monotonic。
+- server/sampler 只按登记 identity 定向 SIGTERM；main/cleanup rc=0、contexts
+  none、无外部 signal。keepalive 恢复为 `32894/32894/32894`，attempt 内与
+  executor 独立核查均 8×10 全卡 100%。
+- 主 Agent验收 P04 `PASS`：native r4 `RECOVERED_PASS` + B0 r1 `PASS` 已满足
+  计划全部 P04 门禁。下一 eligible phase 为 P05 calibration；正式 32/500
+  仍未运行。
