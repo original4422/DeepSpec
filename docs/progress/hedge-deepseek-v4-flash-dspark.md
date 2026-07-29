@@ -3,9 +3,10 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T07:32:56Z`
-- 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`10:38:15` / `2026-07-29T08:54:41Z`
+- 快照时间：`2026-07-29T07:54:18Z`（660 分钟 checkpoint 提前 23 秒）
+- 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
+  `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
+- elapsed / deadline：持续执行 / `NONE`
 - 当前 phase：P00–P06 均已 PASS；P07 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -21,6 +22,8 @@
   - P06：formal tooling 138/138 与主 Agent复验 PASS，commit/push `6a74186`；
     唯一 native formal 500/500、0 retry、74594 tokens、31.76484698125425 TPS；
     主 Agent独立重算与 TP8/GPU/HEDGE-off/cleanup/archive 全 PASS
+  - P07：static prepare/client/validator/attempt/tests 已齐；两轮 RED→GREEN；
+    fail-closed 与全回归进行中，尚未登录 worker/live
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
 - keepalive / server / PID：P06 server/sampler 已定向退出、contexts none；
   dedicated keepalive `107326/107326/107326` 已恢复，8×10 全卡 100%
@@ -38,10 +41,10 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`
-- 首要事项：提交 P06 验收节点并派发唯一 P07 HEDGE B>0 executor
-- 下一检查点：`2026-07-29T07:54:41Z`
-- 下一 30 分钟动作：完成最小 P07 HEDGE-on contract/tooling 验收并启动唯一
-  B>0 attempt；不得改变 frozen config 或 decode identity
+- 首要事项：完成 P07 static 主审；PASS 后才启动唯一 HEDGE B>0 executor
+- 下一检查点：`2026-07-29T08:24:41Z`
+- 下一 30 分钟动作：完成 P07 fail-closed/全回归、主审和 tooling commit；若
+  PASS，执行 lane preflight、pause/contexts-none 与唯一 B>0 冷加载
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -731,3 +734,22 @@
   contexts none；keepalive `107326` 的 8×10 全卡 100%。
 - archive manifest 39/39 的文件集合、size 与 SHA 独立重算全匹配。P06 `PASS`，
   P07 入口成立；P06 executor 已停止，未启动第二 attempt。
+
+### 2026-07-29T07:47:18Z — 用户解除原截止
+
+- 用户明确“现在没有截止时间，你往前执行就行”。原
+  `2026-07-29T08:54:41Z` 只保留为历史 12 小时窗口边界，不再触发停止或收尾。
+- P07/P08 继续按冻结计划执行；该授权不改变 worker/lane、source/wheel/model、
+  dataset/config、单次正式 arm、进程清理、keepalive、证据或提交纪律。
+
+### 2026-07-29T07:54:41Z — 660 分钟 checkpoint
+
+- 实际快照于 `07:54:18Z` 提前 23 秒落盘。P07 bounded executor 已完成治理、
+  计划与 TDD 阅读；static prepare/client/validator/attempt/tests 文件已齐，
+  当前仅在本地执行 fail-closed 与全回归，未登录 worker或启动 live。
+- 第一轮 RED→GREEN 冻结 HEDGE-on config/counter/lifecycle seam；第二轮真实
+  P06 identity parity 发现 disposable `build_path_exists` 的归档/现场瞬时差异。
+  修正仅排除该瞬时字段，wheel bytes/hash、installed content、source/core、
+  checkpoint 与 decode contract 仍为硬门禁。
+- lane 保持 P06 收尾后 dedicated keepalive `107326`；本 checkpoint 不宣称
+  P07 tooling PASS，也没有 P07 attempt ID。

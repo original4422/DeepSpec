@@ -3,8 +3,10 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T07:32:56Z`
-- 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
+- 记录更新时间：`2026-07-29T07:54:18Z`
+- 自主窗口：始于 `2026-07-28T20:54:41Z`；原截止
+  `2026-07-29T08:54:41Z` 已由用户于 `2026-07-29T07:47:18Z` 明确解除，
+  当前无截止时间
 - B0：P04 单请求 smoke `PASS`；P05 32 条完整 token IDs `PASS`（32/32）
 - 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
   `FAIL_TRACE_SCOPE`、`FAIL_PRE_COHORT_QUIESCENCE` 与
@@ -56,8 +58,8 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `ada66253e719cd021cdec369914245b51ff46b61`
-- 下一步：P06 executor 与主 Agent独立重算均 `PASS`；派发唯一 P07 HEDGE
-  `B>0` executor，只允许加载冻结 config，不改变 source/wheel/model/request
+- 下一步：P07 static tooling 已补齐 prepare/client/validator/attempt/tests，
+  正在完成 fail-closed 与全回归；主审通过前不登录 worker
 
 ## 当前阶段
 
@@ -70,7 +72,7 @@
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
 | P06 | `PASS` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS | — |
-| P07 | `IN_PROGRESS` | P06 有效、P05 config frozen、decode identity 未变 | 唯一 HEDGE B>0 500 |
+| P07 | `IN_PROGRESS` | P06 有效、P05 config frozen；static tooling 已齐并完成两轮 RED→GREEN，lane 仍为 keepalive | fail-closed/全回归、主审、唯一 HEDGE B>0 500 |
 | P08 | `NOT_STARTED` | — | P07 门禁 |
 
 ## 固定实验协议
