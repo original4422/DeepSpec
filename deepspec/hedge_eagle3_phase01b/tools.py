@@ -43,6 +43,9 @@ GENERATION = {
     "top_p": 1,
     "max_tokens": 512,
     "chat_template_kwargs": {"enable_thinking": False},
+    "return_meta_info": True,
+    "logprobs": True,
+    "top_logprobs": 0,
 }
 
 
@@ -100,6 +103,8 @@ def build_resolved_config(
     config: dict[str, Any] = {
         "schema_version": 1,
         "mode": mode,
+        "proposal_tokens": 3,
+        "internal_verify_width": 4,
         "lane": {
             "worker_id": "4099544",
             "gpu_model": "NVIDIA H20",
@@ -128,9 +133,10 @@ def build_resolved_config(
         },
         "server": {
             "speculative_algorithm": "EAGLE3",
+            "speculative_draft_attention_backend": "flashinfer",
             "speculative_num_steps": 3,
             "speculative_eagle_topk": 1,
-            "speculative_num_draft_tokens": 3,
+            "speculative_num_draft_tokens": 4,
             "moe_runner_backend": "flashinfer_mxfp4",
             "context_length": 4096,
             "max_running_requests": 1,
@@ -380,13 +386,14 @@ def _response_fields(
         message.get("content"), str
     ):
         raise TransportFailure("response choice lacks message content")
+    meta_info = choice.get("meta_info")
     candidates = [
         choice.get("token_ids"),
         message.get("token_ids"),
         response.get("token_ids"),
         (
-            choice.get("meta_info", {}).get("output_token_ids")
-            if isinstance(choice.get("meta_info"), dict)
+            meta_info.get("output_token_ids")
+            if isinstance(meta_info, dict)
             else None
         ),
         (
@@ -403,16 +410,63 @@ def _response_fields(
         ):
             token_ids = list(candidate)
             break
+    if isinstance(meta_info, dict) and (
+        "output_token_logprobs" in meta_info
+    ):
+        triples = meta_info["output_token_logprobs"]
+        if not isinstance(triples, list) or not all(
+            isinstance(triple, (list, tuple))
+            and len(triple) == 3
+            and isinstance(triple[0], (int, float))
+            and not isinstance(triple[0], bool)
+            and isinstance(triple[1], int)
+            and not isinstance(triple[1], bool)
+            and isinstance(triple[2], str)
+            for triple in triples
+        ):
+            raise TransportFailure(
+                "response output token logprobs are not complete triples"
+            )
+        triple_token_ids = [int(triple[1]) for triple in triples]
+        declared_length = meta_info.get("output_token_logprobs_length")
+        if (
+            not isinstance(declared_length, int)
+            or isinstance(declared_length, bool)
+            or declared_length != len(triple_token_ids)
+        ):
+            raise TransportFailure(
+                "response output token logprobs declared length differs"
+            )
+        meta_completion_tokens = meta_info.get("completion_tokens")
+        if (
+            not isinstance(meta_completion_tokens, int)
+            or isinstance(meta_completion_tokens, bool)
+            or meta_completion_tokens != len(triple_token_ids)
+        ):
+            raise TransportFailure(
+                "response meta completion tokens differ from token IDs"
+            )
+        if token_ids is not None and token_ids != triple_token_ids:
+            raise TransportFailure(
+                "response token ID fields disagree with logprob triples"
+            )
+        token_ids = triple_token_ids
     if token_ids is None:
         raise TransportFailure("response lacks complete output token IDs")
     usage = response.get("usage")
-    if not isinstance(usage, dict) or not isinstance(
-        usage.get("completion_tokens"), int
+    if (
+        not isinstance(usage, dict)
+        or not isinstance(usage.get("completion_tokens"), int)
+        or isinstance(usage.get("completion_tokens"), bool)
     ):
         raise TransportFailure("response lacks completion token usage")
     completion_tokens = int(usage["completion_tokens"])
     if completion_tokens < 0:
         raise TransportFailure("completion token usage is negative")
+    if completion_tokens != len(token_ids):
+        raise TransportFailure(
+            "response completion token usage differs from token IDs"
+        )
     return message["content"], token_ids, completion_tokens
 
 

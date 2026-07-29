@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "phase": "02",
+  "route": "DeepSeek-V4-Flash + EAGLE3.1",
+  "sglang_base_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "runtime_patch": {
+    "path": "sglang-eagle3-deepseek-v4.patch",
+    "size_bytes": 19290,
+    "sha256": "64ce797b2a4ac5f668557fb481f9577c4a72baf601c5350eee03dd4ad7e60fe2",
+    "tracked_files": [
+      "python/sglang/srt/arg_groups/deepseek_v4_hook.py",
+      "python/sglang/srt/models/deepseek_v4.py"
+    ]
+  },
+  "source_test": {
+    "path": "test_deepseek_v4_eagle3_aux.py",
+    "destination": "test/registered/unit/models/test_deepseek_v4_eagle3_aux.py",
+    "size_bytes": 9671,
+    "sha256": "2f32eecbe96c104352b9e9793da519abd339408044bc15b9a3c4994f3af5232b",
+    "test_count": 11
+  },
+  "live_validation": {
+    "worker_id": "4099544",
+    "tensor_parallel_size": 8,
+    "attempt": "/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T012234Z-phase-02-native-smoke-02",
+    "server_log_sha256": "4e200e3052c57baa0f0c18595b4b24180368a91108e12cb43e7e636330eb2c42",
+    "api_smoke_sha256": "3e8cac859e4e73144652274b0d9d265eaff97a69046cddbf10a7cbdfaa055a2f"
+  },
+  "clean_replay": {
+    "result": "PASS",
+    "git_apply_check": "PASS",
+    "test_count": 11,
+    "log": "/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T002900Z-phase-02-tdd-native-adapter-01/canonical_clean_replay.log",
+    "log_sha256": "99e52acf0c9e7c439ced3d525197e1deb948d2979a6d51c0635d63ac547a6024"
+  }
+}

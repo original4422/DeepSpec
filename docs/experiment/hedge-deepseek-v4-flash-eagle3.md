@@ -1,21 +1,17 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_01_COMPLETE`。** Phase 00 与 Phase 01A/B/C 均已由主 Agent
-> 验收，具备进入 Phase 02 的条件；尚无模型或正式结果。固定 target 与 draft 均已
-> 发布为独立 HDFS 实体；共享 target complete marker 可供 DFlash 只读复核。
-> worker `4099544` 上的项目专用
-> 8 卡 operational keepalive 已于 `2026-07-28T22:39:34Z` 建立：8 张
-> NVIDIA H20 各有 10 个一秒样本且 mean utilization 均为 `100%`，owner
-> `PID/PGID/SID=277607/277607/277607`，精确 UUID、进程归属和 CUDA 13
-> forward-compat 链接顺序均已由主 Agent 复核；Phase 01B 最终状态复核仍为八卡
-> mean utilization `100%`。target/draft acquisition 已自然结束，发布后的 NVMe
-> snapshot、owner、manifest 和日志证据仍保留。
-> DSpark pure HEDGE core marker 已只读验收为 READY，但本路线尚未 cherry-pick。
-> 固定 SGLang 的顺序 blocker 已缩小为 DeepSeek-V4 guard 首先拒绝 `EAGLE3`，
-> 放开后缺少独立 `set_eagle3_layers_to_capture` 与 V4 mHC aux capture。
-> Phase 01B 的独立 uv/SGLang、固定 GSM8K split、顺序 runner、B0/q25/report
-> fixtures 与定向 process cleanup 均 PASS。当前尚未启动模型服务或正式实验；
-> 后续结果仍全部 pending。
+> **状态：`PHASE_02_COMPLETE`。** target-only TP=8
+> diagnostic 与 native Eagle3 TP=8 smoke 均已跑通；这只是 bring-up，不是正式
+> native baseline，32 条 calibration、`B=0`、`g/B` 与正式 500 条仍全部 pending。
+> native 服务实际加载固定 target 和
+> `LlamaForCausalLMEagle3` draft，TP0–7 均记录 draft `flashinfer` backend 与
+> DeepSeek-V4 Eagle3 aux trace；3/3 顺序 API 请求 HTTP 200 并保存完整 token IDs
+> 和 proposal/acceptance trace。短回答 smoke 的 accepted draft tokens 为 `0/9`，
+> 本计划不设 acceptance 门槛，不能据此外推 calibration 或正式结果。
+> attempt 结束后已定向 SIGTERM 登记的 server group，无 KILL fallback；8 卡
+> context 清空，operational keepalive 恢复为 owner `315671`，8 张 H20 的
+> 10×1 秒 utilization 均为 `100%`。DSpark pure HEDGE core marker 已 READY，
+> 但本路线尚未 cherry-pick，也未进入 Phase 03。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -28,6 +24,15 @@
 >
 > **权威 Phase 01B artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T232000Z-phase-01b-final-17`
+>
+> **权威 Phase 02 target artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T235505Z-phase-02-target-diagnostic-02`
+>
+> **权威 Phase 02 native/TDD artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T002900Z-phase-02-tdd-native-adapter-01`
+>
+> **权威 Phase 02 native live artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T012234Z-phase-02-native-smoke-02`
 
 ## 快速结果
 
@@ -51,7 +56,7 @@
 | Dataset seed | 980406 |
 | Formal samples | 500 |
 | DeepSpec source | branch `exp/hedge-v4-eagle3`; Phase 00 base `cac6c78d88df97d395406fe831f573df3016e7f7` |
-| SGLang source | `/home/tiger/src/sglang-hedge-v4-eagle3`; clean base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; source/import/lock gates PASS |
+| SGLang source | `/home/tiger/src/sglang-hedge-v4-eagle3`; HEAD/base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; reviewed native runtime patch SHA-256 `64ce797b2a4ac5f668557fb481f9577c4a72baf601c5350eee03dd4ad7e60fe2`; final commit pending Phase 03 |
 | Target | `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1`; 73 regular files，`159630041626` bytes，manifest `af6f274af9b0b257a6b910ae9b8ac4d0e1dd0a0bbcd96898fc6772c7e158facd`，published |
 | Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; 7 regular files，`1858538499` bytes，manifest `dfa6b2de48c46f4fda0cf7070466d35e6bd3df44b84ba0363616cc0f1f6020a0`，published |
 | HEDGE core | READY marker audited：pure-core commit `4d96f44065c07030ede67484a262006ec149626a`，33 tests PASS；not cherry-picked |
@@ -61,7 +66,9 @@
 | Runner fixture | 10 warmup + 500 formal，500 terminal/500 success/5 retries，最大 in-flight 1；q25 fixture `g=B=1.75`，B0 PASS/FAIL 两路径 PASS |
 | Phase 01C contract | logical `[1,21,40]` → hook `[2,22,41]` → 4-stream mean → `[N,3,4096]` → runner `[N,12288]`; 3 CPU tests PASS |
 | Phase 01C research | `docs/research/hedge_eagle3_phase01c/eagle3_compatibility_research.md` |
-| Key commits | Phase 00 bootstrap `9369479acb6cbd88ae98a6e04446c6d50134feae`；Phase 01C contract `a8d913e8f200f02519a446ea77fcb235f2c76681`；Phase 01A publication `bb6ae8a92eac8c7d5a130b247835a01c70fe891b`（均已 push）；Phase 01B runtime commit 待本次提交后回填 |
+| Phase 02 target | TP0–7、46/46 shards、packed FP4 `flashinfer_mxfp4`、八卡 context/API PASS；非正式 diagnostic |
+| Phase 02 native | 3/3 terminal、6 completion tokens、proposal `3` / internal verify `4`、accepted `0/9`；八 rank Eagle3 aux trace PASS；非正式 smoke |
+| Key commits | Phase 00 bootstrap `9369479acb6cbd88ae98a6e04446c6d50134feae`；Phase 01C contract `a8d913e8f200f02519a446ea77fcb235f2c76681`；Phase 01A publication `bb6ae8a92eac8c7d5a130b247835a01c70fe891b`；Phase 01B runtime `dccbb219faf25fa803cc27e26f59cc1b9786b9f4`（均已 push） |
 
 ## Phase 00：bootstrap 与 operational ownership
 
@@ -126,11 +133,80 @@ NVIDIA H20、每卡 `97871 MiB`、compute capability `9.0`。完整 UUID 和拓�
 | `20260728T230600Z-phase-01b-fixtures-13` → `...231000Z...-14` → `...231700Z...-15` | Phase 01B / runner/process fixtures | 先增加差异诊断，再仅对 lane-local loopback bypass inherited proxy | PASS | 定位 `HTTP_PROXY` 劫持 loopback；10+500、retry、B0、q25、答案解析和精确 PGID cleanup 全部通过 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T231700Z-phase-01b-fixtures-proxy-bypass-15` |
 | `20260728T232000Z-phase-01b-final-17` | Phase 01B / authoritative seal | required artifacts 采用 temp→fsync→hash→atomic replace→post-validate | PASS，主 Agent 已验收 | 初次封存暴露 runner summary 零长度竞态；修复后 6 个 artifact 的 size/hash 与 manifest 全部独立复算一致，无 empty SHA | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T232000Z-phase-01b-final-17` |
 
+## Phase 02：target diagnostic 与 native Eagle3 smoke
+
+### 最小实现与可复现封存
+
+Phase 02 按 TDD 完成 DeepSeek-V4 Eagle3 native adapter。目标模型的 logical layers
+`[1,21,40]` 映射到 after-layer hooks `[2,22,41]`；每个原始 mHC tensor
+`[N,4,4096]` 以 BF16 沿 stream 维求均值，按 logical layer 排序为
+`[N,3,4096]`，再交付 runner 所需的 `[N,12288]`。实现明确隔离 DSpark capture，
+并为每个 TP rank 只发一次 shape/dtype/device/checksum trace。
+
+SGLang tracked runtime patch 为 `19290` bytes，SHA-256
+`64ce797b2a4ac5f668557fb481f9577c4a72baf601c5350eee03dd4ad7e60fe2`；
+source-side test 为 `9671` bytes，SHA-256
+`2f32eecbe96c104352b9e9793da519abd339408044bc15b9a3c4994f3af5232b`。
+两者已固化到 `patches/hedge_eagle3_phase02/`，并在固定 base
+`fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` 的临时 clean worktree 上通过
+`git apply --check` 和 11/11 tests；重放日志为
+`canonical_clean_replay.log`，SHA-256
+`99e52acf0c9e7c439ced3d525197e1deb948d2979a6d51c0635d63ac547a6024`。
+
+native attempt 01 暴露 draft backend 继承错误：target 合法使用 `dsv4`，但
+`LlamaForCausalLMEagle3` draft 的 `head_dim=128` 被送入只接受 DeepSeek-V4
+`head_dim=512` 的 DSV4 backend assertion。单变量修复是只为 draft 显式设置
+`flashinfer`，target 保持 `dsv4`。Phase 01B 的三臂配置源同时固定这一字段，保证后续
+native、`B=0` 和 `B>0` 使用相同 decode-affecting server config。最终离线回归：
+SGLang 11/11、Phase 01C 3/3、Phase 01B 6/6、Phase 02 safety 14/14 与 mock
+10 warmup + 500 formal 全部 PASS；日志为 `offline_final_v3.log`，SHA-256
+`b36b335cee4a615f3309a232b9740cb8c28b4afe925d675d0be33317701d9bdc`。
+
+### Live 证据
+
+target-only attempt 02 是隔离 diagnostic，不是 baseline：TP0–7 全部初始化，
+46/46 target shards 加载完成，packed FP4 使用 `flashinfer_mxfp4`；八张物理 H20
+均有 context/模型显存和请求期活动，OpenAI-compatible API 返回 HTTP 200 非空结果，
+且无未处理 CUDA/NCCL/worker crash。
+
+native attempt 02 使用相同 target、固定
+`SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1` draft、TP=8、proposal tokens `3`
+与 internal verify width `4`。TP0–7 均加载 `LlamaForCausalLMEagle3`，各 rank
+明确记录 target `dsv4`、draft `flashinfer`，以及一次 Eagle3 aux trace：
+raw shapes 均为 `[[4,4,4096]]*3`，structured `[4,3,4096]`，runner
+`[4,12288]`，dtype BF16，device 分别为 local `cuda:0..7`。
+
+服务 ready 后 3/3 顺序请求均 HTTP 200，保存完整响应和 output token IDs；共
+6 completion tokens。三次 request 都有 `verify_count=1`、proposed draft
+tokens `3`、accepted draft tokens `0`、histogram `[1,0,0,0]`，因此合计
+accepted `0/9`。这是短回答基础设施 smoke，不是质量/性能评测；计划没有 acceptance
+门槛，`0/9` 不影响 Phase 02 native bring-up PASS，也不能据此外推 calibration 或
+formal arm。
+
+native 请求窗口合计仅约 1 秒，1 秒粒度 sampler 在该切片捕获到 7/8 GPU 非零
+utilization，GPU4 恰好漏采；因此不声称“精确请求窗口 sampled utilization 8/8”。
+八卡参与结论由 TP0–7 各自的 forward aux trace、八张卡的 CUDA context/模型显存，
+以及全服务期每卡 maximum utilization `100%` 共同支持。
+
+server 登记身份为 `PID/PGID/SID=303437/303437/303437`。结束时仅向该 process
+group 发送 SIGTERM，无 KILL fallback；随后验证八卡 CUDA context 为空。keepalive
+恢复为 owner `315671`，准确 8 个 owned workers/context，8×10 个 1 秒样本逐卡
+utilization 均为 `100%`。
+
+### Attempt 历史
+
+| Attempt | 单一变化 | 结果 | 根因/新证据 | Artifact |
+| --- | --- | --- | --- | --- |
+| `20260728T235315Z-phase-02-target-diagnostic-01` | 首次 target-only 编排 | FAIL CLOSED | `/proc/stat` 本地 Python one-liner 转义语法错误；服务未 ready，无模型结论；定向 SIGTERM、0 context、keepalive 恢复 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T235315Z-phase-02-target-diagnostic-01` |
+| `20260728T235505Z-phase-02-target-diagnostic-02` | 仅修正 sampler 编排语法 | PASS diagnostic | TP0–7、46/46 shards、packed FP4 backend、八卡参与和 HTTP 200 均证实；不作为 baseline | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T235505Z-phase-02-target-diagnostic-02` |
+| `20260729T002900Z-phase-02-tdd-native-adapter-01` | test-first 实现 aux adapter 与 native harness | PASS offline | patch/test 固化；draft backend inheritance 由专用 RED→GREEN 缩小并修复；clean-base replay 11/11 PASS | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T002900Z-phase-02-tdd-native-adapter-01` |
+| `20260729T010230Z-phase-02-native-smoke-01` | 首次 target+draft native 启动 | FAIL CLOSED | draft 误继承 target `dsv4`，`head_dim=128` 触发 DSV4 `head_dim=512` assertion；精确清理、0 context、keepalive 恢复 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T010230Z-phase-02-native-smoke-01` |
+| `20260729T012234Z-phase-02-native-smoke-02` | 唯一变化为 draft backend `flashinfer` | PASS native smoke | 8 ranks target+draft/aux trace、3/3 HTTP 200、token IDs 与 acceptance trace 完整；accepted `0/9` 非质量门槛；无未处理 crash | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T012234Z-phase-02-native-smoke-02` |
+
 ## 下一步
 
-保持已验收的 8 卡 operational keepalive。Phase 02 按 test-first 与 01C 已证据化的
-guard → capture → loader → runner 顺序进入 native bring-up：每个正式模型 attempt
-紧邻地定向暂停 keepalive、确认 8 个 CUDA context 均退出；先做 target-only TP=8
-诊断，再做 native Eagle3 smoke，并在每个 attempt 后恢复 keepalive。OpenAI chat
-完整 output token IDs 是 fail-closed runtime gate，禁止静默重 tokenize。本记录不声称
-任何模型实验已开始。
+Phase 02 executor 已满足退出门禁，并经主 Agent 独立重放与 artifact 复核验收通过。
+下一步进入 Phase 03：先保持 owner `315671` 的 8 卡 operational keepalive，核对 DSpark pure-core
+commit/marker 与本仓库 canonical patch manifest，再 cherry-pick pure core 并以可复现
+patch/build 注入独立 SGLang source。不得把本次 3-request smoke 写成 native baseline，
+不得在 Phase 03 前运行 32 条 calibration、`B=0` 或正式 500 条。

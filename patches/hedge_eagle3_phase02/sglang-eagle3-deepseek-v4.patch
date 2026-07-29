@@ -1,0 +1,463 @@
+diff --git a/python/sglang/srt/arg_groups/deepseek_v4_hook.py b/python/sglang/srt/arg_groups/deepseek_v4_hook.py
+index 0ede772..12b4942 100644
+--- a/python/sglang/srt/arg_groups/deepseek_v4_hook.py
++++ b/python/sglang/srt/arg_groups/deepseek_v4_hook.py
+@@ -11,6 +11,28 @@ if TYPE_CHECKING:
+ logger = logging.getLogger(__name__)
+ 
+ 
++def validate_deepseek_v4_speculative_algorithm(
++    server_args: ServerArgs,
++    model_arch: str,
++) -> None:
++    """Validate the speculative capabilities exposed by DeepSeek-V4."""
++    if server_args.speculative_algorithm is None:
++        return
++    assert server_args.speculative_algorithm in (
++        "EAGLE",
++        "EAGLE3",
++        "DSPARK",
++    ), (
++        "Only EAGLE, EAGLE3 and DSPARK speculative algorithms are "
++        f"supported for {model_arch}"
++    )
++    if server_args.speculative_algorithm in ("EAGLE", "EAGLE3"):
++        assert server_args.speculative_eagle_topk == 1, (
++            "Only EAGLE/EAGLE3 speculative decoding with topk == 1 is "
++            f"supported for {model_arch}"
++        )
++
++
+ def apply_deepseek_v4_defaults(server_args: ServerArgs, model_arch: str) -> None:
+     """Residual imperative arm of the DeepSeek V4 defaults.
+ 
+@@ -52,15 +74,7 @@ def apply_deepseek_v4_defaults(server_args: ServerArgs, model_arch: str) -> None
+             f"Setting max_running_requests to {server_args.max_running_requests} for {model_arch}."
+         )
+ 
+-    if server_args.speculative_algorithm is not None:
+-        assert server_args.speculative_algorithm in (
+-            "EAGLE",
+-            "DSPARK",
+-        ), f"Only EAGLE and DSPARK speculative algorithms are supported for {model_arch}"
+-        if server_args.speculative_algorithm == "EAGLE":
+-            assert (
+-                server_args.speculative_eagle_topk == 1
+-            ), f"Only EAGLE speculative algorithm with topk == 1 is supported for {model_arch}"
++    validate_deepseek_v4_speculative_algorithm(server_args, model_arch)
+ 
+ 
+ def validate_deepseek_v4_cp(server_args: ServerArgs) -> None:
+diff --git a/python/sglang/srt/models/deepseek_v4.py b/python/sglang/srt/models/deepseek_v4.py
+index 2648061..c210fda 100644
+--- a/python/sglang/srt/models/deepseek_v4.py
++++ b/python/sglang/srt/models/deepseek_v4.py
+@@ -196,6 +196,205 @@ logger = logging.getLogger(__name__)
+ _FP8_WO_A_GEMM = envs.SGLANG_OPT_FP8_WO_A_GEMM.get()
+ _MHC_POST_MULT_VALUE = 2.0
+ 
++
++def reduce_eagle3_mhc_hidden_state(
++    raw_hidden_state: torch.Tensor,
++    *,
++    hc_mult: int,
++    hidden_size: int,
++) -> torch.Tensor:
++    """Reduce one completed DeepSeek-V4 mHC state for EAGLE3."""
++    if (
++        raw_hidden_state.ndim != 3
++        or raw_hidden_state.shape[1] != hc_mult
++        or raw_hidden_state.shape[2] != hidden_size
++    ):
++        raise ValueError(
++            "expected raw EAGLE3 mHC shape "
++            f"[N,{hc_mult},{hidden_size}], got "
++            f"{list(raw_hidden_state.shape)}"
++        )
++    if raw_hidden_state.dtype != torch.bfloat16:
++        raise ValueError(
++            "expected raw EAGLE3 mHC dtype torch.bfloat16, got "
++            f"{raw_hidden_state.dtype}"
++        )
++    return raw_hidden_state.mean(dim=1)
++
++
++def capture_eagle3_completed_hidden_state(
++    executed_layer_id: int,
++    completed_hidden_state: torch.Tensor,
++    *,
++    logical_layer_ids: List[int],
++    hook_layer_ids: List[int],
++    captured_by_logical_id: dict[int, torch.Tensor],
++    hc_mult: int,
++    hidden_size: int,
++) -> None:
++    """Capture one completed mHC state at an EAGLE3 boundary hook."""
++    if len(logical_layer_ids) != len(hook_layer_ids):
++        raise ValueError(
++            "EAGLE3 logical and hook layer mappings must have equal length."
++        )
++    hook_layer_id = executed_layer_id + 1
++    if hook_layer_id not in hook_layer_ids:
++        return
++    logical_layer_id = logical_layer_ids[hook_layer_ids.index(hook_layer_id)]
++    if logical_layer_id in captured_by_logical_id:
++        raise ValueError(
++            f"duplicate EAGLE3 aux tap at logical layer {logical_layer_id}"
++        )
++    captured_by_logical_id[logical_layer_id] = (
++        reduce_eagle3_mhc_hidden_state(
++            completed_hidden_state,
++            hc_mult=hc_mult,
++            hidden_size=hidden_size,
++        )
++    )
++
++
++def assemble_eagle3_aux_hidden_states(
++    logical_layer_ids: List[int],
++    captured_by_logical_id: dict[int, torch.Tensor],
++    *,
++    hidden_size: int,
++) -> tuple[List[torch.Tensor], torch.Tensor]:
++    """Order reduced EAGLE3 states and expose their structured layout."""
++    if len(logical_layer_ids) != 3:
++        raise ValueError(
++            "DeepSeek-V4 EAGLE3 requires exactly three aux hidden states."
++        )
++    missing = [
++        layer_id
++        for layer_id in logical_layer_ids
++        if layer_id not in captured_by_logical_id
++    ]
++    if missing:
++        raise ValueError(f"missing EAGLE3 aux taps: {missing}")
++    ordered = [
++        captured_by_logical_id[layer_id]
++        for layer_id in logical_layer_ids
++    ]
++    batch_size = ordered[0].shape[0] if ordered[0].ndim > 0 else None
++    expected_shape = [batch_size, hidden_size]
++    for layer_id, hidden_state in zip(logical_layer_ids, ordered):
++        if (
++            hidden_state.ndim != 2
++            or list(hidden_state.shape) != expected_shape
++        ):
++            raise ValueError(
++                "expected reduced EAGLE3 aux shape "
++                f"{expected_shape} at logical layer {layer_id}, got "
++                f"{list(hidden_state.shape)}"
++            )
++        if hidden_state.dtype != torch.bfloat16:
++            raise ValueError(
++                "expected reduced EAGLE3 aux dtype torch.bfloat16 at "
++                f"logical layer {layer_id}, got {hidden_state.dtype}"
++            )
++    devices = {hidden_state.device for hidden_state in ordered}
++    if len(devices) != 1:
++        raise ValueError(
++            f"EAGLE3 aux taps must share one local device, got {devices}"
++        )
++    return ordered, torch.stack(ordered, dim=1)
++
++
++def build_eagle3_aux_trace(
++    *,
++    logical_layer_ids: List[int],
++    hook_layer_ids: List[int],
++    raw_shapes_by_logical_id: dict[int, List[int]],
++    structured_hidden_states: torch.Tensor,
++    runner_hidden_states: torch.Tensor,
++    hc_mult: int,
++    hidden_size: int,
++    tp_rank: int,
++    tp_world_size: int,
++    expected_local_device: torch.device,
++) -> dict[str, Any]:
++    """Validate and describe one TP rank's EAGLE3 aux handoff."""
++    if len(logical_layer_ids) != 3 or len(hook_layer_ids) != 3:
++        raise ValueError("EAGLE3 trace requires exactly three layer mappings.")
++    if hook_layer_ids != [layer_id + 1 for layer_id in logical_layer_ids]:
++        raise ValueError(
++            "EAGLE3 hook IDs must be the after-layer boundaries for the "
++            "logical layer IDs."
++        )
++    if tp_world_size <= 0 or tp_rank < 0 or tp_rank >= tp_world_size:
++        raise ValueError(
++            f"invalid EAGLE3 TP rank {tp_rank}/{tp_world_size}"
++        )
++    raw_shapes = [
++        raw_shapes_by_logical_id.get(layer_id)
++        for layer_id in logical_layer_ids
++    ]
++    expected_raw_shape = [
++        structured_hidden_states.shape[0],
++        hc_mult,
++        hidden_size,
++    ]
++    if any(shape != expected_raw_shape for shape in raw_shapes):
++        raise ValueError(
++            "unexpected EAGLE3 raw aux shapes: "
++            f"expected {expected_raw_shape}, got {raw_shapes}"
++        )
++    expected_structured_shape = [
++        structured_hidden_states.shape[0],
++        3,
++        hidden_size,
++    ]
++    if list(structured_hidden_states.shape) != expected_structured_shape:
++        raise ValueError(
++            "unexpected EAGLE3 structured aux shape: "
++            f"expected {expected_structured_shape}, got "
++            f"{list(structured_hidden_states.shape)}"
++        )
++    expected_runner_shape = [
++        structured_hidden_states.shape[0],
++        3 * hidden_size,
++    ]
++    if list(runner_hidden_states.shape) != expected_runner_shape:
++        raise ValueError(
++            "unexpected EAGLE3 runner aux shape: "
++            f"expected {expected_runner_shape}, got "
++            f"{list(runner_hidden_states.shape)}"
++        )
++    if (
++        structured_hidden_states.dtype != torch.bfloat16
++        or runner_hidden_states.dtype != torch.bfloat16
++    ):
++        raise ValueError(
++            "EAGLE3 aux trace requires BF16 structured and runner tensors."
++        )
++    expected_local_device = torch.device(expected_local_device)
++    if (
++        structured_hidden_states.device != expected_local_device
++        or runner_hidden_states.device != expected_local_device
++    ):
++        raise ValueError(
++            "EAGLE3 aux tensors are not on the current TP rank's local "
++            f"device {expected_local_device}: structured="
++            f"{structured_hidden_states.device}, runner="
++            f"{runner_hidden_states.device}"
++        )
++    return {
++        "tp_rank": tp_rank,
++        "tp_world_size": tp_world_size,
++        "logical_layer_ids": list(logical_layer_ids),
++        "hook_layer_ids": list(hook_layer_ids),
++        "raw_shapes": raw_shapes,
++        "structured_shape": list(structured_hidden_states.shape),
++        "runner_shape": list(runner_hidden_states.shape),
++        "dtype": str(structured_hidden_states.dtype),
++        "device": str(structured_hidden_states.device),
++        "runner_checksum": float(
++            runner_hidden_states.float().sum().item()
++        ),
++    }
++
++
+ DEEPSEEK_V4_STACKED_PARAMS_MAPPING: List[Tuple[str, str, int]] = [
+     ("gate_up_proj", "gate_proj", 0),
+     ("gate_up_proj", "up_proj", 1),
+@@ -2104,6 +2303,9 @@ class DeepseekV4Model(nn.Module):
+             self.cp_size = get_parallel().attn_cp_size
+ 
+         self.dspark_layers_to_capture: Optional[List[int]] = None
++        self.eagle3_logical_layers_to_capture: Optional[List[int]] = None
++        self.eagle3_hook_layers_to_capture: Optional[List[int]] = None
++        self._eagle3_aux_trace_emitted = False
+ 
+     def get_input_embeddings(self) -> nn.Module:
+         return self.embed_tokens
+@@ -2293,17 +2495,33 @@ class DeepseekV4Model(nn.Module):
+                 delattr(forward_batch, _attr)
+ 
+         capture_dspark = self.dspark_layers_to_capture is not None
+-        if capture_dspark and dsa_use_prefill_cp(forward_batch):
++        capture_eagle3 = self.eagle3_hook_layers_to_capture is not None
++        if (
++            capture_eagle3
++            and self.eagle3_logical_layers_to_capture is None
++        ):
++            raise RuntimeError(
++                "EAGLE3 hook layers are configured without logical layers."
++            )
++        if capture_dspark and capture_eagle3:
++            raise RuntimeError(
++                "DeepSeek-V4 DSpark and EAGLE3 aux capture cannot be active "
++                "in the same forward pass."
++            )
++        capture_aux = capture_dspark or capture_eagle3
++        if capture_aux and dsa_use_prefill_cp(forward_batch):
+             raise NotImplementedError(
+-                "DSpark aux hidden-state capture is not supported together with "
+-                "DeepSeek-V4 prefill context parallelism (attn_cp_size > 1). Disable one "
+-                "of them: DSpark static-verify is CP-off for v1."
++                "DeepSeek-V4 speculative aux hidden-state capture is not "
++                "supported together with prefill context parallelism "
++                "(attn_cp_size > 1)."
+             )
+         dspark_aux_hidden_states: List[torch.Tensor] = []
+-        # DSpark aux capture needs the per-layer eager loop (TBO's overlapped
+-        # execution cannot expose per-layer completed hidden states), so skip
++        eagle3_captured_by_logical_id: dict[int, torch.Tensor] = {}
++        eagle3_raw_shapes_by_logical_id: dict[int, List[int]] = {}
++        # Speculative aux capture needs the per-layer eager loop (TBO's
++        # overlapped execution cannot expose completed layer states), so skip
+         # TBO when capturing -- a perf-only downgrade, not a correctness one.
+-        if self._can_run_tbo(forward_batch) and not capture_dspark:
++        if self._can_run_tbo(forward_batch) and not capture_aux:
+             # Two-batch-overlap prefill (EP / mori). Cross-layer mHC fusion is
+             # disabled here (each layer self-contained), so no trailing hc_post.
+             hidden_states = self._forward_layers_tbo(
+@@ -2334,14 +2552,45 @@ class DeepseekV4Model(nn.Module):
+                         prev_post=prev_post,
+                         prev_comb=prev_comb,
+                     )
+-                if capture_dspark and i in self.dspark_layers_to_capture:
++                capture_eagle3_layer = (
++                    capture_eagle3
++                    and i + 1 in self.eagle3_hook_layers_to_capture
++                )
++                if (
++                    capture_dspark
++                    and i in self.dspark_layers_to_capture
++                ) or capture_eagle3_layer:
+                     if use_fused:
+                         completed = layer.hc_post(
+                             hidden_states, prev_residual, prev_post, prev_comb
+                         )
+                     else:
+                         completed = hidden_states
+-                    dspark_aux_hidden_states.append(completed.mean(dim=1))
++                    if capture_dspark:
++                        dspark_aux_hidden_states.append(completed.mean(dim=1))
++                    else:
++                        hook_index = (
++                            self.eagle3_hook_layers_to_capture.index(i + 1)
++                        )
++                        logical_layer_id = (
++                            self.eagle3_logical_layers_to_capture[hook_index]
++                        )
++                        eagle3_raw_shapes_by_logical_id[logical_layer_id] = (
++                            list(completed.shape)
++                        )
++                        capture_eagle3_completed_hidden_state(
++                            i,
++                            completed,
++                            logical_layer_ids=(
++                                self.eagle3_logical_layers_to_capture
++                            ),
++                            hook_layer_ids=self.eagle3_hook_layers_to_capture,
++                            captured_by_logical_id=(
++                                eagle3_captured_by_logical_id
++                            ),
++                            hc_mult=self.hc_mult,
++                            hidden_size=self.hidden_size,
++                        )
+             if use_fused and last_layer is not None:
+                 hidden_states = last_layer.hc_post(
+                     hidden_states, prev_residual, prev_post, prev_comb
+@@ -2369,6 +2618,49 @@ class DeepseekV4Model(nn.Module):
+ 
+         if capture_dspark:
+             return (hidden_states, pre_hc_head), dspark_aux_hidden_states
++        if capture_eagle3:
++            (
++                eagle3_aux_hidden_states,
++                eagle3_structured_hidden_states,
++            ) = assemble_eagle3_aux_hidden_states(
++                self.eagle3_logical_layers_to_capture,
++                eagle3_captured_by_logical_id,
++                hidden_size=self.hidden_size,
++            )
++            if (
++                get_bool_env_var("SGLANG_EAGLE3_V4_AUX_TRACE")
++                and not self._eagle3_aux_trace_emitted
++            ):
++                eagle3_runner_hidden_states = torch.cat(
++                    eagle3_aux_hidden_states, dim=-1
++                )
++                tp_group = get_tp_group()
++                expected_local_device = (
++                    torch.device("cuda", torch.cuda.current_device())
++                    if eagle3_structured_hidden_states.device.type == "cuda"
++                    else eagle3_structured_hidden_states.device
++                )
++                trace = build_eagle3_aux_trace(
++                    logical_layer_ids=(
++                        self.eagle3_logical_layers_to_capture
++                    ),
++                    hook_layer_ids=self.eagle3_hook_layers_to_capture,
++                    raw_shapes_by_logical_id=(
++                        eagle3_raw_shapes_by_logical_id
++                    ),
++                    structured_hidden_states=(
++                        eagle3_structured_hidden_states
++                    ),
++                    runner_hidden_states=eagle3_runner_hidden_states,
++                    hc_mult=self.hc_mult,
++                    hidden_size=self.hidden_size,
++                    tp_rank=tp_group.rank_in_group,
++                    tp_world_size=tp_group.world_size,
++                    expected_local_device=expected_local_device,
++                )
++                logger.info("EAGLE3_V4_AUX_TRACE %s", trace)
++                self._eagle3_aux_trace_emitted = True
++            return (hidden_states, pre_hc_head), eagle3_aux_hidden_states
+ 
+         return hidden_states, pre_hc_head
+ 
+@@ -2456,6 +2748,53 @@ class DeepseekV4ForCausalLM(nn.Module):
+         self.capture_aux_hidden_states = True
+         self.model.dspark_layers_to_capture = list(layer_ids)
+ 
++    def set_eagle3_layers_to_capture(
++        self, logical_layer_ids: Optional[List[int]]
++    ) -> None:
++        if not self.pp_group.is_last_rank:
++            return
++        if logical_layer_ids is None or len(logical_layer_ids) == 0:
++            raise ValueError(
++                "EAGLE3 requires explicit logical layer IDs for aux capture."
++            )
++        logical_layer_ids = list(logical_layer_ids)
++        if len(logical_layer_ids) != 3:
++            raise ValueError(
++                "DeepSeek-V4 EAGLE3 requires exactly three logical layer IDs."
++            )
++        if any(
++            current >= following
++            for current, following in zip(
++                logical_layer_ids, logical_layer_ids[1:]
++            )
++        ):
++            raise ValueError(
++                "EAGLE3 logical layer IDs must be strictly increasing."
++            )
++        num_layers = int(self.config.num_hidden_layers)
++        if any(
++            not isinstance(layer_id, int)
++            or layer_id < 0
++            or layer_id >= num_layers
++            for layer_id in logical_layer_ids
++        ):
++            raise ValueError(
++                "EAGLE3 logical layer ID is outside target layer range "
++                f"[0, {num_layers}): {logical_layer_ids}."
++            )
++        self.capture_aux_hidden_states = True
++        self.model.eagle3_logical_layers_to_capture = logical_layer_ids
++        self.model.eagle3_hook_layers_to_capture = [
++            layer_id + 1 for layer_id in logical_layer_ids
++        ]
++        log_info_on_rank0(
++            logger,
++            "DeepSeek-V4 EAGLE3 aux capture configured: "
++            f"logical_layers={logical_layer_ids}, "
++            "hook_layers="
++            f"{self.model.eagle3_hook_layers_to_capture}",
++        )
++
+     def determine_num_fused_shared_experts(self):
+         self.num_fused_shared_experts = 0
+         if get_server_args().disable_shared_experts_fusion:

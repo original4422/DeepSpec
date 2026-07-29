@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from deepspec.hedge_eagle3_phase01b.tools import (
+    GENERATION,
     TransportFailure,
     _response_fields,
     build_resolved_config,
@@ -14,6 +15,83 @@ from deepspec.hedge_eagle3_phase01b.tools import (
 
 
 class Phase01BToolsTest(unittest.TestCase):
+    def test_runtime_logprob_triples_supply_complete_token_ids(self) -> None:
+        response = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "4",
+                    },
+                    "meta_info": {
+                        "completion_tokens": 2,
+                        "output_token_logprobs": [
+                            [-0.1, 22, "4"],
+                            [-0.2, 1, "<eos>"],
+                        ],
+                        "output_token_logprobs_length": 2,
+                    },
+                }
+            ],
+            "usage": {"completion_tokens": 2},
+        }
+
+        self.assertEqual(
+            _response_fields(response),
+            ("4", [22, 1], 2),
+        )
+        self.assertEqual(GENERATION["return_meta_info"], True)
+        self.assertEqual(GENERATION["logprobs"], True)
+        self.assertEqual(GENERATION["top_logprobs"], 0)
+
+    def test_runtime_token_id_metadata_mismatches_fail_closed(self) -> None:
+        def response() -> dict:
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": "4",
+                        },
+                        "meta_info": {
+                            "completion_tokens": 2,
+                            "output_token_logprobs": [
+                                [-0.1, 22, "4"],
+                                [-0.2, 1, "<eos>"],
+                            ],
+                            "output_token_logprobs_length": 2,
+                        },
+                    }
+                ],
+                "usage": {"completion_tokens": 2},
+            }
+
+        malformed_triple = response()
+        malformed_triple["choices"][0]["meta_info"][
+            "output_token_logprobs"
+        ][0][1] = True
+        declared_length = response()
+        declared_length["choices"][0]["meta_info"][
+            "output_token_logprobs_length"
+        ] = 1
+        meta_completion = response()
+        meta_completion["choices"][0]["meta_info"]["completion_tokens"] = 1
+        usage_completion = response()
+        usage_completion["usage"]["completion_tokens"] = 1
+        disagreeing_fields = response()
+        disagreeing_fields["choices"][0]["token_ids"] = [99, 1]
+        cases = (
+            (malformed_triple, "complete triples"),
+            (declared_length, "declared length differs"),
+            (meta_completion, "meta completion tokens differ"),
+            (usage_completion, "usage differs"),
+            (disagreeing_fields, "fields disagree"),
+        )
+        for payload, message in cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(TransportFailure, message):
+                    _response_fields(payload)
+
     def test_answer_normalization_and_precedence(self) -> None:
         self.assertEqual(normalize_numeric_answer("$1,234.50"), "1234.5")
         self.assertEqual(normalize_numeric_answer("6/8"), "3/4")
@@ -54,6 +132,22 @@ class Phase01BToolsTest(unittest.TestCase):
         self.assertEqual(configs["B0"]["server"], configs["B+"]["server"])
         self.assertEqual(configs["native"]["request"], configs["B+"]["request"])
         self.assertEqual(configs["native"]["lane"], configs["B+"]["lane"])
+        self.assertEqual(configs["native"]["proposal_tokens"], 3)
+        self.assertEqual(configs["native"]["internal_verify_width"], 4)
+        self.assertEqual(
+            configs["native"]["server"]["speculative_num_steps"],
+            3,
+        )
+        self.assertEqual(
+            configs["native"]["server"]["speculative_num_draft_tokens"],
+            4,
+        )
+        self.assertEqual(
+            configs["native"]["server"][
+                "speculative_draft_attention_backend"
+            ],
+            "flashinfer",
+        )
 
     def test_b0_first_mismatch_and_nonfinite_rejected(self) -> None:
         native = [
