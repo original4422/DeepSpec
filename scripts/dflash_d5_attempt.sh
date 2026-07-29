@@ -2,10 +2,16 @@
 # Phase D5 strict-native calibration and B=0 lifecycle for the assigned TP=8 worker.
 set -Eeuo pipefail
 
+if [[ "$#" -lt 5 ]]; then
+  echo "usage: $0 ACTION ATTEMPT_ID {native|b0} NATIVE_ATTEMPT_ID HARD_STOP_UTC" >&2
+  exit 2
+fi
+
 readonly ACTION="${1:?action required}"
 readonly ATTEMPT_ID="${2:?attempt id required}"
 readonly ARM="${3:?arm required: native or b0}"
 readonly NATIVE_ATTEMPT_ID="${4:-none}"
+readonly HARD_STOP_UTC="${5}"
 readonly WORKER_ID=4099543
 readonly EXPECTED_HOST="g340-cd51-4b00-4d69-9088-7ae6-6253"
 readonly REPO="/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash"
@@ -20,7 +26,6 @@ readonly D1C_HARNESS="${REPO}/scripts/dflash_d1c_harness.py"
 readonly CALIBRATION_DATA="${REPO}/docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1c/dflash_d1c_gsm8k_calibration_32.jsonl"
 readonly CALIBRATION_INDICES="${REPO}/docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1c/dflash_d1c_calibration_indices.json"
 readonly DATASET_IDENTITY="${REPO}/docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d1c/dflash_d1c_dataset_identity.json"
-readonly HARD_STOP_UTC="2026-07-29T05:55:48Z"
 readonly CUDA_VIEW_HELPER="${REPO}/scripts/dflash_d3_cuda_view.sh"
 readonly JIT_PREBUILD_HELPER="${REPO}/scripts/dflash_d3_jit_prebuild.py"
 readonly CUDA_VIEW="/tmp/deepspec-hedge-dflash/toolchains/cuda-13.0"
@@ -38,6 +43,22 @@ readonly DRAFT_POINTER="/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft_pointer
 readonly SCRATCH="/tmp/deepspec-hedge-dflash/runs/${ATTEMPT_ID}"
 readonly HDFS_RUN="/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/${ATTEMPT_ID}"
 readonly BASE_URL="http://127.0.0.1:${PORT}"
+
+if [[ ! "${HARD_STOP_UTC}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]]; then
+  echo "hard stop UTC must use exact YYYY-MM-DDTHH:MM:SSZ format" >&2
+  exit 2
+fi
+if ! parsed_hard_stop_utc="$(date -u -d "${HARD_STOP_UTC}" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)"; then
+  echo "hard stop UTC is not parseable: ${HARD_STOP_UTC}" >&2
+  exit 2
+fi
+if [[ "${parsed_hard_stop_utc}" != "${HARD_STOP_UTC}" ]]; then
+  echo "hard stop UTC is not canonical UTC: ${HARD_STOP_UTC}" >&2
+  exit 2
+fi
+readonly HARD_STOP_EPOCH="$(date -u -d "${HARD_STOP_UTC}" +%s)"
+unset parsed_hard_stop_utc
+
 case "${ARM}" in
   native)
     [[ "${ATTEMPT_ID}" =~ ^dflash-d5-native-[0-9]{8}T[0-9]{6}Z-a[0-9]{2}$ ]]
@@ -108,7 +129,7 @@ COMMAND=(
 utc_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
 before_hard_stop() {
-  [[ "$(date -u +%s)" -lt "$(date -u -d "${HARD_STOP_UTC}" +%s)" ]]
+  [[ "$(date -u +%s)" -lt "${HARD_STOP_EPOCH}" ]]
 }
 
 require_worker_identity() {
@@ -517,6 +538,7 @@ resolved = {
             "port_free": True,
             "keepalive_pid": pid,
             "source_sha": source_sha,
+            "hard_stop_utc": hard_stop_utc,
         },
         indent=2,
         sort_keys=True,
@@ -599,12 +621,16 @@ stop_sampler() {
   sid="$(ps -o sid= -p "${pid}" | tr -d ' ')"
   [[ "${pgid}" = "${pid}" && "${sid}" = "${pid}" ]] || return 1
   "${PYTHON}" - "${pid}" "${REPO}/scripts/dflash_d5_attempt.sh" \
-    "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}" <<'PY'
+    "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}" \
+    "${HARD_STOP_UTC}" <<'PY'
 import pathlib, sys
 raw=pathlib.Path(f"/proc/{sys.argv[1]}/cmdline").read_bytes()
 argv=[x.decode(errors="replace") for x in raw.split(b"\0") if x]
-expected=["bash", sys.argv[2], "_sample", sys.argv[3], sys.argv[4], sys.argv[5]]
-raise SystemExit(0 if argv[:6] == expected else 1)
+expected=[
+    "bash", sys.argv[2], "_sample", sys.argv[3], sys.argv[4], sys.argv[5],
+    sys.argv[6],
+]
+raise SystemExit(0 if argv[:7] == expected else 1)
 PY
   kill -TERM -- "-${pid}"
   for _ in $(seq 1 20); do
@@ -637,7 +663,8 @@ write_cleanup_and_seal() {
   "${PYTHON}" - "${SCRATCH}" "${HDFS_RUN}" "${ATTEMPT_ID}" \
     "${cleanup_status}" "${contexts_clear}" "${resume_rc}" "${SOURCE_SHA}" \
     "${HEDGE_CONFIG}" "${ARM}" "${HEDGE_ENABLED_VALUE}" \
-    "${CALIBRATION_TRACE_VALUE}" "${NATIVE_ATTEMPT_ID}" <<'PY'
+    "${CALIBRATION_TRACE_VALUE}" "${NATIVE_ATTEMPT_ID}" \
+    "${HARD_STOP_UTC}" <<'PY'
 import hashlib
 import json
 import os
@@ -658,6 +685,7 @@ arm = sys.argv[9]
 hedge_enabled = sys.argv[10] == "1"
 calibration_trace = sys.argv[11] == "1"
 native_attempt_id = sys.argv[12]
+hard_stop_utc = sys.argv[13]
 now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 api_path = scratch / "api_smoke.json"
 startup_path = scratch / "startup.json"
@@ -679,6 +707,7 @@ cleanup = {
     "status": cleanup_status,
     "contexts_clear": contexts_clear,
     "keepalive_resume_returncode": resume_rc,
+    "hard_stop_utc": hard_stop_utc,
     "finished_at_utc": now,
 }
 (scratch / "cleanup.json").write_text(
@@ -711,6 +740,7 @@ summary = {
     "calibration_trace": calibration_trace,
     "hedge_config": hedge_config,
     "native_attempt_id": native_attempt_id,
+    "hard_stop_utc": hard_stop_utc,
     "source_sha": source_sha,
     "benchmark": False,
     "finished_at_utc": now,
@@ -1029,7 +1059,7 @@ for key in ("worker_id", "hostname", "pid", "pgid", "sid", "argv", "physical_gpu
     assert before[key] == now[key], key
 PY
     trap 'exit 130' INT TERM
-    trap 'rc=$?; trap - EXIT INT TERM; if [[ $rc -ne 0 ]]; then bash "$0" cleanup-resume "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}" || true; fi; exit $rc' EXIT
+    trap 'rc=$?; trap - EXIT INT TERM; if [[ $rc -ne 0 ]]; then bash "$0" cleanup-resume "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}" "${HARD_STOP_UTC}" || true; fi; exit $rc' EXIT
     bash "${KEEPALIVE}" pause "${WORKER_ID}" >"${SCRATCH}/keepalive_pause.txt"
     wait_no_contexts "${SCRATCH}/cuda_contexts_after_pause.txt"
     setsid "${COMMAND[@]}" >"${SCRATCH}/server.log" 2>&1 &
@@ -1054,7 +1084,7 @@ PY
     process_matches_server "${server_pid}" "${server_ticks}"
     record_process_identity "${server_pid}" "${server_ticks}"
     setsid nohup bash "$0" _sample \
-      "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}" \
+      "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}" "${HARD_STOP_UTC}" \
       "${server_pid}" "${server_ticks}" \
       >"${SCRATCH}/sampler.log" 2>&1 &
     sampler_pid=$!
@@ -1075,16 +1105,18 @@ PY
       printf '\n%s not-ready\n' "$(utc_now)" >>"${SCRATCH}/readiness_checks.log"
       sleep 5
     done
-    "${PYTHON}" - "${SCRATCH}/startup.json" "${ready}" "${ready_started}" <<'PY'
+    "${PYTHON}" - "${SCRATCH}/startup.json" "${ready}" "${ready_started}" \
+      "${HARD_STOP_UTC}" <<'PY'
 import json, pathlib, sys
 from datetime import datetime, timezone
-path, ready, started = sys.argv[1:]
+path, ready, started, hard_stop_utc = sys.argv[1:]
 pathlib.Path(path).write_text(json.dumps({
   "schema_version": 1,
   "status": "ready" if ready == "1" else "timeout",
   "started_at_utc": started,
   "finished_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
   "timeout_seconds": 3600,
+  "hard_stop_utc": hard_stop_utc,
 }, indent=2, sort_keys=True) + "\n")
 PY
     [[ "${ready}" -eq 1 ]]
@@ -1157,10 +1189,10 @@ PY
     printf 'CLEANUP_RESUME_PASS attempt=%s hdfs=%s\n' "${ATTEMPT_ID}" "${HDFS_RUN}"
     ;;
   _sample)
-    sample_gpus "${5:?server pid}" "${6:?start ticks}"
+    sample_gpus "${6:?server pid}" "${7:?start ticks}"
     ;;
   *)
-    echo "usage: $0 {contract|preflight|pause-launch|status|cleanup-resume} ATTEMPT_ID {native|b0} [NATIVE_ATTEMPT_ID]" >&2
+    echo "usage: $0 {contract|preflight|pause-launch|status|cleanup-resume} ATTEMPT_ID {native|b0} NATIVE_ATTEMPT_ID HARD_STOP_UTC" >&2
     exit 2
     ;;
 esac

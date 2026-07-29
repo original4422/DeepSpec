@@ -15,6 +15,7 @@ REPO = Path(__file__).resolve().parents[2]
 LAUNCHER = REPO / "scripts" / "dflash_d5_attempt.sh"
 API = REPO / "scripts" / "dflash_d5_api.py"
 ATTEMPT = "dflash-d5-native-20260729T000000Z-a01"
+HARD_STOP_UTC = "2026-07-29T16:31:29Z"
 
 
 def load_api():
@@ -28,7 +29,15 @@ def load_api():
 class D5ToolingTest(unittest.TestCase):
     def test_native_contract_and_frozen_identity(self) -> None:
         completed = subprocess.run(
-            ["bash", str(LAUNCHER), "contract", ATTEMPT, "native", "none"],
+            [
+                "bash",
+                str(LAUNCHER),
+                "contract",
+                ATTEMPT,
+                "native",
+                "none",
+                HARD_STOP_UTC,
+            ],
             cwd=REPO,
             check=True,
             text=True,
@@ -51,7 +60,7 @@ class D5ToolingTest(unittest.TestCase):
         self.assertNotIn(
             "SGLANG_DFLASH_HEDGE_CONFIG_JSON", contract["environment"]
         )
-        self.assertEqual(contract["hard_stop_utc"], "2026-07-29T05:55:48Z")
+        self.assertEqual(contract["hard_stop_utc"], HARD_STOP_UTC)
         self.assertFalse(contract["gpu_action"])
 
     def test_launcher_syntax_heredocs_deadline_and_self_calls(self) -> None:
@@ -60,19 +69,40 @@ class D5ToolingTest(unittest.TestCase):
         self.assertNotIn('"phase": "D4-C"', source)
         self.assertGreaterEqual(source.count("before_hard_stop"), 5)
         self.assertIn(
-            'cleanup-resume "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}"',
+            'cleanup-resume "${ATTEMPT_ID}" "${ARM}" '
+            '"${NATIVE_ATTEMPT_ID}" "${HARD_STOP_UTC}"',
             source,
         )
         self.assertIn(
-            '"$0" _sample \\\n      "${ATTEMPT_ID}" "${ARM}" "${NATIVE_ATTEMPT_ID}"',
+            '"$0" _sample \\\n      "${ATTEMPT_ID}" "${ARM}" '
+            '"${NATIVE_ATTEMPT_ID}" "${HARD_STOP_UTC}"',
             source,
         )
-        self.assertIn('sample_gpus "${5:?server pid}" "${6:?start ticks}"', source)
+        self.assertIn('sample_gpus "${6:?server pid}" "${7:?start ticks}"', source)
+        self.assertNotIn('readonly HARD_STOP_UTC="2026-', source)
         self.assertNotIn("scripts/dflash_d4_b0_attempt.sh", source)
         for index, block in enumerate(
             re.findall(r"<<'PY'\n(.*?)\nPY\n", source, flags=re.DOTALL)
         ):
             ast.parse(block, filename=f"{LAUNCHER}:heredoc-{index}")
+
+    def test_deadline_is_required_exact_utc_and_parseable(self) -> None:
+        base = ["bash", str(LAUNCHER), "contract", ATTEMPT, "native", "none"]
+        for deadline in (
+            None,
+            "2026-07-29 16:31:29Z",
+            "2026-07-29T16:31:29+00:00",
+            "2026-02-30T16:31:29Z",
+        ):
+            command = base if deadline is None else [*base, deadline]
+            completed = subprocess.run(
+                command,
+                cwd=REPO,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.assertEqual(completed.returncode, 2, deadline)
 
     def test_linear_q25_and_trace_validation_are_reproducible(self) -> None:
         module = load_api()
