@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "status": "PASS",
+  "classification": "D3_NATIVE_DFLASH_SMOKE_PASS",
+  "auditor": "phase-executor",
+  "audited_at_utc": "2026-07-29T03:55:49Z",
+  "attempt": {
+    "attempt_id": "dflash-d3-native-20260729T033321Z-a05",
+    "worker_id": "4099543",
+    "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+    "gpu_lane": "8x NVIDIA H20",
+    "tp_size": 8,
+    "mode": "native_dflash",
+    "hedge_enabled": false,
+    "benchmark": false,
+    "scratch": "/tmp/deepspec-hedge-dflash/runs/dflash-d3-native-20260729T033321Z-a05",
+    "hdfs_run": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d3-native-20260729T033321Z-a05",
+    "fresh_attempts_executed": 1,
+    "second_attempt_executed": false
+  },
+  "single_variable_from_a04": {
+    "field": "SGLang source",
+    "before": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "after": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "model_checkpoint_decode_backend_jit_request_lifecycle_changes": 0
+  },
+  "source_identity": {
+    "head": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "parent": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "fixed_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "fixed_base_is_ancestor": true,
+    "sglang_worktree_clean": true,
+    "launcher_sha256": "e1694ee3aaeb09703dff5f4fec4a1a5c911bc7169e5a1ccf1ee98909e3e2dc71"
+  },
+  "checkpoint_identity": {
+    "target": {
+      "repo_id": "deepseek-ai/DeepSeek-V4-Flash",
+      "revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+      "architecture": "DeepseekV4ForCausalLM",
+      "weight_shard_count": 46,
+      "total_bytes": 159630041626
+    },
+    "draft": {
+      "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+      "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+      "block_size": 8,
+      "proposal_candidates": 7,
+      "aux_hidden_state_layer_ids": [
+        3,
+        13,
+        23,
+        32,
+        42
+      ],
+      "total_bytes": 3607606957
+    }
+  },
+  "runtime_evidence": {
+    "resolved_algorithm": "DFLASH",
+    "proposal_width": 8,
+    "draft_candidates": 7,
+    "target_moe_backend": "flashinfer_mxfp4",
+    "mxfp4_method_rank_occurrences": 8,
+    "mhc_prewarm_tp_ranks": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "target_load": {
+      "status": "PASS",
+      "model_type": "DeepseekV4ForCausalLM",
+      "tp_ranks_loaded": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "memory_usage_gb_per_rank": 20.45,
+      "server_log_lines": [
+        2810,
+        2817,
+        2824,
+        2832,
+        2843,
+        2854,
+        2856,
+        2858
+      ]
+    },
+    "draft_load": {
+      "status": "PASS",
+      "model_type": "DFlashDraftModel",
+      "tp_ranks_loaded": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "memory_usage_gb_per_rank": 3.13,
+      "server_log_lines": [
+        2885,
+        2893,
+        2894,
+        2895,
+        2896,
+        2897,
+        2898,
+        2899
+      ]
+    },
+    "live_dflash_layout": {
+      "block_size": 8,
+      "mask_token_id": 1,
+      "fused_kv_n_layers": 5,
+      "num_kv_heads": 1,
+      "head_dim": 256,
+      "server_log_lines": [
+        2900,
+        2901,
+        2902
+      ]
+    },
+    "a04_shape_fingerprint_count": 0,
+    "shape_mismatch_count": 0,
+    "traceback_count": 0,
+    "cuda_error_count": 0,
+    "nccl_error_count": 0,
+    "unhandled_worker_crash": false
+  },
+  "api_smoke": {
+    "status": "PASS",
+    "ready_log_line": 3301,
+    "chat_completion_http_status": 200,
+    "chat_completion_log_line": 3309,
+    "content": "4",
+    "output_token_ids": [
+      22,
+      1
+    ],
+    "completion_tokens": 2,
+    "prompt_tokens": 17,
+    "elapsed_seconds": 0.3950426890514791,
+    "started_at_utc": "2026-07-29T03:48:50.627547Z",
+    "finished_at_utc": "2026-07-29T03:48:51.022620Z",
+    "speculative_metrics": {
+      "proposed_drafts": 7,
+      "accepted_drafts": 0,
+      "verify_count": 1,
+      "accept_length": 2.0
+    }
+  },
+  "gpu_participation": {
+    "rank_to_physical_gpu_mapping_artifact": "process_identity.json",
+    "tp_ranks_mapped": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "physical_gpu_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "loaded_memory_mib_after_ready": [
+      93091,
+      93189,
+      93189,
+      93189,
+      93189,
+      93189,
+      93189,
+      92949
+    ],
+    "lifecycle_samples_per_gpu": 408,
+    "same_api_second_samples": 8,
+    "immediate_post_response_utilization_percent": [
+      62,
+      67,
+      38,
+      30,
+      42,
+      53,
+      7,
+      62
+    ],
+    "immediate_post_response_memory_used_mib": [
+      93093,
+      93193,
+      93193,
+      93193,
+      93193,
+      93193,
+      93193,
+      92953
+    ],
+    "request_window_classification": "PASS",
+    "sampling_resolution_note": "The 0.395 s API smoke was shorter than the sampler's 1 s lifecycle polling interval, so request.active was not observed and phase=request rows are zero. gpu_samples.csv nevertheless contains all eight rank-mapped GPUs in the same UTC second as API start, and the launcher's immediate post-response nvidia-smi snapshot records nonzero utilization on all eight GPUs. No replay or second request was run."
+  },
+  "cleanup_and_keepalive": {
+    "status": "PASS",
+    "contexts_after_pause": "none",
+    "contexts_after_server": "none",
+    "contexts_clear": true,
+    "keepalive_resume_returncode": 0,
+    "sealed_keepalive_gate": {
+      "healthy": true,
+      "sample_count_per_gpu": 10,
+      "minimum_mean_utilization_percent": 40.0,
+      "per_gpu_mean_utilization_percent": [
+        40.0,
+        40.0,
+        40.2,
+        40.0,
+        40.0,
+        40.1,
+        40.2,
+        40.2
+      ]
+    },
+    "fresh_readback": {
+      "status": "HEALTHY",
+      "keepalive_pid": 110847,
+      "sample_count_per_gpu": 10,
+      "per_gpu_mean_utilization_percent": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ]
+    }
+  },
+  "sealed_artifacts": {
+    "complete_status": "PASS",
+    "published_at_utc": "2026-07-29T03:49:56.692805Z",
+    "manifest_entries": 38,
+    "manifest_check": "PASS_38_OF_38",
+    "manifest_sha256": "cf92016603857ba58ee7f067c74ab0eb6e42d01777d93c40bc89cc86c9a0b558",
+    "complete_json_sha256": "bbd92b065209986cce628460fc3b3a029de8d00d4e4853a02c8352b640221b87",
+    "server_log_sha256": "b32e22a3a6fa691112b414f3ebcbfd1aad83df099891d2466e0de71e5f6adc99",
+    "api_smoke_sha256": "09fcef5902aac4871805b3eef155427f46d16ba1650d5701eac80555305b6058",
+    "gpu_samples_sha256": "c0958e288a4c3abd9b952eac00e806b1d452d0cac86e9f41ce7b372d5e864579",
+    "gpu_after_request_sha256": "6fd8543246b2235915ab4873eacfe512058d28071140ffc4fd4eba3c16c18ee4"
+  },
+  "handoff": {
+    "d3_exit_gate": "PASS",
+    "d4_authorized_or_started": false,
+    "commit_created_by_phase_executor": false,
+    "push_performed_by_phase_executor": false,
+    "next_gate": "main-agent review, acceptance, and commit"
+  }
+}

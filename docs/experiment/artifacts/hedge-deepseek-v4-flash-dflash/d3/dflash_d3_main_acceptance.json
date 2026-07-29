@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "auditor": "main-agent",
+  "audited_at_utc": "2026-07-29T03:58:56Z",
+  "status": "PASS",
+  "attempt": {
+    "attempt_id": "dflash-d3-native-20260729T033321Z-a05",
+    "worker_id": "4099543",
+    "gpu_count": 8,
+    "gpu_model": "NVIDIA H20",
+    "tp_size": 8,
+    "hdfs_run": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d3-native-20260729T033321Z-a05",
+    "manifest_entries": 38,
+    "manifest_sha256": "cf92016603857ba58ee7f067c74ab0eb6e42d01777d93c40bc89cc86c9a0b558",
+    "manifest_check": "PASS_38_OF_38",
+    "complete_status": "PASS"
+  },
+  "source": {
+    "fixed_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "native_integration": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+    "deepseek_v4_allowlist_fix": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "tp_weight_loader_fix": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "worktree_clean": true,
+    "hedge_enabled": false
+  },
+  "native_runtime": {
+    "target_revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+    "draft_revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+    "target_tp_ranks_loaded": 8,
+    "draft_tp_ranks_loaded": 8,
+    "target_moe_backend": "flashinfer_mxfp4",
+    "dflash_block_size": 8,
+    "draft_candidates": 7,
+    "aux_hidden_state_layer_ids": [
+      3,
+      13,
+      23,
+      32,
+      42
+    ],
+    "live_fused_kv_layers": 5,
+    "a04_shape_fingerprint_count": 0,
+    "unhandled_cuda_nccl_or_worker_crash": false
+  },
+  "api_smoke": {
+    "http_status": 200,
+    "content": "4",
+    "output_token_ids": [
+      22,
+      1
+    ],
+    "completion_tokens": 2,
+    "proposed_drafts": 7,
+    "accepted_drafts": 0,
+    "verify_count": 1,
+    "elapsed_seconds": 0.3950426890514791
+  },
+  "gpu_participation": {
+    "rank_to_physical_gpu_mapping_complete": true,
+    "loaded_memory_mib_range": [
+      92949,
+      93189
+    ],
+    "immediate_post_response_utilization_percent": [
+      62,
+      67,
+      38,
+      30,
+      42,
+      53,
+      7,
+      62
+    ],
+    "lifecycle_samples_per_gpu": 408,
+    "request_window_check": "PASS",
+    "sampling_limitation": "The 0.395-second request was shorter than the one-second lifecycle sampler interval, so no row was labeled phase=request. The API timestamps, same-second rank-mapped lifecycle rows, and immediate post-response eight-GPU snapshot jointly provide the request-window evidence; no replay was run."
+  },
+  "cleanup_and_keepalive": {
+    "cleanup_status": "PASS",
+    "contexts_clear": true,
+    "keepalive_resume_returncode": 0,
+    "fresh_readback_at_utc": "2026-07-29T03:58:56Z",
+    "fresh_keepalive_pid": 110847,
+    "fresh_gate_healthy": true,
+    "fresh_sample_count_per_gpu": 10,
+    "fresh_per_gpu_mean_utilization_percent": {
+      "0": 100.0,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 100.0,
+      "5": 100.0,
+      "6": 100.0,
+      "7": 100.0
+    }
+  },
+  "main_agent_independent_checks": {
+    "sealed_manifest_recomputed": "PASS_38_OF_38",
+    "source_checkpoint_api_summary_consistency": "PASS",
+    "server_log_rank_and_error_scan": "PASS",
+    "gpu_csv_mapping_counts_and_values": "PASS",
+    "primary_dflash_cpu_suite": "PASS_10_OF_10",
+    "overlap_cpu_suite": "PASS_6_PLUS_1_CUDA_SKIP",
+    "remote_worker_and_keepalive_readback": "PASS"
+  },
+  "exit_gate": {
+    "d3": "PASS",
+    "d4_authorized": true,
+    "formal_native_arm_completed": false,
+    "b0_status": "NOT_RUN",
+    "next_phase": "D4"
+  }
+}

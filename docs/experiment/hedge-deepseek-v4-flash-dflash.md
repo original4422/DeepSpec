@@ -1,6 +1,6 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `IN_PROGRESS — D0/D1A/D1B/D1C/D2 ACCEPTED; D3 READY`
+Status / outcome label: `IN_PROGRESS — D0–D3 ACCEPTED; D4 AUTHORIZED`
 
 Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
 
@@ -10,7 +10,7 @@ Target repo@revision / HDFS `.complete`: `deepseek-ai/DeepSeek-V4-Flash@60d8d707
 
 Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `READY — primary .complete published at 2026-07-28T23:39:20Z`
 
-SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / native D2 `7245c3d607a1eadc26582bb78ebd603a70c22fa7`; HEDGE-final pending D4
+SGLang base / final source SHA: `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1` / native D3 `1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5`; HEDGE-final pending D4
 
 HEDGE pure-core SHA: `4d96f44065c07030ede67484a262006ec149626a` (`READY`, verified; not yet cherry-picked)
 
@@ -20,19 +20,19 @@ B0 PASS|FAIL|NOT_RUN: `NOT_RUN`
 
 Frozen B/g/m: `NOT_CALIBRATED`
 
-Native result: `NOT_RUN`
+Native result: `D3 SHORT SMOKE PASS`；正式 500 条 native arm 尚未运行
 
 B+ result: `NOT_RUN`
 
 Canonical or exploratory: `UNDETERMINED`
 
-Primary blocker: `NONE FOR D3`；target、primary draft、native source/env、dataset 与 worker/keepalive 前置均已 READY。
+Primary blocker: `NONE FOR D4 ENTRY`；native TP8、target/draft、pure core、dataset 与 worker/keepalive 前置均已 READY。
 
 Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/`
 
-Git commit: latest pushed progress `f167423`; DeepSpec D2 `37a881a`; SGLang native D2 `7245c3d607a1eadc26582bb78ebd603a70c22fa7`; D1A key node is this commit
+Git commit: latest pushed progress `c65a60a`; DeepSpec D3 recovery `6c929a8`; SGLang native D3 `1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5`
 
-下一步：调度独立 D3 executor；fresh inventory 后紧邻地定向暂停本 lane keepalive，确认八卡 CUDA context 清空，再执行 TP8 native DFlash short smoke。
+下一步：调度独立 D4 executor；验证 DSpark pure-core pointer，cherry-pick canonical core，并以可复现注入把同一 core 接入独立 SGLang source。
 
 ## D0 会话与资源基线
 
@@ -132,3 +132,30 @@ scan 均 PASS。主 Agent staged 审核曾发现新增 config 文件 EOF 多一�
 没有启动 GPU、大模型或 HEDGE，也没有暂停 keepalive。权威 handoff 为
 `docs/plan/handoffs/dflash-phase-d2-handoff.md`，主验收记录为
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d2/dflash_d2_main_acceptance.json`。
+
+## D3 native DFlash 启动与短 smoke
+
+D3 用单变量链条保留了四个可审计节点。a02 暴露并修复 DeepSeek-V4 DFLASH allowlist；
+a03 在八 rank target/backend 初始化后暴露 FlashInfer `fused_moe_90` 缺少
+`-lcudart/-lnvrtc` 的 CUDA 13 link layout。lane-scoped CUDA view 与独立
+`FLASHINFER_WORKSPACE_BASE` 随后完成 183/183 构建，并证明共享
+`~/.cache/flashinfer` 未被写入。
+
+a04 越过 JIT 后，在八个 rank 的 draft load 同时复现 global checkpoint
+`down_proj=(4096,2048)` 被 local TP shard `(4096,256)` 前置等形检查拒绝。真实
+`RowParallelLinear.weight_loader` 的 TP=8 RED/GREEN fixture 固定根因；source
+`1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5` 只让 custom TP loader 先执行分片，
+并保留 replicated 参数和 buffer 的严格形状检查。主 Agent 独立复跑 primary
+10/10 与 overlap 6 PASS/1 CUDA-only skip。
+
+唯一 source-only a05 完成八 rank target 与 draft load、DFLASH block 8、5 层 fused KV、
+HTTP 200 chat API 和 7 个 draft proposal。ready 后八卡显存为 `92949–93189 MiB`；
+API 返回后的即时逐卡利用率为 `[62,67,38,30,42,53,7,62]%`。0.395 秒请求短于
+一秒 sampler 周期，因此没有 `phase=request` 行；该限制已在 handoff 置明，没有补跑。
+
+a05 HDFS manifest
+`cf92016603857ba58ee7f067c74ab0eb6e42d01777d93c40bc89cc86c9a0b558`
+由 executor 与主 Agent分别验证 38/38。cleanup 后 contexts clear，keepalive
+fresh readback PID `110847`、八卡 10×1 秒均值均为 100%。D3 权威 handoff 为
+`docs/plan/handoffs/dflash-phase-d3-handoff.md`，主验收记录为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d3/dflash_d3_main_acceptance.json`。
