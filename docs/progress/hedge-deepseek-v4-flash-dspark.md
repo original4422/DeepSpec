@@ -3,11 +3,11 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T09:36:48Z`（09:38:30Z checkpoint 前心跳）
+- 快照时间：`2026-07-29T09:52:49Z`（P07 主验收关键节点）
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
   `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
 - elapsed / deadline：持续执行 / `NONE`
-- 当前 phase：P00–P06 均已 PASS；P07 `IN_PROGRESS`
+- 当前 phase：P00–P07 均已 PASS；P08 `READY`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
   - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
@@ -22,20 +22,19 @@
   - P06：formal tooling 138/138 与主 Agent复验 PASS，commit/push `6a74186`；
     唯一 native formal 500/500、0 retry、74594 tokens、31.76484698125425 TPS；
     主 Agent独立重算与 TP8/GPU/HEDGE-off/cleanup/archive 全 PASS
-  - P07：tooling commit/push `3253062`；唯一 attempt
-    `20260729T084544Z-p07-hedge-formal-r1` 已通过 8×H20/keepalive/no-clobber
-    preflight，TP0–TP7 load/JIT/autotune 与 target/draft ready；10 条 warmup
-    均 200，`09:06:31Z` clear 后 formal 500 已 active；无 crash marker
+  - P07：tooling commit/push `3253062`；唯一 HEDGE formal 500/500、0 retry、
+    75819 tokens、33.493242595936465 TPS；主 Agent独立重算 client/HEDGE/GPU/
+    identity/server/lifecycle/shutdown/keepalive 与 39-file manifest 均 PASS
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：preflight dedicated keepalive
-  `107326/107326/107326` 8×10 全卡 100%；08:47:21Z 按协议暂停，08:47:23Z
-  contexts-none；登记 TP8 server PID/PGID/SID `109060` 当前 active
+- keepalive / server / PID：P07 server/sampler 已按登记 PID/PGID 定向退出；
+  `cuda_contexts_after.txt` 为 contexts none；dedicated keepalive 已恢复为
+  `121312/121312/121312`，8×10 全卡 mean/min/max 100%
 - 最新 attempt：`20260729T084544Z-p07-hedge-formal-r1`；preflight/ready PASS，
-  10 warmup 排除，formal 500 自 `09:06:31Z` 起 active
+  10 warmup 排除，500/500 与完整生命周期主审 PASS
 - 最新 immutable HDFS artifact：
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1`
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T084544Z-p07-hedge-formal-r1`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；HEAD/origin clean `3253062`
+  branch `exp/hedge-v4-dspark`；上一已 push 节点 `55c35af`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -44,10 +43,11 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`；P07 tooling `3253062`
-- 首要事项：持续监控唯一 HEDGE B>0 formal 500；不得改参数、并发、拼接或重启
-- 下一检查点：`2026-07-29T10:06:48Z`
-- 下一 30 分钟动作：完成剩余 91 条；500 条终态后立即执行 validator、定向
-  cleanup、contexts-none、8×10 keepalive 恢复与 immutable archive
+- 首要事项：提交 P07 结果 Git 节点，然后启动不使用 GPU 的 P08 最终离线审计
+- 下一检查点：`2026-07-29T10:22:49Z`
+- 下一 30 分钟动作：完成 P07 result/handoff commit/push；P08 重算
+  calibration、B0、两个 formal summary/delta、identity、TP8/GPU 与最终
+  process/keepalive，生成 final JSON/Markdown/manifest
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -809,3 +809,24 @@
   keepalive 仍按协议暂停，登记的 TP8 server/model contexts 保持 active。
 - 尚未运行终态 validator、cleanup 或 HDFS 发布；剩余 91 条完成后由同一
   launcher 原子执行这些阶段。
+
+### 2026-07-29T09:52:49Z — P07 formal 完成与主验收
+
+- 唯一 launcher rc=0；500/500 success、0 failed、0 retry；75819 completion
+  tokens、2263.710352404s、33.493242595936465 output TPS。acceptance 为
+  15386 proposals、60357 accepted drafts、3.922851943325101 accepted/proposal、
+  4.927791498765111 含 bonus acceptance length。
+- HEDGE endpoint：strict/HEDGE accepted `56642/60357`，relaxed mismatches
+  1427；charged/remaining/initial `723.75/307.5/1031.25` 精确守恒；
+  initialized=finished=500，active=leak=0，exhaustion=cap trim=0。
+- 答案 474 match / 13 mismatch / 13 parse failure。相对 native，TPS
+  +5.4412212837109175%，accepted/proposal +7.643116362511315%，含 bonus
+  acceptance length +5.995676056634869%，match rate -0.8 percentage point。
+  这些都是单次运行观察值，没有门槛或方差结论。
+- TP/target/draft ranks 0–7、八卡各 1909 formal-window samples、无运行期
+  crash；定向 cleanup 后 contexts none，keepalive `121312` 的 8×10 全卡
+  100%。HDFS 39 个 manifest 项的 size/SHA 由主 Agent逐项重算匹配，
+  manifest SHA `397462ad…b082`。
+- 权威 monotonic artifact 证明 counter clear 先于 formal timing start
+  351410 ns。此前运行中心跳的 `09:06:31Z` 来自 server wall-log 观察点，
+  不作为正式计时边界。

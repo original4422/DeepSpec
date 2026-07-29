@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T09:36:48Z`
+- 记录更新时间：`2026-07-29T09:52:49Z`
 - 读者版结果报告：
   [`docs/results/hedge-deepseek-v4-flash-dspark.md`](../results/hedge-deepseek-v4-flash-dspark.md)
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；原截止
@@ -20,13 +20,13 @@
 - 正式 native run：`PASS`；
   `20260729T062241Z-p06-native-formal-r1`，500/500、0 retry、74594 tokens、
   2348.31919839s、31.76484698125425 output TPS
-- 正式 HEDGE run：`IN_PROGRESS`；
-  `20260729T084544Z-p07-hedge-formal-r1` 已完成 TP8 load/ready 与 10 条
-  warmup，`2026-07-29T09:06:31Z` clear 后进入唯一 formal 500
-- worker / TP / GPU 参与：`4106666` / 8 / P07 TP0–TP7 load/JIT/autotune
-  完成、target/draft ready；P06 TP/target/draft ranks 0–7；
-  formal window 每卡 1982 samples、min model memory 79619–80099 MiB、max util
-  99–100%；无 crash，shutdown/contexts-none/keepalive 8×10 全部 `PASS`
+- 正式 HEDGE run：`PASS`；
+  `20260729T084544Z-p07-hedge-formal-r1`，500/500、0 retry、75819 tokens、
+  2263.710352404s、33.493242595936465 output TPS
+- worker / TP / GPU 参与：`4106666` / 8 / P06 与 P07 的 TP/target/draft ranks
+  均为 0–7；P07 formal window 每卡 1909 samples、min model memory
+  79621–80101 MiB、max util 99%；无运行期 crash，shutdown/contexts-none/
+  keepalive 8×10 全部 `PASS`
 - model / checkpoint：固定目标
   `deepseek-ai/DeepSeek-V4-Flash-DSpark@62af8fffb2f7030cac4de2f0169f5b8d1101b646`；
   P00 checkpoint r1 PASS，canonical identity 记录 75 files / 48 shards /
@@ -36,17 +36,21 @@
   `a4077b9f…10c52`、clean replay 10-file tree `69e80df9…2422`；formal wheel
   `a5c14bd7…71f9` 已发布/uv 安装，旧 `f2054c…` 保留为历史实体
 - g / B / m：`2.0625` / `2.0625` / `1`
-- native TPS / HEDGE TPS / delta：`31.76484698125425` / `NOT_RUN` / —
+- native TPS / HEDGE TPS / delta：`31.76484698125425` /
+  `33.493242595936465` / `+1.7283956146822135`（`+5.4412212837109175%`）
 - native accepted length / HEDGE accepted length / delta：
-  `4.64904954814584` / `NOT_RUN` / —
+  `4.64904954814584` / `4.927791498765111` /
+  `+0.27874195061927143`（`+5.995676056634869%`）
 - native GSM match / HEDGE GSM match：`478`（11 mismatch / 11 parse failure） /
-  `NOT_RUN`
+  `474`（13 mismatch / 13 parse failure）；match rate `95.6% → 94.8%`
 - artifact root：native
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`；
   B0
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T051340Z-p05-b0-calibration-r1`；
   P06
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1`；
+  P07
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T084544Z-p07-hedge-formal-r1`；
   freeze `artifacts/hedge-dspark/p05-calibration/`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；
@@ -63,9 +67,9 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `325306216f12640d1e0b97a9367a1dc360a53c46`
-- 下一步：持续监控唯一 P07 HEDGE `B>0` 500 条正式窗口；不改参数、不并发、
-  不 resume/stitch/restart。终态后执行 live validator、定向 cleanup、
-  contexts-none、8×10 keepalive 恢复与 immutable archive
+- 下一步：P07 已由主 Agent独立验收 `PASS`。进入 P08 纯离线审计，重算
+  calibration/B0/native/HEDGE/delta，生成最终 JSON/Markdown/manifest；不再
+  启动模型
 
 ## 当前阶段
 
@@ -78,8 +82,8 @@
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
 | P06 | `PASS` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS | — |
-| P07 | `IN_PROGRESS` | static 主审 153/153、tooling `3253062`；唯一 attempt `20260729T084544Z-p07-hedge-formal-r1` 已 TP8 ready、10 warmup 完成，09:06:31Z clear 后 formal 500 active；无 crash marker | formal 500 终态、validation/cleanup/archive |
-| P08 | `NOT_STARTED` | — | P07 门禁 |
+| P07 | `PASS` | 唯一 HEDGE formal 500/500、0 retry、75819 tokens、2263.710352404s、33.493242595936465 TPS；HEDGE/runtime/TP8/GPU/cleanup/archive 主审全 PASS | 结果 Git 节点 |
+| P08 | `READY` | P06/P07 均有效；所有服务已停止；keepalive `121312` 8×10 全卡 100% | 最终离线审计 |
 
 ## 固定实验协议
 
@@ -128,6 +132,56 @@
   manifest SHA-256
   `f0014a88b05761b47a85b841d052a13a2e6d6d4baa21bf4f3640b4e7c96beca7`
 - 结果提交：`9134825`；660 分钟进展/授权扩展提交：`b1bced1`
+
+## P07 HEDGE 正式 500 结果
+
+| 指标 | 结果 | 相对 native |
+| --- | ---: | ---: |
+| 状态 / attempt | `PASS` / `20260729T084544Z-p07-hedge-formal-r1` | — |
+| warmup / formal | 10 条排除计时 / 500 条单次顺序运行 | 相同协议 |
+| 成功 / 失败 / retry | 500 / 0 / 0 | 0 / 0 / 0 |
+| completion tokens | 75819 | +1225（+1.6422232351127386%） |
+| timed wall seconds | 2263.710352404 | -84.60884598600023（-3.602953382317353%） |
+| end-to-end output TPS | 33.493242595936465 | +1.7283956146822135（+5.4412212837109175%） |
+| proposals / proposed drafts / accepted drafts | 15386 / 76930 / 60357 | -659 / -3295 / +1884 |
+| accepted drafts / proposal | 3.922851943325101 | +0.2785390732721247（+7.643116362511315%） |
+| acceptance length（含 bonus） | 4.927791498765111 | +0.27874195061927143（+5.995676056634869%） |
+| 逐位置 accepted drafts | `[14779, 13649, 12278, 10688, 8963]` | `[-125, +422, +590, +569, +428]` |
+| GSM8K match / mismatch / parse failure | 474 / 13 / 13 | -4 / +2 / +2；match rate -0.8 pp |
+
+- HEDGE config：`g=B=2.0625`、`m=1`、
+  `value_scheme=normalized_suffix`、width/block size 5；config fingerprint
+  `6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921`。
+- authoritative endpoint counters：15386 runtime calls；strict accepted
+  56642，HEDGE accepted 60357（+3715）；1427 relaxed mismatches；
+  regret charged `723.75`，remaining `307.5`，initial budget `1031.25`，
+  守恒精确成立；budget exhaustion 0、cap trim 0。
+- request lifecycle：initialized=finished=500；active=0、state leak=0；
+  `requests_non_natural=1`。逐请求记录中 500 条均成功，其中一条 completion
+  达到 512 tokens。
+- TP/target/draft ranks 0–7 均加载；P07 formal window 八卡各 1909 samples，
+  每卡最低模型显存 79621–80101 MiB，最大利用率均 99%；无运行期
+  CUDA/NCCL/worker crash。
+- shutdown：server/sampler 仅按登记 PID/PGID 定向 SIGTERM；main/cleanup rc=0，
+  无 external signal；`cuda_contexts_after.txt` 证明 contexts none；
+  dedicated keepalive 恢复为 PID/PGID/SID `121312/121312/121312`，
+  8×10 每卡 mean/min/max 均 100%。
+- immutable artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T084544Z-p07-hedge-formal-r1`
+- `formal_outputs.jsonl` SHA-256：
+  `615063928d19a8d5274bc669dc1ce1e7ce538c3b59ba21ce9b49e135d5078668`
+- `answer_summary.json` / `acceptance_summary.json` / `hedge_counters.json`
+  SHA-256：`1d1a1cdd23c4d17a875d28d5b1e5a0152b1c45f7cb6bbf61e3d252e61e448fa0` /
+  `069e8d2b058cf451d8c9c9b3d2f44d1bb32cad6ca1ef4ff101cd98c221498505` /
+  `5f0874f54da28145e44a5911b45d8aaab3f058ea5a545bd6a4b8889ee8eca7e0`
+- archive manifest：39/39 文件集合、size 与 SHA 主 Agent逐项重算匹配；
+  manifest SHA-256
+  `397462adbd28aea5e8df8f275c2d1947bf29d297b5c84747ca6bf7c6a5bdb082`。
+- `pre_formal_clear.finished_monotonic_ns=1987396471339815`，
+  `formal_start_monotonic_ns=1987396471691225`，因此 clear 先于正式计时；
+  运行中心跳中的 `09:06:31Z` 是 server wall-log 观察点，不是权威计时边界。
+- P06/P07 正式输出中 15/500 条完整 token-ID 列表相同、485/500 不同；
+  这是结果描述，不作为成功门槛。两 arm 都各有一条 512-token completion。
 
 ## P01 acquisition evidence
 
@@ -185,7 +239,7 @@
 | P06 formal tooling | 固定 warmup/500/timing/retry/summary/identity/lifecycle 契约 | `PASS_COMMITTED`：executor 138/138；主 Agent targeted/regression/syntax/contract PASS；真实 r4 spec replay PASS | commit/push `6a74186` |
 | `20260729T062241Z-p06-native-formal-r1` | 唯一 native formal；10 warmup + 单次 timed 500 | `PASS`：500/500 success、0 retry、74594 tokens、2348.31919839s、31.76484698125425 TPS；accepted/proposal 3.644312870052976；TP8/GPU/HEDGE-off/cleanup/archive PASS | immutable HDFS；formal SHA `ecd99525…2607`，archive manifest SHA `f0014a88…eca7` |
 | P07 formal tooling | 在 P06 已验收 lifecycle 上冻结正预算身份、retry-aware 请求边界与 HEDGE runtime counter 门禁 | `PASS_COMMITTED`：executor 与主 Agent均 153/153；syntax/lock/contract/diff PASS；P06 immutable formal artifact 重放 PASS | commit/push `3253062`；`artifacts/hedge-dspark/p07-tooling/` |
-| `20260729T084544Z-p07-hedge-formal-r1` | 唯一 HEDGE `B>0` formal；只切换冻结 HEDGE config | `IN_PROGRESS`：8×10 keepalive preflight 100%；08:47:21Z pause、contexts-none、TP8 target/draft load/JIT/autotune/ready、10 warmup 均 200；09:06:31Z clear 后 formal 500 active，09:36:48Z 为 409/500，无 error/retry/crash marker | worker scratch `/tmp/deepspec-hedge-dspark-20260729T084544Z-p07-hedge-formal-r1`；HDFS 目标尚未发布 |
+| `20260729T084544Z-p07-hedge-formal-r1` | 唯一 HEDGE `B>0` formal；只切换冻结 HEDGE config | `PASS`：500/500、0 retry、75819 tokens、2263.710352404s、33.493242595936465 TPS；HEDGE counters、TP8/GPU、shutdown/contexts/keepalive/archive 主审全 PASS | immutable HDFS；formal SHA `61506392…8668`，manifest SHA `397462ad…b082` |
 
 ## P04 integration smoke 当前状态
 
@@ -497,9 +551,12 @@
 - P00–P03 已完成主 Agent PASS 验收并 commit/push；P04 native r4 已由原始证据
   与修复后只读 validator replay 记为 `RECOVERED_PASS`，原 FAIL artifact 未修改。
 - B0 单请求 smoke 与 P05 32 条 B0 均 PASS；P05 native r1/r2/r3 的失败证据保持
-  不可变。native 500 与 HEDGE B>0 500 尚未运行。
-- 当前没有 TPS、acceptance、GSM8K 正式结果或可比较 delta。
+  不可变。native 500 与 HEDGE B>0 500 均已运行一次并由主 Agent验收 PASS。
+- 正式结果和路线内 delta 已记录，但每个 arm 仅运行一次，不提供方差、置信区间或
+  跨路线绝对排名；TPS/acceptance/GSM8K 均无通过阈值。
 - native r4 已完成定向 shutdown、contexts none 和 keepalive 恢复；其 rc=1 是
   validator 工具误报，不是 CUDA/NCCL/worker crash。
 - P05 参数只来自 fixed calibration scoped trace，已经 B0 完整 token-ID 等价与
   reducer 落盘冻结；正式 500 条结果不得反向修改 `g/B/m`。
+- P08 最终离线审计尚未完成，因此当前总体状态仍为 `IN_PROGRESS`，不能提前发布
+  最终 `COMPLETE`。

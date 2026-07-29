@@ -8,8 +8,8 @@
 
 ## 一页结论
 
-- 状态：`IN_PROGRESS`；32 条 calibration 与 native 正式 500 已完成，
-  HEDGE `B>0` 正式 500 尚未运行。
+- 状态：`IN_PROGRESS`；32 条 calibration、native 正式 500 与 HEDGE
+  `B>0` 正式 500 均已完成并通过主 Agent复验；仅剩 P08 最终离线审计。
 - 数据不是新生成或训练数据：固定
   `openai/gsm8k@740312add88f781978c0658806c59bc2815b9866`
   的 `main/test`，用 seed `980406` 确定性 shuffle；前 32 条 calibration，
@@ -19,7 +19,11 @@
   `value_scheme=normalized_suffix`、width/block size 5。
 - native 正式 500：500/500 成功、0 retry、74594 completion tokens、
   2348.31919839 秒、31.76484698125425 output TPS。
-- HEDGE 正式结果与路线内差值：`PENDING`；不会用 formal 结果回调参数。
+- HEDGE 正式 500：500/500 成功、0 retry、75819 completion tokens、
+  2263.710352404 秒、33.493242595936465 output TPS。
+- 路线内观察值：TPS `+5.4412%`，accepted drafts/proposal `+7.6431%`，
+  含 bonus acceptance length `+5.9957%`；GSM8K match rate
+  `95.6% → 94.8%`（`-0.8` 个百分点）。不会用 formal 结果回调参数。
 
 ## 固定身份
 
@@ -114,22 +118,30 @@ formal 请求发出前到第 500 个请求终态，HTTP、生成、排队和 ret
 
 | 指标 | native | HEDGE `B>0` | 差值 |
 | --- | ---: | ---: | ---: |
-| 状态 | `PASS` | `PENDING` | — |
-| 成功 / 失败 / retry | 500 / 0 / 0 | `PENDING` | `PENDING` |
-| completion tokens | 74594 | `PENDING` | `PENDING` |
-| timed wall seconds | 2348.31919839 | `PENDING` | `PENDING` |
-| output TPS | 31.76484698125425 | `PENDING` | `PENDING` |
-| proposals | 16045 | `PENDING` | `PENDING` |
-| proposed draft tokens | 80225 | `PENDING` | `PENDING` |
-| accepted draft tokens | 58473 | `PENDING` | `PENDING` |
-| accepted drafts / proposal | 3.644312870052976 | `PENDING` | `PENDING` |
-| acceptance length（含 bonus） | 4.64904954814584 | `PENDING` | `PENDING` |
-| GSM match / mismatch / parse failure | 478 / 11 / 11 | `PENDING` | `PENDING` |
+| 状态 | `PASS` | `PASS` | — |
+| 成功 / 失败 / retry | 500 / 0 / 0 | 500 / 0 / 0 | 0 / 0 / 0 |
+| completion tokens | 74594 | 75819 | +1225（+1.6422%） |
+| timed wall seconds | 2348.31919839 | 2263.710352404 | -84.608845986（-3.6030%） |
+| output TPS | 31.76484698125425 | 33.493242595936465 | +1.7283956146822135（+5.4412%） |
+| proposals | 16045 | 15386 | -659（-4.1072%） |
+| proposed draft tokens | 80225 | 76930 | -3295（-4.1072%） |
+| accepted draft tokens | 58473 | 60357 | +1884（+3.2220%） |
+| accepted drafts / proposal | 3.644312870052976 | 3.922851943325101 | +0.2785390732721247（+7.6431%） |
+| acceptance length（含 bonus） | 4.64904954814584 | 4.927791498765111 | +0.27874195061927143（+5.9957%） |
+| GSM match / mismatch / parse failure | 478 / 11 / 11 | 474 / 13 / 13 | -4 / +2 / +2 |
 
 native 逐位置 accepted draft tokens：
 
 ```text
 [14904, 13227, 11688, 10119, 8535]
+```
+
+HEDGE 逐位置 accepted draft tokens、相对 native 差值与 proposal 接受率：
+
+```text
+counts = [14779, 13649, 12278, 10688, 8963]
+delta  = [-125, +422, +590, +569, +428]
+rates  = [0.960549, 0.887105, 0.797998, 0.694657, 0.582543]
 ```
 
 ### native 运行证据
@@ -154,14 +166,51 @@ native 逐位置 accepted draft tokens：
 
 ### HEDGE `B>0`
 
-`PENDING`。运行完成后，本节将补齐：
+唯一 attempt：
+`20260729T084544Z-p07-hedge-formal-r1`。
 
-- 唯一 attempt 和 artifact/hash；
-- TPS、tokens、acceptance 与逐位置统计；
-- runtime calls、relaxed mismatches、regret charged、budget exhaustion、
-  cap trims、request initialized/finished、active/leak；
-- TP8/八卡、cleanup、keepalive 与 archive 证据；
-- 相对 native 的路线内差值。
+- immutable artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T084544Z-p07-hedge-formal-r1`
+- `formal_outputs.jsonl` SHA-256：
+  `615063928d19a8d5274bc669dc1ce1e7ce538c3b59ba21ce9b49e135d5078668`
+- `answer_summary.json` SHA-256：
+  `1d1a1cdd23c4d17a875d28d5b1e5a0152b1c45f7cb6bbf61e3d252e61e448fa0`
+- `acceptance_summary.json` SHA-256：
+  `069e8d2b058cf451d8c9c9b3d2f44d1bb32cad6ca1ef4ff101cd98c221498505`
+- `hedge_counters.json` SHA-256：
+  `5f0874f54da28145e44a5911b45d8aaab3f058ea5a545bd6a4b8889ee8eca7e0`
+- archive manifest SHA-256：
+  `397462adbd28aea5e8df8f275c2d1947bf29d297b5c84747ca6bf7c6a5bdb082`
+
+HEDGE authoritative counters：
+
+| counter | 值 |
+| --- | ---: |
+| runtime calls / proposals | 15386 |
+| strict accepted draft tokens | 56642 |
+| HEDGE accepted draft tokens | 60357 |
+| HEDGE 相对 strict 新增 accepted | 3715 |
+| relaxed mismatches | 1427 |
+| regret charged / remaining / initial | 723.75 / 307.5 / 1031.25 |
+| budget spent | 70.1818181818% |
+| budget exhaustion / cap trim | 0 / 0 |
+| initialized / finished / non-natural | 500 / 500 / 1 |
+| active request states / state leaks | 0 / 0 |
+
+`charged + remaining = initial = 500 × B = 1031.25` 精确成立。HEDGE
+snapshot 固定 `counter_schema_version=1`、candidate alignment 和 native
+full-vocab score seam；calibration trace 在正式 arm 中关闭。
+
+TP/target/draft ranks 0–7 全部加载；八卡 formal window 各有 1909 samples，
+最低模型显存 79621–80101 MiB，最大利用率均 99%；没有运行期
+CUDA/NCCL/worker crash。定向停止后 contexts none；keepalive 恢复为 PID
+`121312`，8×10 全卡 mean/min/max 100%。归档中的 39 个 manifest 项已由
+主 Agent逐项重算 size/SHA 并全部匹配。
+
+P06/P07 中 15/500 条完整输出 token-ID 列表相同，485/500 不同；答案 outcome
+迁移为：472 `match→match`、4 `match→mismatch`、2
+`match→parse_failure`、2 `mismatch→match`、9 `mismatch→mismatch`、
+11 `parse_failure→parse_failure`。这些都是观察值，不是通过门槛。
 
 ## 限制
 
@@ -169,4 +218,6 @@ native 逐位置 accepted draft tokens：
 - 不做跨方法绝对性能排名；只比较同一路线、同一最终 identity 的 native 与
   HEDGE `B>0`。
 - GSM8K match 是观测指标，不是基础设施成功门禁。
-- 当前文档尚未包含 P07 结果，因此不能得出 HEDGE 正预算相对 native 的最终结论。
+- 每个正式 arm 只运行一次，不报告方差或置信区间；观察到的路线内差值不能外推为
+  跨硬件、跨方法或生产吞吐结论。
+- P08 尚未生成最终审计 JSON/manifest，因此总体状态暂不标记 `COMPLETE`。
