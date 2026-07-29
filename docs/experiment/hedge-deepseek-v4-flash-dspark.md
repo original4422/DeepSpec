@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T08:40:25Z`
+- 记录更新时间：`2026-07-29T09:08:30Z`
 - 读者版结果报告：
   [`docs/results/hedge-deepseek-v4-flash-dspark.md`](../results/hedge-deepseek-v4-flash-dspark.md)
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；原截止
@@ -20,9 +20,11 @@
 - 正式 native run：`PASS`；
   `20260729T062241Z-p06-native-formal-r1`，500/500、0 retry、74594 tokens、
   2348.31919839s、31.76484698125425 output TPS
-- 正式 HEDGE run：`NOT_RUN`；P07 tooling 已 `PASS_COMMITTED`，live 已具备
-  启动条件
-- worker / TP / GPU 参与：`4106666` / 8 / P06 TP/target/draft ranks 0–7；
+- 正式 HEDGE run：`IN_PROGRESS`；
+  `20260729T084544Z-p07-hedge-formal-r1` 已完成 TP8 load/ready 与 10 条
+  warmup，`2026-07-29T09:06:31Z` clear 后进入唯一 formal 500
+- worker / TP / GPU 参与：`4106666` / 8 / P07 TP0–TP7 load/JIT/autotune
+  完成、target/draft ready；P06 TP/target/draft ranks 0–7；
   formal window 每卡 1982 samples、min model memory 79619–80099 MiB、max util
   99–100%；无 crash，shutdown/contexts-none/keepalive 8×10 全部 `PASS`
 - model / checkpoint：固定目标
@@ -61,9 +63,9 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `325306216f12640d1e0b97a9367a1dc360a53c46`
-- 下一步：P07 四项主审 finding 已全部 RED→GREEN；executor 与主 Agent
-  全回归均 153/153，P06 immutable formal artifact 已由修改后的共享代码
-  重放 PASS。重新核对唯一 lane 后启动一次 HEDGE `B>0` 500 条正式 attempt
+- 下一步：持续监控唯一 P07 HEDGE `B>0` 500 条正式窗口；不改参数、不并发、
+  不 resume/stitch/restart。终态后执行 live validator、定向 cleanup、
+  contexts-none、8×10 keepalive 恢复与 immutable archive
 
 ## 当前阶段
 
@@ -76,7 +78,7 @@
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
 | P06 | `PASS` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS | — |
-| P07 | `IN_PROGRESS` | static 主审 153/153；marker scrub、retry 501、snapshot identity、物理/lifecycle/budget counter 门禁均 PASS；P06 真实归档重放 PASS；tooling commit/push `3253062`；lane 仍为 keepalive | 唯一 HEDGE B>0 500 |
+| P07 | `IN_PROGRESS` | static 主审 153/153、tooling `3253062`；唯一 attempt `20260729T084544Z-p07-hedge-formal-r1` 已 TP8 ready、10 warmup 完成，09:06:31Z clear 后 formal 500 active；无 crash marker | formal 500 终态、validation/cleanup/archive |
 | P08 | `NOT_STARTED` | — | P07 门禁 |
 
 ## 固定实验协议
@@ -183,6 +185,7 @@
 | P06 formal tooling | 固定 warmup/500/timing/retry/summary/identity/lifecycle 契约 | `PASS_COMMITTED`：executor 138/138；主 Agent targeted/regression/syntax/contract PASS；真实 r4 spec replay PASS | commit/push `6a74186` |
 | `20260729T062241Z-p06-native-formal-r1` | 唯一 native formal；10 warmup + 单次 timed 500 | `PASS`：500/500 success、0 retry、74594 tokens、2348.31919839s、31.76484698125425 TPS；accepted/proposal 3.644312870052976；TP8/GPU/HEDGE-off/cleanup/archive PASS | immutable HDFS；formal SHA `ecd99525…2607`，archive manifest SHA `f0014a88…eca7` |
 | P07 formal tooling | 在 P06 已验收 lifecycle 上冻结正预算身份、retry-aware 请求边界与 HEDGE runtime counter 门禁 | `PASS_COMMITTED`：executor 与主 Agent均 153/153；syntax/lock/contract/diff PASS；P06 immutable formal artifact 重放 PASS | commit/push `3253062`；`artifacts/hedge-dspark/p07-tooling/` |
+| `20260729T084544Z-p07-hedge-formal-r1` | 唯一 HEDGE `B>0` formal；只切换冻结 HEDGE config | `IN_PROGRESS`：8×10 keepalive preflight 100%；08:47:21Z pause、contexts-none、TP8 target/draft load/JIT/autotune/ready、10 warmup 均 200；09:06:31Z clear 后 formal 500 active，09:08:30Z 为 25/500，无 error/crash marker | worker scratch `/tmp/deepspec-hedge-dspark-20260729T084544Z-p07-hedge-formal-r1`；HDFS 目标尚未发布 |
 
 ## P04 integration smoke 当前状态
 

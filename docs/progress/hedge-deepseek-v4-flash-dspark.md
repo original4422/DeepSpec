@@ -3,7 +3,7 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T08:40:25Z`（P07 tooling 关键 Git 节点）
+- 快照时间：`2026-07-29T09:08:30Z`（09:10:25Z checkpoint 前心跳）
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
   `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
 - elapsed / deadline：持续执行 / `NONE`
@@ -22,15 +22,16 @@
   - P06：formal tooling 138/138 与主 Agent复验 PASS，commit/push `6a74186`；
     唯一 native formal 500/500、0 retry、74594 tokens、31.76484698125425 TPS；
     主 Agent独立重算与 TP8/GPU/HEDGE-off/cleanup/archive 全 PASS
-  - P07：主审四项 finding 均已 RED→GREEN；executor 与主 Agent全回归
-    153/153，syntax/lock/contract/diff 均 PASS；修改后的共享代码对 P06
-    immutable formal artifact 重放 PASS；tooling commit/push `3253062`；
-    尚未登录 worker/live
+  - P07：tooling commit/push `3253062`；唯一 attempt
+    `20260729T084544Z-p07-hedge-formal-r1` 已通过 8×H20/keepalive/no-clobber
+    preflight，TP0–TP7 load/JIT/autotune 与 target/draft ready；10 条 warmup
+    均 200，`09:06:31Z` clear 后 formal 500 已 active；无 crash marker
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：P06 server/sampler 已定向退出、contexts none；
-  dedicated keepalive `107326/107326/107326` 已恢复，8×10 全卡 100%
-- 最新 attempt：`20260729T062241Z-p06-native-formal-r1`；preflight/ready PASS，
-  10 warmup 排除，500/500 与完整生命周期主审 PASS
+- keepalive / server / PID：preflight dedicated keepalive
+  `107326/107326/107326` 8×10 全卡 100%；08:47:21Z 按协议暂停，08:47:23Z
+  contexts-none；登记 TP8 server PID/PGID/SID `109060` 当前 active
+- 最新 attempt：`20260729T084544Z-p07-hedge-formal-r1`；preflight/ready PASS，
+  10 warmup 排除，formal 500 自 `09:06:31Z` 起 active
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
@@ -43,11 +44,10 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`；P07 tooling `3253062`
-- 首要事项：重新核对 worker `4106666`、既有进程与 8×10 keepalive 后，
-  启动唯一 HEDGE B>0 formal executor
-- 下一检查点：`2026-07-29T09:10:25Z`
-- 下一 30 分钟动作：完成 P07 live preflight，紧邻暂停 keepalive、证明八卡
-  context 退出并启动 TP=8 服务；若模型加载跨检查点则持续报告 launcher 状态
+- 首要事项：持续监控唯一 HEDGE B>0 formal 500；不得改参数、并发、拼接或重启
+- 下一检查点：`2026-07-29T09:38:30Z`
+- 下一 30 分钟动作：按约每 100 条记录 formal 进度与错误状态；若 500 条达到
+  终态，立即执行 validator、定向 cleanup、contexts-none、keepalive 与 archive
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -785,3 +785,17 @@
   server-log 证据均继续 PASS。
 - tooling 已 commit/push 为 `3253062`，工作区 clean；未登录 worker、未暂停
   keepalive、未启动 P07 live。下一步只执行唯一 HEDGE `B>0` formal attempt。
+
+### 2026-07-29T09:08:30Z — P07 formal 运行心跳
+
+- 唯一 attempt `20260729T084544Z-p07-hedge-formal-r1`。preflight 重新确认
+  worker `4106666` 为 8×H20，远端只有 dedicated keepalive；PID/PGID/SID
+  `107326` 的 8×10 每卡 mean/min/max 均 100%，NVMe/HDFS no-clobber PASS。
+- 08:47:21Z 暂停 keepalive，08:47:23Z contexts-none，08:47:24Z 启动并登记
+  TP8 server `109060`。48/48 target shards、FP8/MHC、MXFP4 expert prep、
+  FlashInfer autotune、DeepGEMM JIT 与 draft load 均完成；TP0–TP7 和固定
+  DSPARK/block5/`flashinfer_mxfp4` identity 成立。
+- target/draft ready 后 10 条 warmup 均 200；09:06:31Z
+  `/set_internal_state` clear 完成并进入唯一 formal 500。心跳时 25/500
+  已顺序终态、无 request error，也无 traceback/CUDA/NCCL/worker crash。
+  keepalive 保持暂停，仅登记模型 contexts active，尚未 cleanup/archive。
