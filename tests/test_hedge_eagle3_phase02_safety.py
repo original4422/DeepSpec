@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -183,7 +184,12 @@ class Phase02SafetyTests(unittest.TestCase):
             "--speculative-draft-attention-backend",
             target_command,
         )
-        resolved = resolver.resolve("native", "offline-draft-backend")
+        with patch.object(
+            resolver,
+            "source_identity",
+            return_value=self._reviewed_native_source_identity(),
+        ):
+            resolved = resolver.resolve("native", "offline-draft-backend")
         self.assertEqual(
             resolved["attention_backends"],
             {

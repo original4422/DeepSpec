@@ -1,0 +1,86 @@
+{
+  "all_unit_tests_total": {
+    "failed": 0,
+    "passed": 103
+  },
+  "clean_replay": {
+    "candidate_patch_sha256": "13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945",
+    "git_apply_check": "PASS",
+    "git_diff_check": "PASS",
+    "sglang_aux_passed": 11,
+    "sglang_hedge_passed": 21,
+    "status": "PASS"
+  },
+  "deepspec_staged_diff_check": {
+    "excluded_diff_check": "PASS",
+    "excluded_path": "patches/hedge_eagle3_phase03/sglang-final-candidate.patch",
+    "full_check": "EXPECTED_20_MECHANICAL_WARNINGS",
+    "mechanical_warning_count": 20,
+    "status": "PASS_WITH_CANONICAL_PATCH_EXCLUDED"
+  },
+  "deepspec_total": {
+    "failed": 0,
+    "passed": 71
+  },
+  "finalized_at_utc": "2026-07-29T03:18:56.212185Z",
+  "finalizer_state_machine": {
+    "different_sha_pre_write_rejection": "PASS",
+    "pending_to_frozen": "PASS",
+    "same_sha_byte_idempotence": "PASS"
+  },
+  "gpu_operations_performed": false,
+  "keepalive_modified": false,
+  "main_agent_independent_replay": {
+    "candidate_patch_sha256_matched": true,
+    "git_apply_check": "PASS",
+    "git_diff_check": "PASS",
+    "git_diff_check_scope": "SGLang applied source tree",
+    "injection_aggregate_matched": true,
+    "sglang_aux_passed": 11,
+    "sglang_hedge_passed": 21,
+    "status": "PASS",
+    "uv_lock_sha256_matched": true
+  },
+  "mock_runner": {
+    "formal": 500,
+    "formal_terminal_success": 500,
+    "generation_retries": 5,
+    "maximum_in_flight": 1,
+    "status": "PASS",
+    "warmup": 10
+  },
+  "schema_version": 1,
+  "sglang_final_sha": "90c8558721de37ed0dc12802f29253ba52b873bc",
+  "sglang_final_sha_status": "FROZEN",
+  "status": "PASS",
+  "suites": {
+    "deepspec_phase01b_tools": {
+      "failed": 0,
+      "passed": 6
+    },
+    "deepspec_phase01c_contract": {
+      "failed": 0,
+      "passed": 3
+    },
+    "deepspec_phase02_safety": {
+      "failed": 0,
+      "passed": 14
+    },
+    "deepspec_phase03": {
+      "failed": 0,
+      "passed": 15
+    },
+    "pure_core": {
+      "failed": 0,
+      "passed": 33
+    },
+    "sglang_aux_current_source": {
+      "failed": 0,
+      "passed": 11
+    },
+    "sglang_hedge_current_source": {
+      "failed": 0,
+      "passed": 21
+    }
+  }
+}

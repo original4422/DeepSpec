@@ -83,14 +83,32 @@ def build_resolved_config(
             "gate": float(gate),
             "max_relaxed_mismatches_per_block": 1,
             "value_scheme": "normalized_suffix",
+            "block_size": 3,
+        }
+        hedge_mode = "enabled"
+        hedge_config = {
+            "B": float(gate),
+            "g": float(gate),
+            "m": 1,
+            "value_scheme": "normalized_suffix",
+            "block_size": 3,
         }
     elif mode == "B0":
         hedge = {
             "enabled": True,
             "risk_budget": 0.0,
-            "gate": None,
+            "gate": 0.0,
             "max_relaxed_mismatches_per_block": 1,
             "value_scheme": "normalized_suffix",
+            "block_size": 3,
+        }
+        hedge_mode = "b0"
+        hedge_config = {
+            "B": 0.0,
+            "g": 0.0,
+            "m": 1,
+            "value_scheme": "normalized_suffix",
+            "block_size": 3,
         }
     else:
         hedge = {
@@ -99,7 +117,10 @@ def build_resolved_config(
             "gate": None,
             "max_relaxed_mismatches_per_block": 1,
             "value_scheme": "normalized_suffix",
+            "block_size": 3,
         }
+        hedge_mode = "disabled"
+        hedge_config = None
     config: dict[str, Any] = {
         "schema_version": 1,
         "mode": mode,
@@ -117,7 +138,7 @@ def build_resolved_config(
             "sglang_base_commit": SGLANG_BASE,
             "sglang_source_root": SOURCE_ROOT,
             "venv": VENV,
-            "final_commit": "TO_BE_FROZEN_AFTER_PHASE_03",
+            "final_commit": "90c8558721de37ed0dc12802f29253ba52b873bc",
         },
         "models": {
             "target": {
@@ -140,6 +161,7 @@ def build_resolved_config(
             "moe_runner_backend": "flashinfer_mxfp4",
             "context_length": 4096,
             "max_running_requests": 1,
+            "mem_fraction_static": 0.60,
             "disable_cuda_graph": True,
             "disable_prefill_cuda_graph": True,
             "disable_draft_extend_cuda_graph": True,
@@ -149,6 +171,20 @@ def build_resolved_config(
         "environment": {
             "SGLANG_DSV4_FP4_EXPERTS": "1",
             "SGLANG_DSV4_FP4_DEQUANT": None,
+            "SGLANG_DISABLE_DRAFT_EXTEND_CUDA_GRAPH": "1",
+            "SGLANG_RAGGED_VERIFY_MODE": "static",
+            "SGLANG_EAGLE3_V4_AUX_TRACE": "1",
+            "SGLANG_EAGLE3_HEDGE_MODE": hedge_mode,
+            "SGLANG_EAGLE3_HEDGE_CONFIG_JSON": (
+                None
+                if hedge_config is None
+                else json.dumps(
+                    hedge_config,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                )
+            ),
+            "SGLANG_EAGLE3_HEDGE_TRACE_CAPACITY": "1024",
             "compat_root": COMPAT_ROOT,
             "cuda_home": (
                 f"{VENV}/lib/python3.11/site-packages/nvidia/cu13"
@@ -170,6 +206,12 @@ def build_resolved_config(
             "max_attempts_total": 3,
             "warmup_count": 10,
             "formal_count": 500,
+            "require_proposal_trace": True,
+            "trace_control": {
+                "clear": "/set_internal_state",
+                "drain": "/server_info",
+                "dp_size": 1,
+            },
         },
         "hedge": hedge,
     }
@@ -470,10 +512,327 @@ def _response_fields(
     return message["content"], token_ids, completion_tokens
 
 
+def _response_meta_request_id(response: Mapping[str, Any]) -> str:
+    choices = response.get("choices")
+    if not isinstance(choices, list) or len(choices) != 1:
+        raise TransportFailure("response does not have exactly one choice")
+    choice = choices[0]
+    meta_info = choice.get("meta_info") if isinstance(choice, dict) else None
+    request_id = (
+        meta_info.get("id") if isinstance(meta_info, dict) else None
+    )
+    if not isinstance(request_id, str) or not request_id:
+        raise TransportFailure("response meta_info.id is missing")
+    envelope_id = response.get("id")
+    if envelope_id != request_id:
+        raise TransportFailure(
+            "response id differs from response meta_info.id"
+        )
+    return request_id
+
+
+def _finite_number(value: object, *, field: str) -> float:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not math.isfinite(float(value))
+    ):
+        raise TransportFailure(f"Eagle3 trace {field} is not finite")
+    return float(value)
+
+
+def extract_eagle3_proposal_trace(
+    payload: Mapping[str, Any],
+    *,
+    expected_sample_id: str,
+    expected_mode: str | None = None,
+) -> dict[str, Any]:
+    """Validate one-DP `/server_info` and select one response's trace."""
+
+    internal_states = payload.get("internal_states")
+    if not isinstance(internal_states, list) or len(internal_states) != 1:
+        raise TransportFailure(
+            "Eagle3 trace requires exactly one DP internal state"
+        )
+    state = internal_states[0]
+    if not isinstance(state, dict):
+        raise TransportFailure("Eagle3 internal state is not an object")
+    envelope = state.get("eagle3_hedge_info_record")
+    if not isinstance(envelope, dict):
+        raise TransportFailure(
+            "server_info lacks eagle3_hedge_info_record"
+        )
+    if envelope.get("schema_version") != 1:
+        raise TransportFailure("Eagle3 trace schema_version is not 1")
+    mode = envelope.get("mode")
+    if mode not in {"disabled", "b0", "enabled"}:
+        raise TransportFailure("Eagle3 trace mode is invalid")
+    if expected_mode is not None and mode != expected_mode:
+        raise TransportFailure(
+            f"Eagle3 trace mode differs: {mode!r} != {expected_mode!r}"
+        )
+    if envelope.get("proposal_width") != 3:
+        raise TransportFailure("Eagle3 trace proposal_width is not 3")
+    if envelope.get("verify_width") != 4:
+        raise TransportFailure("Eagle3 trace verify_width is not 4")
+    if envelope.get("active_request_states") != 0:
+        raise TransportFailure(
+            "Eagle3 trace request state was not cleaned at terminal response"
+        )
+    dropped = envelope.get("trace_rows_dropped")
+    if dropped != 0:
+        raise TransportFailure(
+            f"Eagle3 trace has dropped rows: {dropped!r}"
+        )
+    trace = envelope.get("trace")
+    seen = envelope.get("trace_rows_seen")
+    if (
+        not isinstance(trace, list)
+        or not isinstance(seen, int)
+        or isinstance(seen, bool)
+        or seen != len(trace)
+    ):
+        raise TransportFailure(
+            "Eagle3 trace_rows_seen differs from stored trace"
+        )
+
+    validated: list[dict[str, Any]] = []
+    proposal_ids: list[int] = []
+    for row in trace:
+        if not isinstance(row, dict):
+            raise TransportFailure("Eagle3 proposal trace row is not an object")
+        if row.get("schema_version") != 1 or row.get("mode") != mode:
+            raise TransportFailure(
+                "Eagle3 proposal row schema or mode differs"
+            )
+        proposal_id = row.get("proposal_id")
+        if (
+            not isinstance(proposal_id, int)
+            or isinstance(proposal_id, bool)
+            or proposal_id < 0
+        ):
+            raise TransportFailure("Eagle3 proposal_id is invalid")
+        proposal_ids.append(proposal_id)
+        sample_id = row.get("sample_id")
+        if not isinstance(sample_id, str) or not sample_id:
+            raise TransportFailure("Eagle3 proposal sample_id is invalid")
+        for field in ("draft_token_ids", "target_top_token_ids"):
+            values = row.get(field)
+            if (
+                not isinstance(values, list)
+                or len(values) != 3
+                or not all(
+                    isinstance(value, int) and not isinstance(value, bool)
+                    for value in values
+                )
+            ):
+                raise TransportFailure(
+                    f"Eagle3 proposal {field} does not have width 3"
+                )
+        for field in (
+            "target_top_logits",
+            "target_draft_token_logits",
+            "regrets",
+            "values",
+        ):
+            values = row.get(field)
+            if not isinstance(values, list) or len(values) != 3:
+                raise TransportFailure(
+                    f"Eagle3 proposal {field} does not have width 3"
+                )
+            for value in values:
+                _finite_number(value, field=field)
+        strict = row.get("strict_accepted_drafts")
+        accepted = row.get("hedge_accepted_drafts")
+        relaxed = row.get("relaxed_mismatches")
+        if (
+            not isinstance(strict, int)
+            or isinstance(strict, bool)
+            or not 0 <= strict <= 3
+            or not isinstance(accepted, int)
+            or isinstance(accepted, bool)
+            or not 0 <= accepted <= 3
+            or row.get("commit_length") != accepted + 1
+            or relaxed not in (0, 1)
+        ):
+            raise TransportFailure(
+                "Eagle3 proposal acceptance fields are inconsistent"
+            )
+        barrier = row.get("first_strict_rejection")
+        if strict == 3:
+            if barrier is not None:
+                raise TransportFailure(
+                    "all-accepted Eagle3 proposal has a strict barrier"
+                )
+        else:
+            if not isinstance(barrier, dict):
+                raise TransportFailure(
+                    "rejected Eagle3 proposal lacks a strict barrier"
+                )
+            if barrier.get("position") != strict:
+                raise TransportFailure(
+                    "Eagle3 strict barrier position differs"
+                )
+            regret = _finite_number(
+                barrier.get("regret"),
+                field="barrier regret",
+            )
+            value = _finite_number(
+                barrier.get("value"),
+                field="barrier value",
+            )
+            ratio = _finite_number(
+                barrier.get("regret_over_value"),
+                field="barrier regret_over_value",
+            )
+            if regret < 0 or value <= 0 or not math.isclose(
+                ratio,
+                regret / value,
+                rel_tol=1e-9,
+                abs_tol=1e-9,
+            ):
+                raise TransportFailure(
+                    "Eagle3 strict barrier values are inconsistent"
+                )
+        validated.append(dict(row))
+    if proposal_ids != list(range(len(proposal_ids))):
+        raise TransportFailure(
+            "Eagle3 proposal IDs are not a contiguous drained sequence"
+        )
+
+    selected = [
+        row for row in validated if row["sample_id"] == expected_sample_id
+    ]
+    foreign = [
+        row for row in validated if row["sample_id"] != expected_sample_id
+    ]
+    if not selected:
+        foreign_ids = sorted({row["sample_id"] for row in foreign})
+        raise TransportFailure(
+            "Eagle3 trace lacks expected sample_id "
+            f"{expected_sample_id!r}; foreign={foreign_ids!r}"
+        )
+    barriers = []
+    for row in selected:
+        barrier = row["first_strict_rejection"]
+        if barrier is not None:
+            barriers.append(
+                {
+                    "sample_id": expected_sample_id,
+                    "proposal_id": row["proposal_id"],
+                    **barrier,
+                }
+            )
+    return {
+        "schema_version": 1,
+        "mode": mode,
+        "sample_id": expected_sample_id,
+        "proposal_trace": selected,
+        "strict_rejection_barriers": barriers,
+        "foreign_trace_row_count": len(foreign),
+        "foreign_sample_ids": sorted(
+            {row["sample_id"] for row in foreign}
+        ),
+        "trace_rows_seen": seen,
+        "trace_rows_dropped": 0,
+    }
+
+
 Transport = Callable[
     [str, Mapping[str, Any], float],
     dict[str, Any],
 ]
+
+ControlTransport = Callable[
+    [str, str, Mapping[str, Any] | None, float],
+    Any,
+]
+
+
+def urllib_json_control_transport(
+    method: str,
+    url: str,
+    body: Mapping[str, Any] | None,
+    timeout_seconds: float,
+) -> Any:
+    """JSON control transport; unlike generation, POST may return a list."""
+
+    request = urllib.request.Request(
+        url,
+        data=None if body is None else canonical_json_bytes(body),
+        headers={"Content-Type": "application/json"},
+        method=method,
+    )
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(request, timeout=timeout_seconds) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as error:
+        failure_body = error.read().decode("utf-8", errors="replace")
+        raise TransportFailure(
+            f"HTTP {error.code}",
+            status_code=error.code,
+            response_body=failure_body,
+        ) from error
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        raise TransportFailure(str(error)) from error
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise TransportFailure(
+            "control response is not valid JSON",
+            response_body=raw,
+        ) from error
+
+
+class Eagle3TraceControl:
+    """Clear and drain the lane-local Eagle3 trace through control endpoints."""
+
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        expected_mode: str,
+        timeout_seconds: float = 30.0,
+        transport: ControlTransport = urllib_json_control_transport,
+    ) -> None:
+        if expected_mode not in {"disabled", "b0", "enabled"}:
+            raise ValueError("invalid expected Eagle3 HEDGE mode")
+        self.base_url = base_url.rstrip("/")
+        self.expected_mode = expected_mode
+        self.timeout_seconds = timeout_seconds
+        self.transport = transport
+
+    def clear(self) -> None:
+        response = self.transport(
+            "POST",
+            f"{self.base_url}/set_internal_state",
+            {
+                "server_args": {
+                    "eagle3_hedge_clear_info_records": True,
+                }
+            },
+            self.timeout_seconds,
+        )
+        if response != [True]:
+            raise TransportFailure(
+                "Eagle3 trace clear did not return fixed DP=1 [true]"
+            )
+
+    def drain(self, *, expected_sample_id: str) -> dict[str, Any]:
+        response = self.transport(
+            "GET",
+            f"{self.base_url}/server_info",
+            None,
+            self.timeout_seconds,
+        )
+        if not isinstance(response, dict):
+            raise TransportFailure("server_info response is not an object")
+        return extract_eagle3_proposal_trace(
+            response,
+            expected_sample_id=expected_sample_id,
+            expected_mode=self.expected_mode,
+        )
 
 
 class SequentialOpenAIRunner:
@@ -488,6 +847,8 @@ class SequentialOpenAIRunner:
         timeout_seconds: float = 120.0,
         retry_delays_seconds: Sequence[float] = (1.0, 2.0),
         transport: Transport = urllib_json_transport,
+        trace_control: Any | None = None,
+        require_proposal_trace: bool = False,
         monotonic: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
@@ -495,12 +856,18 @@ class SequentialOpenAIRunner:
             raise ValueError("experiment protocol requires 3 total attempts")
         if len(retry_delays_seconds) != max_attempts - 1:
             raise ValueError("retry delay count differs from max attempts")
+        if require_proposal_trace and trace_control is None:
+            raise ValueError(
+                "required proposal trace needs an Eagle3 trace control"
+            )
         self.endpoint = endpoint
         self.model = model
         self.max_attempts = max_attempts
         self.timeout_seconds = timeout_seconds
         self.retry_delays_seconds = tuple(retry_delays_seconds)
         self.transport = transport
+        self.trace_control = trace_control
+        self.require_proposal_trace = require_proposal_trace
         self.monotonic = monotonic
         self.sleep = sleep
         self._in_flight = 0
@@ -521,6 +888,49 @@ class SequentialOpenAIRunner:
             **GENERATION,
         }
 
+    def _retry_trace_operation(
+        self,
+        *,
+        operation_name: str,
+        operation: Callable[[], Any],
+        model_attempt: int,
+    ) -> tuple[Any | None, list[dict[str, Any]], str | None]:
+        attempts = []
+        terminal_error = None
+        for attempt_index in range(self.max_attempts):
+            started = self.monotonic()
+            try:
+                value = operation()
+                attempts.append(
+                    {
+                        "operation": operation_name,
+                        "model_attempt": model_attempt,
+                        "attempt": attempt_index + 1,
+                        "status": "success",
+                        "monotonic_started": started,
+                        "monotonic_finished": self.monotonic(),
+                    }
+                )
+                return value, attempts, None
+            except TransportFailure as error:
+                terminal_error = str(error)
+                attempts.append(
+                    {
+                        "operation": operation_name,
+                        "model_attempt": model_attempt,
+                        "attempt": attempt_index + 1,
+                        "status": "failure",
+                        "monotonic_started": started,
+                        "monotonic_finished": self.monotonic(),
+                        "error": str(error),
+                        "status_code": error.status_code,
+                        "response_body": error.response_body,
+                    }
+                )
+            if attempt_index + 1 < self.max_attempts:
+                self.sleep(self.retry_delays_seconds[attempt_index])
+        return None, attempts, terminal_error
+
     def _execute(
         self,
         sample: Mapping[str, Any],
@@ -538,8 +948,27 @@ class SequentialOpenAIRunner:
         content: str | None = None
         token_ids: list[int] = []
         completion_tokens = 0
+        proposal_trace: list[dict[str, Any]] = []
+        strict_rejection_barriers: list[dict[str, Any]] = []
+        trace_metadata: dict[str, Any] | None = None
+        trace_clear_attempts: list[dict[str, Any]] = []
+        trace_drain_attempts: list[dict[str, Any]] = []
+        first_request_started: float | None = None
+        request_terminal_monotonic: float | None = None
         for attempt_index in range(self.max_attempts):
+            if self.trace_control is not None:
+                _, clear_attempts, clear_error = self._retry_trace_operation(
+                    operation_name="clear",
+                    operation=self.trace_control.clear,
+                    model_attempt=attempt_index + 1,
+                )
+                trace_clear_attempts.extend(clear_attempts)
+                if clear_error is not None:
+                    terminal_error = f"trace clear failed: {clear_error}"
+                    break
             started = self.monotonic()
+            if first_request_started is None:
+                first_request_started = started
             self._in_flight += 1
             self.maximum_in_flight = max(
                 self.maximum_in_flight,
@@ -554,26 +983,62 @@ class SequentialOpenAIRunner:
                 content, token_ids, completion_tokens = _response_fields(
                     response
                 )
+                request_id = (
+                    _response_meta_request_id(response)
+                    if self.trace_control is not None
+                    else None
+                )
+                request_terminal_monotonic = self.monotonic()
                 terminal_response = response
                 attempts.append(
                     {
                         "attempt": attempt_index + 1,
                         "status": "success",
                         "monotonic_started": started,
-                        "monotonic_finished": self.monotonic(),
+                        "monotonic_finished": request_terminal_monotonic,
                         "response": response,
                     }
                 )
+                if self.trace_control is not None:
+                    (
+                        trace_metadata,
+                        drain_attempts,
+                        drain_error,
+                    ) = self._retry_trace_operation(
+                        operation_name="drain",
+                        operation=lambda: self.trace_control.drain(
+                            expected_sample_id=request_id
+                        ),
+                        model_attempt=attempt_index + 1,
+                    )
+                    trace_drain_attempts.extend(drain_attempts)
+                    if drain_error is not None:
+                        terminal_error = (
+                            f"trace drain failed: {drain_error}"
+                        )
+                        break
+                    if not isinstance(trace_metadata, dict):
+                        terminal_error = (
+                            "trace drain failed: result is not an object"
+                        )
+                        break
+                    proposal_trace = list(
+                        trace_metadata["proposal_trace"]
+                    )
+                    strict_rejection_barriers = list(
+                        trace_metadata["strict_rejection_barriers"]
+                    )
                 terminal_error = None
                 break
             except TransportFailure as error:
                 terminal_error = str(error)
+                request_terminal_monotonic = self.monotonic()
                 attempts.append(
                     {
                         "attempt": attempt_index + 1,
                         "status": "failure",
                         "monotonic_started": started,
-                        "monotonic_finished": self.monotonic(),
+                        "monotonic_finished": request_terminal_monotonic,
                         "error": str(error),
                         "status_code": error.status_code,
                         "response_body": error.response_body,
@@ -594,7 +1059,17 @@ class SequentialOpenAIRunner:
                 "normalized": None,
             }
         )
-        success = terminal_response is not None
+        generation_success = terminal_response is not None
+        trace_complete = (
+            trace_metadata is not None
+            if self.trace_control is not None
+            else None
+        )
+        success = generation_success and (
+            not self.require_proposal_trace or trace_complete is True
+        )
+        all_trace_attempts = trace_clear_attempts + trace_drain_attempts
+        record_terminal_monotonic = self.monotonic()
         return {
             "schema_version": 1,
             "phase": phase,
@@ -607,12 +1082,32 @@ class SequentialOpenAIRunner:
             "attempts": attempts,
             "attempt_count": len(attempts),
             "retry_count": max(0, len(attempts) - 1),
+            "generation_retry_count": max(0, len(attempts) - 1),
+            "trace_retry_count": sum(
+                item["attempt"] > 1 for item in all_trace_attempts
+            ),
+            "trace_clear_attempts": trace_clear_attempts,
+            "trace_drain_attempts": trace_drain_attempts,
+            "generation_status": (
+                "success" if generation_success else "failure"
+            ),
+            "trace_status": (
+                "not_requested"
+                if trace_complete is None
+                else ("success" if trace_complete else "failure")
+            ),
             "terminal_status": "success" if success else "failure",
             "terminal_error": terminal_error,
+            "first_request_monotonic_started": first_request_started,
+            "request_terminal_monotonic": request_terminal_monotonic,
+            "record_terminal_monotonic": record_terminal_monotonic,
             "full_response": terminal_response,
             "response_text": content,
             "output_token_ids": token_ids,
             "completion_tokens": completion_tokens,
+            "proposal_trace": proposal_trace,
+            "strict_rejection_barriers": strict_rejection_barriers,
+            "trace_metadata": trace_metadata,
             "reference_answer": reference,
             "model_answer": model_answer,
             "answer_match": (
@@ -620,7 +1115,7 @@ class SequentialOpenAIRunner:
                     reference.get("normalized"),
                     model_answer.get("normalized"),
                 )
-                if success
+                if generation_success
                 else False
             ),
         }
@@ -646,7 +1141,6 @@ class SequentialOpenAIRunner:
             )
             for index in range(warmup_count)
         ]
-        formal_started = self.monotonic()
         formal_records = [
             self._execute(
                 sample,
@@ -656,7 +1150,6 @@ class SequentialOpenAIRunner:
             )
             for index, sample in enumerate(formal)
         ]
-        formal_finished = self.monotonic()
         if self._in_flight != 0 or self.maximum_in_flight != 1:
             raise RuntimeError("runner sequentiality invariant failed")
         if any(
@@ -664,6 +1157,9 @@ class SequentialOpenAIRunner:
             for record in formal_records
         ):
             raise RuntimeError("formal request did not reach terminal state")
+        formal_started, formal_finished = formal_timing_bounds(
+            formal_records
+        )
         result = {
             "schema_version": 1,
             "endpoint": self.endpoint,
@@ -681,6 +1177,29 @@ class SequentialOpenAIRunner:
         return result
 
 
+def formal_timing_bounds(
+    records: Sequence[Mapping[str, Any]],
+) -> tuple[float, float]:
+    if not records:
+        raise RuntimeError("formal run has no records")
+    started = records[0].get("first_request_monotonic_started")
+    if (
+        not isinstance(started, (int, float))
+        or isinstance(started, bool)
+        or not math.isfinite(float(started))
+    ):
+        raise RuntimeError("first formal generation request was never issued")
+    finished = records[-1].get("record_terminal_monotonic")
+    if (
+        not isinstance(finished, (int, float))
+        or isinstance(finished, bool)
+        or not math.isfinite(float(finished))
+        or float(finished) < float(started)
+    ):
+        raise RuntimeError("last formal request lacks a valid terminal time")
+    return float(started), float(finished)
+
+
 def summarize_run(run: Mapping[str, Any]) -> dict[str, Any]:
     formal = run.get("formal")
     if not isinstance(formal, list):
@@ -690,7 +1209,33 @@ def summarize_run(run: Mapping[str, Any]) -> dict[str, Any]:
         record.get("terminal_status") == "success" for record in formal
     )
     failures = terminal - successes
+    generation_successes = sum(
+        record.get(
+            "generation_status",
+            (
+                "success"
+                if record.get("terminal_status") == "success"
+                else "failure"
+            ),
+        )
+        == "success"
+        for record in formal
+    )
+    generation_failures = terminal - generation_successes
+    trace_successes = sum(
+        record.get("trace_status") == "success" for record in formal
+    )
+    trace_failures = sum(
+        record.get("trace_status") == "failure" for record in formal
+    )
+    trace_not_requested = sum(
+        record.get("trace_status", "not_requested") == "not_requested"
+        for record in formal
+    )
     retries = sum(int(record.get("retry_count", 0)) for record in formal)
+    trace_retries = sum(
+        int(record.get("trace_retry_count", 0)) for record in formal
+    )
     parse_failures = sum(
         record.get("model_answer", {}).get("status") == "parse_failure"
         for record in formal
@@ -705,7 +1250,14 @@ def summarize_run(run: Mapping[str, Any]) -> dict[str, Any]:
         "formal_terminal": terminal,
         "successes": successes,
         "failures": failures,
+        "generation_successes": generation_successes,
+        "generation_failures": generation_failures,
+        "trace_successes": trace_successes,
+        "trace_failures": trace_failures,
+        "trace_not_requested": trace_not_requested,
         "retries": retries,
+        "generation_retries": retries,
+        "trace_retries": trace_retries,
         "parse_failures": parse_failures,
         "matches": matches,
         "match_rate": matches / terminal if terminal else None,

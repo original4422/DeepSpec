@@ -1,0 +1,86 @@
+{
+  "clean_replay": {
+    "base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "git_apply_check": "PASS",
+    "git_diff_check": "PASS",
+    "log": "clean-replay-tests.log",
+    "log_sha256": "33f9b26a838ad7e23feec850e81b482d905373bd096ad7dde091a57869fcbf82",
+    "patch_sha256_after_replay": "13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945",
+    "python": "/home/tiger/venvs/deepspec-hedge-v4-eagle3/bin/python",
+    "source_tests": [
+      "test/registered/unit/models/test_deepseek_v4_eagle3_aux.py",
+      "test/registered/unit/speculative/test_eagle3_hedge.py"
+    ],
+    "status": "PASS"
+  },
+  "deepspec_head_before_phase03_commit": "41d1c28028204cab107e4aad117bc734df36658d",
+  "deepspec_staged_diff_check": {
+    "excluded_diff_check": "PASS",
+    "excluded_path": "patches/hedge_eagle3_phase03/sglang-final-candidate.patch",
+    "mechanical_warning_count": 20,
+    "mechanical_warning_reason": "The canonical unified diff contains blank context-marker lines consisting of one space. As an outer newly added DeepSpec file, those immutable bytes render as '+ ' and trigger git diff --check trailing-whitespace warnings.",
+    "status": "PASS_WITH_CANONICAL_PATCH_EXCLUDED"
+  },
+  "dspark_pure_core_publish_sha": "4d96f44065c07030ede67484a262006ec149626a",
+  "eagle3_pure_core_import_sha": "4cefd0a36ea254e4c14a83f35dc8db15b37a3384",
+  "finalized_at_utc": "2026-07-29T03:18:56.212185Z",
+  "hedge_source_sha": "9fb903d676254ea5f5d171051fb15c54f331111c",
+  "injection": {
+    "aggregate_sha256": "53ce6f3a4bb8d2ac6cc6a531f565455e15a7021fc2cce0a446ef3c1e7352a815",
+    "file_count": 4,
+    "files": [
+      {
+        "bytes": 415,
+        "path": "python/sglang/srt/speculative/hedge_spec/__init__.py",
+        "sha256": "e51bba48b8a67895270b3285775dfc3741421eb4a0c3cdf566a1cf0e9360daca"
+      },
+      {
+        "bytes": 6413,
+        "path": "python/sglang/srt/speculative/hedge_spec/budget.py",
+        "sha256": "c573fe2381416c70511f97968fe14fa9ef1e16d08c805eb55982efc0d23a5ce8"
+      },
+      {
+        "bytes": 5688,
+        "path": "python/sglang/srt/speculative/hedge_spec/config.py",
+        "sha256": "03079c13b327b1c31374421060d07217401dc3049c7b8fb5fb6c68d30b6db176"
+      },
+      {
+        "bytes": 5278,
+        "path": "python/sglang/srt/speculative/hedge_spec/torch_rule.py",
+        "sha256": "92bb84a3bf3f03fd127636c5d5ef6b7bb9e22d4198cc57dac320606ae1256c72"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "sglang_base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "sglang_candidate": {
+    "changed_file_count": 13,
+    "changed_files": [
+      "python/sglang/srt/arg_groups/deepseek_v4_hook.py",
+      "python/sglang/srt/managers/scheduler.py",
+      "python/sglang/srt/models/deepseek_v4.py",
+      "python/sglang/srt/speculative/eagle3_hedge.py",
+      "python/sglang/srt/speculative/eagle_utils.py",
+      "python/sglang/srt/speculative/eagle_worker_common.py",
+      "python/sglang/srt/speculative/hedge_spec/__init__.py",
+      "python/sglang/srt/speculative/hedge_spec/budget.py",
+      "python/sglang/srt/speculative/hedge_spec/config.py",
+      "python/sglang/srt/speculative/hedge_spec/torch_rule.py",
+      "python/sglang/srt/speculative/multi_layer_eagle_worker_v2.py",
+      "test/registered/unit/models/test_deepseek_v4_eagle3_aux.py",
+      "test/registered/unit/speculative/test_eagle3_hedge.py"
+    ],
+    "patch": "sglang-final-candidate.patch",
+    "patch_bytes": 125075,
+    "patch_sha256": "13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945"
+  },
+  "sglang_final_sha": "90c8558721de37ed0dc12802f29253ba52b873bc",
+  "sglang_final_sha_status": "FROZEN",
+  "sglang_head_before_final_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "status": "FINAL_CANDIDATE_FROZEN",
+  "uv_lock": {
+    "bytes": 373158,
+    "path": "uv.lock",
+    "sha256": "b4c369d005163398e823c3a5eba939d913098a7242ddf16591c89857be7db946"
+  }
+}
