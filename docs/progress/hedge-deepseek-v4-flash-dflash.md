@@ -3,15 +3,15 @@
 当前标签：`IN_PROGRESS`
 
 - Timebox：`2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；若 B0 未完成，`2026-07-29T05:55:58Z` 停止实现。
-- 已用/剩余：约 `5h11m`；距 9 小时实现停止点约 `3h49m`，距 12 小时硬停止约 `6h49m`。
-- 当前 phase：D3 native TP8 short smoke 的 a03 已把 blocker 推进到 FlashInfer JIT 最终链接；CUDA 13.0 toolkit-view 与 isolated prebuild helper 已落盘，正在完成严格 wrapper/静态验收，尚未远端编译；D0–D2 均已通过主 Agent 验收。
+- 已用/剩余：约 `5h40m`；距 9 小时实现停止点约 `3h20m`，距 12 小时硬停止约 `6h20m`。
+- 当前 phase：D3 native TP8 short smoke 的 CUDA 13.0 toolkit-view 与 isolated FlashInfer prebuild 已通过静态/身份门禁；DFlash `/tmp` cache 正从零编译 `fused_moe_90`，02:35Z 到 `[153/183]`，尚未完成最终链接；D0–D2 均已通过主 Agent 验收。
 - Worker：`4099543`，`g340-cd51-4b00-4d69-9088-7ae6-6253`，8×H20。
 - Keepalive：a03 cleanup 后恢复为 PID/PGID/SID `75280`，10×1 秒门禁逐卡平均利用率均为 100%；下一 GPU attempt 仍仅由 D3 operational executor 按 `pause→context-clear→launch→cleanup→resume/gate` 生命周期控制，主 Agent 不并发登录或改变 lane。
 - Eagle target marker：`READY`；23:04:53Z 发布的 immutable marker、provider commit/OID、manifest SHA、formal entity、46-shard index、config/tokenizer、73 files/159,630,041,626 bytes 与零 symlink/hardlink 已由主 Agent 只读复核 PASS。
 - Draft：`READY`；primary D1A attempt `dflash-d1a-primary-20260728T213507Z` 的同一 curl second pass 自然完成，6 files / 3,607,606,957 bytes 经 NVMe/HDFS 独立实体核查与原子发布 PASS；`.complete` SHA `f26d5899…338b`、pointer SHA `d2b43994…1add`。首次约 3.40 GB 后的 reset 已归因为 `curl-internal-retry-restarts-from-invocation-offset-zero`，fallback 未启用。
 - DSpark pure-core pointer：`READY`；主 Agent 已验证 `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/hedge-core.json`、commit `4d96f44065c07030ede67484a262006ec149626a`、parent `77053dd3ea84bb1c8dde7971f5f12759c1375e1f`、HEDGE source `9fb903d676254ea5f5d171051fb15c54f331111c`、10 个逐文件 hash 与 33 tests PASS。按计划尚未 cherry-pick，须等 D3 后由 D4 executor 消费。
 - 当前 blocker：除 `-lcudart/-lnvrtc` 的 toolkit layout 外，a03 后只读发现共享 `~/.cache/flashinfer` 的 `build.ninja` 已被 Eagle3 lane 改写为其 venv identity；按 lane 独立纪律该 cache 禁止写入、复制或复用。已从 installed FlashInfer 0.6.14 源码确认官方隔离入口 `FLASHINFER_WORKSPACE_BASE` 和显式架构 `FLASHINFER_CUDA_ARCH_LIST=9.0`，但独立 cache 的从零 build/link 尚未证明。
-- 下一检查点：完成 repo-hosted prebuild wrapper，保持 keepalive active、`CUDA_VISIBLE_DEVICES=''`，在 DFlash `/tmp` isolated cache 从零生成/编译 `fused_moe_90`；验证 `.so`、readelf/ldd、无共享路径污染、shared-cache before/after 不变及无额外 CUDA context；主 Agent验收后才授权 fresh a04。
+- 下一检查点：isolated prebuild 完成 `[183/183]` 与最终 link，验证 `.so`、readelf/ldd、无共享路径污染、shared-cache before/after 不变及无额外 CUDA context；主 Agent验收后才授权 fresh a04。
 
 | UTC | Phase | 动作 | 结论 | Artifact | 下一步 |
 | --- | --- | --- | --- | --- | --- |
@@ -31,3 +31,4 @@
 | 2026-07-29T01:04:46Z | D3 | 补记 4 小时 checkpoint：验收 a02 sealed attempt，按实际 blocker 仅扩展 DeepSeek-V4 DFLASH allowlist并固定新 source；授权 a03 | a02 在 server args 阶段 FAIL，未进入 rank/load，manifest 27/27、context-clear、cleanup 和 keepalive resume gate 全部 PASS；source `d49a890…`、7/7 tests 与 launcher identity PASS；a03 尚无结果 | HDFS `dflash-d3-native-20260729T004350Z-a02`；`d3/dflash_d3_a02_failure_summary.json`；SGLang `d49a890…` | a03 仅改变 source allowlist fix，继续 fresh preflight→pause-launch→status→cleanup-resume；完成后独立验收 D3 |
 | 2026-07-29T01:36:48Z | D3 | 4.7 小时 checkpoint：独立验收 a03 sealed attempt与双采样；纠正“外部 kill”初判并固定 JIT linker 根因；转入 CPU-only toolkit-view 修复 | a03 FAIL/API NOT_RUN，但 allowlist、TP8/NCCL、46 shards、八卡 contexts/约 22.5 GiB 和 `flashinfer_mxfp4` 均已证明；JIT `[175/183]` 后仅因 `-lcudart/-lnvrtc` link paths 失败，SGLang 自行清理；manifest/cleanup/context-clear/keepalive resume gate PASS | HDFS `dflash-d3-native-20260729T010505Z-a03`；manifest `7e55c7ac…6cd7`；stall probes；server linker log | 不清 cache、不切 backend；先证明同一 CUDA 13.0 payload 的 `/tmp` toolkit view 可完成 ninja/link，再由主 Agent决定 a04 |
 | 2026-07-29T02:05:46Z | D3 | 5.2 小时 checkpoint：识别 shared FlashInfer cache 的 Eagle3 identity 冲突并 fail-closed；核对官方 workspace/arch API；重派 bounded helper 实现 | shared cache 未被本 lane 继续写入且禁止复用；CUDA view、prebuild helper 和 launcher 隔离环境补丁已落盘并通过初步 syntax，严格 wrapper/远端 build 尚未完成，blocker 仍 OPEN；keepalive 最后 gate PID `75280`/八卡100% | `scripts/dflash_d3_cuda_view.sh`、`scripts/dflash_d3_jit_prebuild.py`、updated D3 launcher（均待最终验收） | 完成 wrapper与静态门禁后，从零编译 isolated `fused_moe_90`；只有 link/load identity 全部 PASS 才启动 a04 |
+| 2026-07-29T02:35:00Z | D3 | 5.7 小时 checkpoint：修正 `nvidia-smi` host PID 与 container supervisor PID namespace 证据模型；运行 isolated JIT prebuild a02 | a01 在 JIT 前 fail-fast且无污染；a02 使用 CUDA 13.0 view、空 CVD、独立 DFlash workspace 从零编译到 `[153/183]`，log 7.14 MB、`FAILED:` 0；keepalive PID `75280` 八卡 fresh gate 100%；最终 link 尚未发生，blocker 保持 OPEN | `/tmp/deepspec-hedge-dflash/jit-prebuild/dflash-d3-jit-prebuild-20260729T021412Z-a02`；repo-hosted view/prebuild helpers | 继续同一 a02 到 finalize；独立验收 link、`.so`、path/cache/context postflight 后再决定 a04 |
