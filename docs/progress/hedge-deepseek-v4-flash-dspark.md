@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T06:24:05Z`（570 分钟 checkpoint 提前 36 秒）
+- 快照时间：`2026-07-29T06:54:23Z`（600 分钟 checkpoint 提前 18 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`09:29:24` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`09:59:42` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P05 均已 PASS；P06 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -19,13 +19,13 @@
     TP8/GPU/cleanup/archive 主审 `PASS`；唯一 B0 32/32 完整 token IDs
     等价 PASS；reducer 冻结 `g=B=2.0625,m=1`；commit/push `c244651`
   - P06：formal tooling 138/138 与主 Agent复验 PASS，commit/push `6a74186`；
-    唯一 live executor 正在 preflight，尚未暂停 keepalive或启动模型
+    唯一 live attempt preflight/ready PASS，已进入 timed 500 client
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：B0 登记 server `82443`、sampler `82450` 已定向
-  退出，contexts none；dedicated keepalive 恢复为 `93521/93521/93521`，
-  8×10 全卡 100%
-- 最新 attempt：`20260729T051340Z-p05-b0-calibration-r1`；32/32、0 retry、
-  5183 tokens，live/artifact/shutdown/archive PASS
+- keepalive / server / PID：P06 preflight 时 keepalive `93521` 的 8×10 全卡
+  100%；已按生命周期暂停并启动唯一 launcher `94709`、client `104073`、
+  sampler `94992`，当前 formal client active
+- 最新 attempt：`20260729T062241Z-p06-native-formal-r1`；preflight/ready PASS，
+  10 warmup 已排除，timed 500 正在顺序执行
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
@@ -38,11 +38,11 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`
-- 首要事项：完成唯一 P06 live preflight；PASS 后启动新 native service，执行
-  10 warmup + 单次 500 formal
-- 下一检查点：`2026-07-29T06:54:41Z`
-- 下一 30 分钟动作：P06 preflight、pause/contexts-none、新服务冷加载；若 ready，
-  开始 warmup/formal
+- 首要事项：让唯一 P06 client 连续达到 500 终态；随后验证 summary、formal-only
+  GPU window、HEDGE off、cleanup、keepalive 与 archive
+- 下一检查点：`2026-07-29T07:24:41Z`
+- 下一 30 分钟动作：继续 timed 500；记录每 100 条进展，不重启/拼接；接近
+  500 时完成 validator 与定向收尾
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -690,3 +690,19 @@
   `6a74186`。它不改变 SGLang wheel、engine source 或 P05 config。
 - 唯一 P06 live executor 已派发，当前仍在 read-only preflight；尚未分配
   attempt ID、暂停 keepalive或启动模型，因此没有 500 条结果。
+
+### 2026-07-29T06:54:41Z — 600 分钟 checkpoint
+
+- 实际快照于 `06:54:23Z` 提前 18 秒落盘。唯一 P06 attempt
+  `20260729T062241Z-p06-native-formal-r1` preflight PASS：worker
+  `4106666` exact 8×H20、HEAD ancestry、engine/wheel/checkpoint/P05 freeze、
+  calibration/formal bytes、runner contract、HDFS/NVMe新路径与 port 均成立。
+- 启动前 keepalive `93521/93521/93521` 的 8×10 gate 全卡 100%、每卡
+  815 MiB；process inventory 只有本项目 keepalive。launcher 按生命周期
+  pause、contexts-none 后启动唯一 TP=8 服务。
+- 服务已 ready；10 条 warmup 与 post-warmup clear 位于计时窗外。唯一 client
+  `104073` 已进入 formal 500，launcher `94709` 与 sampler `94992` ownership
+  稳定；`06:54:21Z` 只读 checkpoint 为 123/500。当前没有第二
+  attempt/service、续跑或拼接。
+- 500 尚未全部终态，formal timing/summary/TPS、GPU formal-window、
+  cleanup/archive 仍待完成，因此本 checkpoint 不宣称 P06 PASS。
