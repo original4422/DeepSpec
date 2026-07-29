@@ -264,3 +264,29 @@
 - P04 仍为 `IN_PROGRESS`：静态 tooling 尚待独立 Git 节点 commit/push，随后才可
   分配 native runtime executor。B0、模型参与和所有 P04 GPU attempt 仍为
   `NOT_RUN`。
+
+### 2026-07-29T00:16:20Z — P04 native r2 与 formal-wheel recovery
+
+- P04 静态 tooling 已经主 Agent验收并由
+  `210b2815b8cdb1905a5ad57e8b565319567f8405` commit/push。
+- 唯一 native r2 `20260728T235900Z-p04-native-smoke-r2` 在
+  `preflight_identities` FAIL；HDFS artifact 完整封存且 archive PASS。唯一 false
+  checks 是 formal wheel exists/size/actual SHA：manifest build path 属于开发机
+  `/tmp`，worker 独立 NVMe 中不存在。其余 installed/source/RECORD/toolchain/
+  checkpoint/inventory checks 均 PASS。
+- r2 在 pause keepalive / server start 之前退出；模型、请求、TP ranks 和 sampler
+  均未启动，也没有 signal。keepalive 从未暂停，after gate 为
+  `4730/4730/4730`、8 卡各 10 样本 100%。失败已如实记录并由
+  `4d8d124` commit/push。
+- recovery executor 先建立 exact regression：修复前 1 test FAIL，修复后同一
+  test PASS；valid build + corrupt persistent 仍 FAIL，证明没有 fallback。
+  exact 14,646,094-byte / SHA-256 `f2054c...c7262` wheel 经唯一 HDFS staging
+  no-clobber rename 发布到 hash-named persistent path，source 保留、staging
+  已消失。
+- executor 与主 Agent分别在 worker `4106666` 运行 read-only engine/keepalive
+  probe：两次均 `engine PASS`、`false_checks=[]`，worker-local build path
+  不存在而 persistent size/hash 精确匹配；keepalive 未 pause，8×10 全 100%。
+  完整 22/22 tests 和 shell/JSON/compile/import/contract/diff/debug gates PASS。
+- 单变量 recovery commit/push：
+  `ddc372b5118595d15bfc217e7c3529c0bf86c852`。P04 仍 `IN_PROGRESS`；
+  下一步仅运行新的 native attempt，主验收 PASS 前不运行 B0。

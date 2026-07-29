@@ -3,13 +3,13 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T00:04:22Z`
+- 记录更新时间：`2026-07-29T00:16:20Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：`NOT_RUN`
-- 结论/首要事项：P00–P03 与 P04 静态 tooling 已 PASS/commit/push。首个实际
-  native launcher r2 在 pause keepalive / server start 之前 fail-closed：
-  P03 formal wheel manifest 指向开发机局部 `/tmp`，worker 上该路径不存在。
-  模型、请求和 TP rank 均未启动；当前只修复 wheel 的跨 worker 持久身份。
+- 结论/首要事项：P00–P03 与 P04 静态 tooling 已 PASS/commit/push。native r2
+  的 pre-pause blocker 已完成单变量恢复：exact formal wheel 已原子发布到 HDFS，
+  runtime 强制哈希 persistent entity 且不回退 build `/tmp`。RED→GREEN、22/22
+  tests 与两次 worker read-only probe 均 PASS；下一步是新的 native attempt。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / 模型参与 `NOT_RUN`；keepalive 8/8 gate `PASS`
@@ -35,9 +35,9 @@
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
-  `210b2815b8cdb1905a5ad57e8b565319567f8405`
-- 下一步：把 exact formal wheel 原子发布到 HDFS 并建立 red→green 回归门禁；
-  worker 只读 identity probe PASS 后才运行新的 native attempt
+  `ddc372b5118595d15bfc217e7c3529c0bf86c852`
+- 下一步：重新核对 lane 后运行一个新的 native P04 attempt；其主验收 PASS 前
+  仍不运行 B0
 
 ## 当前阶段
 
@@ -47,7 +47,7 @@
 | P01 | `PASS_COMMITTED` | handoff；13 tests PASS；dataset verify 18/18；独立 indices/hash 全 true；commit/push `77053dd` | — |
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
-| P04 | `IN_PROGRESS` | tooling commit/push `210b281`；native r2 在 pre-pause engine identity FAIL，artifact 完整封存且 keepalive 保持 PASS | 持久 wheel identity 修复、native smoke、主验收、B0 smoke |
+| P04 | `IN_PROGRESS` | tooling `210b281`；r2 pre-pause FAIL 已由 persistent-wheel recovery `ddc372b` 修复，worker probes PASS | native smoke、主验收、B0 smoke |
 | P05–P08 | `NOT_STARTED` | — | P04 门禁 |
 
 ## 固定实验协议
@@ -102,11 +102,13 @@
 | `20260728T230647Z-p04-native-smoke-r1` / B0 | 原计划 live attempts | `NOT_RUN`；首次 executor 被中断/重分配，未 pause keepalive、未动 GPU | 调度记录；无实验 artifact |
 | P04 static tooling | 固定 native/B0 lifecycle、client、sampler、process guard 与 validator | 主 Agent验收 PASS：executor 20/20，主复验 20/20，contract/syntax/whitespace PASS；commit/push `210b281` | `artifacts/hedge-dspark/p04-tooling/tooling_test.log` |
 | `20260728T235900Z-p04-native-smoke-r2` | 首次实际 native launcher；无 decode 配置变化 | FAIL：pre-pause engine identity 发现 worker-local formal wheel 缺失；server/model/request 未启动；archive PASS，keepalive 从未暂停且 after PASS | HDFS attempt root；`engine_identity.json`、`shutdown.json`、`archive_manifest.json` |
+| P04 persistent-wheel recovery | 仅把 formal wheel identity 从 build-local `/tmp` 改为 pinned HDFS entity | PASS：RED→GREEN、22/22、no-fallback、两次 worker engine probe 与 keepalive gate；commit/push `ddc372b` | HDFS hash-named wheel；tooling log；probe IDs `...001241Z...r3`、`...001600Z...main` |
 
 ## P04 integration smoke 当前状态
 
 - 状态：`IN_PROGRESS`；静态 tooling `PASS_COMMITTED`；native r2
-  `FAIL_PRE_PAUSE`；B0 `NOT_RUN`；模型/server 从未启动。
+  `FAIL_PRE_PAUSE_RECOVERED`；recovery `PASS_COMMITTED`；B0 `NOT_RUN`；
+  模型/server 从未启动。
 - 首次 read-only preflight artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260728T230700Z-p04-preflight/worker_inventory.json`。
   worker `4106666` 精确 8×H20、无未知任务、keepalive `4730/4730/4730`、
@@ -144,6 +146,21 @@
   `archive_manifest.status=PASS`；shutdown overall FAIL 只反映 main rc=1 与进程
   从未启动。keepalive 从未暂停，after gate 为 PID/PGID/SID
   `4730/4730/4730`、8 卡各 10 样本 100%。
+- recovery 只改变 formal wheel 的存储身份。P03 build path 保留为 provenance；
+  新 persistent entity：
+  `/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262/sglang-0.5.16-cp311-cp311-linux_x86_64.whl`。
+  source、staging、final 均为 14,646,094 bytes / SHA-256
+  `f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262`；
+  hash-named staging 经 no-clobber directory rename 发布后已不存在，source 保留。
+- 最小 regression 在修复前 1 test FAIL，修复后同一命令 PASS；另有
+  valid build + corrupt persistent fixture，确认绝不 fallback。完整 22/22 tests、
+  shell/JSON/compile/import/contract/diff/debug gates 与主 Agent独立 22/22 均 PASS。
+- executor probe `20260729T001241Z-p04-engine-probe-r3` 与主 Agent probe
+  `20260729T001600Z-p04-engine-probe-main` 均在 worker `4106666` 得到
+  `engine status=PASS`、`false_checks=[]`、`build_path_exists=false`，并实际读取
+  persistent size/hash；两次均未 pause/model，keepalive 8×10 全 100%。
+  recovery commit/push：
+  `ddc372b5118595d15bfc217e7c3529c0bf86c852`。
 
 ## P03 integration 当前证据
 
@@ -212,6 +229,8 @@
   参与证据。
 - native r2 在 engine identity preflight 退出；keepalive 未暂停、没有新增 CUDA
   context，结束后 8×10×1 秒门禁仍 PASS。
+- 两次 recovery read-only probe 同样未暂停 keepalive；worker `4106666` 保持在线，
+  PID/PGID/SID `4730/4730/4730` 且八卡门禁 PASS。
 
 ## 限制与复现状态
 
