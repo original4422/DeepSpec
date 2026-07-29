@@ -1,0 +1,114 @@
+P07 STATIC TOOLING GATE
+generated_at_utc=2026-07-29T08:33:52Z
+gpu_touched=false
+keepalive_paused=false
+server_started=false
+live_attempt_started=false
+
+TDD RED evidence
+initial_missing_adapter=RED ModuleNotFoundError hedge_dspark_p07_client
+stable_runtime_identity=RED disposable wheel build_path_exists differed
+resolved_field_allowlist=RED unapproved field was initially accepted
+counter_replay=RED forged relaxed_mismatches was initially accepted
+entrypoint_marker=RED audited P07 wrapper marker reached shared launcher child inheritance
+retry_lifecycle=RED legal 500-record fixture with one retry and requests_initialized=501 was rejected by exact-500 validation
+runtime_snapshot_identity=RED counter schema, candidate alignment, and score seam drift were initially accepted
+physical_counter_invariants=RED impossible position, lifecycle, exhaustion, trim, and active-budget fixtures were initially accepted
+result=all eight seams reached targeted GREEN
+
+P07 public-seam tests
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_dspark_p07 -v
+result=PASS
+tests=15
+
+P06 native formal regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_dspark_p06 -v
+result=PASS
+tests=16
+
+P05 calibration regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_dspark_p05 -v
+result=PASS
+tests=24
+
+P04 lifecycle/identity regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_dspark_p04 -v
+result=PASS
+tests=29
+
+Frozen protocol regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_protocol -v
+result=PASS
+tests=13
+
+DSpark integration regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_dspark_integration -v
+result=PASS
+tests=23
+
+Pure HEDGE core regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest discover -s tests/hedge_spec -v
+result=PASS
+tests=33
+
+Fresh-process test total
+result=PASS
+tests=153
+failures=0
+
+P06 identity parity probe
+result=PASS
+p06_attempt=20260729T062241Z-p06-native-formal-r1
+server_command=exact
+dataset_and_formal_protocol=exact
+static_environment=exact
+sglang_source_and_patched_tree=exact
+wheel_bytes_and_installed_content=exact
+checkpoint_identity=exact
+volatile_build_path_exists=excluded
+
+P07 frozen HEDGE identity
+result=PASS
+hedge_enabled=1
+calibration_trace=0
+B=2.0625
+g=2.0625
+m=1
+value_scheme=normalized_suffix
+block_size=5
+config_sha256=760128b85b8c3dd67e3b4dee512cc302ee59bd2e2a1b3ab3390fd186ade36b71
+config_fingerprint=6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921
+
+P07 formal counter boundary
+result=PASS
+logical_records=500
+retry_fixture_attempts_total=501
+retry_fixture_success_requests=500
+retry_fixture_requests_initialized=501
+retry_fixture_requests_finished=501
+lower_bound_forgery_499=REJECTED
+upper_bound_forgery_502=REJECTED
+budget_basis=actual_requests_initialized_times_B
+counter_schema_version=1
+candidate_alignment={"anchor_index":0,"draft_indices":[1,6],"target_draft_logit_indices":[0,5]}
+score_seam=native full-vocab next_token_logits after the existing LogitsProcessor TP all-gather; HEDGE adds no TP collective
+position_invariants=each_le_proposals_non_increasing_sum_equals_accepted
+lifecycle_invariant=initialized_minus_finished_equals_active_equals_leaks
+active_budget_conservation=PASS
+
+Static gates
+bash_n=PASS
+py_compile=PASS
+uv_lock_check=PASS
+launcher_contract_json=PASS
+p06_native_launcher_default_unchanged=PASS
+p07_entrypoint_marker_scrubbed_before_child_inheritance=PASS
+runtime_snapshot_schema_contract=PASS
+git_diff_check=PASS
+exact_worker=4106666
+exact_arms=hedge
+tp_size=8
+proposal_width=5
+warmup_count=10
+formal_count=500
+canonical_counter_artifact=hedge_counters.json

@@ -379,11 +379,14 @@ def _validate_record_identity(
         )
 
 
-def validate_client_artifacts(
+def validate_formal_client_artifacts(
     *,
     scratch: Path,
     expected_warmup_indices: Sequence[int],
     expected_formal_indices: Sequence[int],
+    authorized_phase: str,
+    arm: str,
+    snapshot_validator: Any,
 ) -> dict[str, Any]:
     """Recompute all formal artifacts from raw response-bearing JSONL."""
 
@@ -414,7 +417,7 @@ def validate_client_artifacts(
     clear_start = clear.get("started_monotonic_ns")
     clear_end = clear.get("finished_monotonic_ns")
     _require(
-        clear.get("authorized_phase") == "P06"
+        clear.get("authorized_phase") == authorized_phase
         and clear.get("status") == "PASS"
         and clear.get("exact_zero") is True
         and clear.get("verified_snapshot_count", 0) > 0
@@ -426,8 +429,8 @@ def validate_client_artifacts(
     )
     timing = _load_json(scratch / "formal_timing.json")
     _require(
-        timing.get("authorized_phase") == "P06"
-        and timing.get("arm") == "native"
+        timing.get("authorized_phase") == authorized_phase
+        and timing.get("arm") == arm
         and timing.get("clock") == "time.monotonic_ns"
         and timing.get("warmup_record_count") == 10
         and timing.get("warmup_terminal_requests")
@@ -453,8 +456,8 @@ def validate_client_artifacts(
         expected_cohort="formal",
     )
     expected_summary.update(
-        authorized_phase="P06",
-        arm="native",
+        authorized_phase=authorized_phase,
+        arm=arm,
         source_artifacts={
             "formal_outputs_sha256": sha256_file(
                 scratch / "formal_outputs.jsonl"
@@ -478,8 +481,8 @@ def validate_client_artifacts(
     spec = aggregate_spec_acceptance(formal)
     expected_acceptance = {
         "schema_version": 1,
-        "authorized_phase": "P06",
-        "arm": "native",
+        "authorized_phase": authorized_phase,
+        "arm": arm,
         "acceptance": expected_summary["acceptance"],
         "sglang_spec_normalization": spec,
         "hedge": expected_summary["hedge"],
@@ -501,9 +504,7 @@ def validate_client_artifacts(
             for snapshot in stored_counters.get("hedge_snapshots", [])
         ],
     }
-    replayed = validate_native_server_snapshot(
-        reconstructed, require_exact_zero=False
-    )
+    replayed = snapshot_validator(reconstructed, expected_summary)
     for key in (
         "status",
         "arm",
@@ -548,6 +549,28 @@ def validate_client_artifacts(
             scratch / "formal_outputs.jsonl"
         ),
     }
+
+
+def validate_client_artifacts(
+    *,
+    scratch: Path,
+    expected_warmup_indices: Sequence[int],
+    expected_formal_indices: Sequence[int],
+) -> dict[str, Any]:
+    """Preserve the strict native P06 artifact validator."""
+
+    return validate_formal_client_artifacts(
+        scratch=scratch,
+        expected_warmup_indices=expected_warmup_indices,
+        expected_formal_indices=expected_formal_indices,
+        authorized_phase="P06",
+        arm="native",
+        snapshot_validator=lambda payload, _summary: (
+            validate_native_server_snapshot(
+                payload, require_exact_zero=False
+            )
+        ),
+    )
 
 
 def validate_formal_gpu_window(
@@ -826,13 +849,20 @@ def _copy_exclusive(source: Path, destination: Path) -> None:
         shutil.copyfileobj(input_stream, output, 1024 * 1024)
 
 
-def archive_attempt(*, scratch: Path, hdfs_run: Path) -> dict[str, Any]:
+def archive_formal_attempt(
+    *,
+    scratch: Path,
+    hdfs_run: Path,
+    authorized_phase: str,
+    arm: str,
+    required_artifacts: Sequence[str] = REQUIRED_ARTIFACTS,
+) -> dict[str, Any]:
     _require(scratch.is_dir(), "scratch directory is absent")
     _require(hdfs_run.is_dir(), "HDFS run directory is absent")
     _require(not list(hdfs_run.iterdir()), "HDFS run directory is not empty")
     names = {path.name for path in scratch.iterdir() if path.is_file()}
     _require(
-        set(REQUIRED_ARTIFACTS).issubset(names),
+        set(required_artifacts).issubset(names),
         "scratch is missing required artifacts",
     )
     validate_lifecycle_events(
@@ -859,9 +889,9 @@ def archive_attempt(*, scratch: Path, hdfs_run: Path) -> dict[str, Any]:
     ]
     manifest = {
         "schema_version": 1,
-        "authorized_phase": "P06",
+        "authorized_phase": authorized_phase,
         "status": "PASS",
-        "arm": "native",
+        "arm": arm,
         "source": str(scratch),
         "destination": str(hdfs_run),
         "files": records,
@@ -886,11 +916,22 @@ def archive_attempt(*, scratch: Path, hdfs_run: Path) -> dict[str, Any]:
     )
     return {
         "schema_version": 1,
-        "authorized_phase": "P06",
+        "authorized_phase": authorized_phase,
         "status": "PASS",
         "file_count": len(records),
         "manifest": str(hdfs_run / manifest_path.name),
     }
+
+
+def archive_attempt(*, scratch: Path, hdfs_run: Path) -> dict[str, Any]:
+    """Preserve the native P06 archive interface."""
+
+    return archive_formal_attempt(
+        scratch=scratch,
+        hdfs_run=hdfs_run,
+        authorized_phase="P06",
+        arm="native",
+    )
 
 
 def _bool(value: str) -> bool:

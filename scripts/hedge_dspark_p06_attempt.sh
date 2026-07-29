@@ -1,23 +1,64 @@
 #!/usr/bin/env bash
-# Atomic native-only lifecycle for the P06 DSpark formal-500 arm.
+# Atomic lifecycle shared by the frozen P06/P07 formal wrappers.
 
 set -euo pipefail
 
 readonly REPO_ROOT="/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark"
 readonly RUN_ROOT="/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark"
 readonly PYTHON="/home/tiger/venvs/hedge-v4-dspark/bin/python"
-readonly PREPARE="$REPO_ROOT/scripts/hedge_dspark_p06_prepare.py"
+FORMAL_PHASE="P06"
+if [[ "${1:-}" == "--p07-adapter" ]]; then
+  shift
+  FORMAL_PHASE="P07"
+fi
+readonly FORMAL_PHASE
+if [[ "$FORMAL_PHASE" == "P07" ]]; then
+  if [[ "${DEEPSPEC_P07_ENTRYPOINT:-}" != \
+    "$REPO_ROOT/scripts/hedge_dspark_p07_attempt.sh" ]]; then
+    echo "P07 mode is only available through the audited P07 wrapper" >&2
+    exit 2
+  fi
+  readonly PREPARE="$REPO_ROOT/scripts/hedge_dspark_p07_prepare.py"
+  readonly CLIENT="$REPO_ROOT/scripts/hedge_dspark_p07_client.py"
+  readonly VALIDATOR="$REPO_ROOT/scripts/hedge_dspark_p07_validate.py"
+  readonly EXPECTED_ATTEMPT_PATTERN='^[0-9]{8}T[0-9]{6}Z-p07-hedge-formal(-[a-z0-9][a-z0-9-]{0,63})?$'
+else
+  readonly PREPARE="$REPO_ROOT/scripts/hedge_dspark_p06_prepare.py"
+  readonly CLIENT="$REPO_ROOT/scripts/hedge_dspark_p06_client.py"
+  readonly VALIDATOR="$REPO_ROOT/scripts/hedge_dspark_p06_validate.py"
+  readonly EXPECTED_ATTEMPT_PATTERN='^[0-9]{8}T[0-9]{6}Z-p06-native-formal(-[a-z0-9][a-z0-9-]{0,63})?$'
+fi
+unset DEEPSPEC_P07_ENTRYPOINT
 readonly PROCESS_GUARD="$REPO_ROOT/scripts/hedge_dspark_p04_process.py"
 readonly SAMPLER="$REPO_ROOT/scripts/hedge_dspark_p04_gpu_sampler.py"
-readonly CLIENT="$REPO_ROOT/scripts/hedge_dspark_p06_client.py"
-readonly VALIDATOR="$REPO_ROOT/scripts/hedge_dspark_p06_validate.py"
 readonly KEEPALIVE="$REPO_ROOT/scripts/hedge_dspark_keepalive.sh"
 readonly CALIBRATION="$REPO_ROOT/artifacts/hedge-dspark/p01-protocol/gsm8k_calibration_32.jsonl"
 readonly FORMAL="$REPO_ROOT/artifacts/hedge-dspark/p01-protocol/gsm8k_formal_500.jsonl"
 readonly EXPECTED_WORKER="4106666"
 readonly FIXED_PORT="31066"
 
+if [[ "${1:-}" == "--print-server-inherited-environment" ]]; then
+  "$PYTHON" -c \
+    'import json,os,sys; print(json.dumps({"formal_phase": sys.argv[1], "entrypoint_marker_present": "DEEPSPEC_P07_ENTRYPOINT" in os.environ}, sort_keys=True))' \
+    "$FORMAL_PHASE"
+  exit 0
+fi
+
 if [[ "${1:-}" == "--print-contract" ]]; then
+  if [[ "$FORMAL_PHASE" == "P07" ]]; then
+    printf '%s\n' \
+      '{"arms":["hedge"],"worker_id":"4106666","expected_gpus":8,'\
+'"tp_size":8,"proposal_width":5,"port":31066,"warmup_count":10,'\
+'"formal_count":500,"hedge_enabled":true,"resume_allowed":false,'\
+'"p06_reuse":"exact-lifecycle",'\
+'"lifecycle":["preflight","pause_keepalive","prove_contexts_none",'\
+'"start_registered_server_and_sampler",'\
+'"run_atomic_warmup_10_and_formal_500","validate_live_evidence",'\
+'"terminate_registered_server","prove_contexts_none",'\
+'"terminate_registered_sampler","resume_and_validate_keepalive",'\
+'"archive_without_overwrite"]}'
+    exit 0
+  fi
   printf '%s\n' \
     '{"arms":["native"],"worker_id":"4106666","expected_gpus":8,'\
 '"tp_size":8,"proposal_width":5,"port":31066,"warmup_count":10,'\
@@ -32,20 +73,19 @@ if [[ "${1:-}" == "--print-contract" ]]; then
 fi
 
 if [[ "$#" -ne 2 ]]; then
-  echo "usage: $0 <worker-id> <unique-p06-native-formal-attempt-id>" >&2
+  echo "usage: $0 <worker-id> <unique-$FORMAL_PHASE-formal-attempt-id>" >&2
   exit 2
 fi
 
 readonly WORKER_ID="$1"
 readonly ATTEMPT_ID="$2"
-readonly EXPECTED_ATTEMPT_PATTERN='^[0-9]{8}T[0-9]{6}Z-p06-native-formal(-[a-z0-9][a-z0-9-]{0,63})?$'
 
 if [[ "$WORKER_ID" != "$EXPECTED_WORKER" ]]; then
   echo "refusing worker $WORKER_ID; only $EXPECTED_WORKER is authorized" >&2
   exit 2
 fi
 if [[ ! "$ATTEMPT_ID" =~ $EXPECTED_ATTEMPT_PATTERN ]]; then
-  echo "invalid P06 native formal attempt-id: $ATTEMPT_ID" >&2
+  echo "invalid $FORMAL_PHASE formal attempt-id: $ATTEMPT_ID" >&2
   exit 2
 fi
 

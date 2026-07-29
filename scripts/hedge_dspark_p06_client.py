@@ -52,6 +52,9 @@ from hedge_dspark_p06_prepare import (  # noqa: E402
 JsonGet = Callable[[str, float], Mapping[str, Any]]
 JsonPost = Callable[[str, Mapping[str, Any], float], Any]
 CounterClear = Callable[[], Mapping[str, Any]]
+SnapshotValidator = Callable[
+    [Mapping[str, Any], bool, bool], Mapping[str, Any]
+]
 CONTROL_HTTP_TIMEOUT_SECONDS = 10.0
 CLEAR_TIMEOUT_SECONDS = 120.0
 CLEAR_POLL_SECONDS = 1.0
@@ -461,8 +464,11 @@ def validate_native_server_snapshot(
     }
 
 
-def clear_native_formal_evidence(
+def clear_formal_evidence(
     *,
+    authorized_phase: str,
+    arm: str,
+    snapshot_validator: SnapshotValidator,
     base_url: str,
     server_info_get: JsonGet | None = None,
     internal_state_post: JsonPost | None = None,
@@ -471,7 +477,7 @@ def clear_native_formal_evidence(
     timeout_seconds: float = CLEAR_TIMEOUT_SECONDS,
     poll_seconds: float = CLEAR_POLL_SECONDS,
 ) -> dict[str, Any]:
-    """Wait for warmup quiescence, clear counters once, and prove exact zero."""
+    """Wait for quiescence, clear counters once, and prove exact zero."""
 
     if (
         isinstance(timeout_seconds, bool)
@@ -517,9 +523,7 @@ def clear_native_formal_evidence(
             server_info_url,
             min(CONTROL_HTTP_TIMEOUT_SECONDS, remaining),
         )
-        observation = validate_native_server_snapshot(
-            raw, require_exact_zero=False, allow_active=True
-        )
+        observation = dict(snapshot_validator(raw, False, True))
         polls.append(
             {
                 "poll_ordinal": len(polls) + 1,
@@ -570,9 +574,9 @@ def clear_native_formal_evidence(
                 finished_ns = monotonic_ns()
                 return {
                     "schema_version": 1,
-                    "authorized_phase": "P06",
+                    "authorized_phase": authorized_phase,
                     "status": "PASS",
-                    "arm": "native",
+                    "arm": arm,
                     "started_monotonic_ns": started_ns,
                     "finished_monotonic_ns": finished_ns,
                     "timeout_seconds": float(timeout_seconds),
@@ -593,9 +597,9 @@ def clear_native_formal_evidence(
     except BaseException as error:
         evidence = {
             "schema_version": 1,
-            "authorized_phase": "P06",
+            "authorized_phase": authorized_phase,
             "status": "FAIL",
-            "arm": "native",
+            "arm": arm,
             "started_monotonic_ns": started_ns,
             "finished_monotonic_ns": monotonic_ns(),
             "timeout_seconds": float(timeout_seconds),
@@ -611,6 +615,38 @@ def clear_native_formal_evidence(
         }
         error.pre_formal_clear_evidence = evidence
         raise
+
+
+def clear_native_formal_evidence(
+    *,
+    base_url: str,
+    server_info_get: JsonGet | None = None,
+    internal_state_post: JsonPost | None = None,
+    sleeper: Callable[[float], None] = time.sleep,
+    monotonic_ns: Callable[[], int] = time.monotonic_ns,
+    timeout_seconds: float = CLEAR_TIMEOUT_SECONDS,
+    poll_seconds: float = CLEAR_POLL_SECONDS,
+) -> dict[str, Any]:
+    """Preserve the strict P06 native-off clear seam."""
+
+    return clear_formal_evidence(
+        authorized_phase="P06",
+        arm="native",
+        snapshot_validator=lambda payload, exact, active: (
+            validate_native_server_snapshot(
+                payload,
+                require_exact_zero=exact,
+                allow_active=active,
+            )
+        ),
+        base_url=base_url,
+        server_info_get=server_info_get,
+        internal_state_post=internal_state_post,
+        sleeper=sleeper,
+        monotonic_ns=monotonic_ns,
+        timeout_seconds=timeout_seconds,
+        poll_seconds=poll_seconds,
+    )
 
 
 def _seconds(start_ns: int, end_ns: int) -> float:
@@ -734,8 +770,13 @@ def aggregate_spec_acceptance(
     }
 
 
-def run_native_formal(
+def run_formal_arm(
     *,
+    authorized_phase: str,
+    arm: str,
+    final_snapshot_validator: Callable[
+        [Mapping[str, Any], Mapping[str, Any]], Mapping[str, Any]
+    ],
     base_url: str,
     warmup_samples: Sequence[Mapping[str, Any]],
     formal_samples: Sequence[Mapping[str, Any]],
@@ -748,13 +789,21 @@ def run_native_formal(
     clock_ns: Callable[[], int] = time.monotonic_ns,
     counter_clear: CounterClear | None = None,
 ) -> dict[str, Any]:
-    """Run 10 excluded warmups, clear evidence, then exactly one formal 500."""
+    """Run one frozen 10-warmup plus formal-500 protocol."""
 
+    _require(
+        (authorized_phase, arm) in {("P06", "native"), ("P07", "hedge")},
+        "formal arm identity must be P06/native or P07/hedge",
+    )
     _ensure_outputs_absent(artifact_dir)
     if len(warmup_samples) != WARMUP_COUNT:
-        raise ValueError(f"P06 requires exactly {WARMUP_COUNT} warmups")
+        raise ValueError(
+            f"{authorized_phase} requires exactly {WARMUP_COUNT} warmups"
+        )
     if len(formal_samples) != FORMAL_COUNT:
-        raise ValueError(f"P06 requires exactly {FORMAL_COUNT} formal samples")
+        raise ValueError(
+            f"{authorized_phase} requires exactly {FORMAL_COUNT} formal samples"
+        )
     runner = P06ProtocolRunner(
         base_url=base_url,
         model=DEFAULT_MODEL,
@@ -781,6 +830,10 @@ def run_native_formal(
         warmup_records,
         expected_count=WARMUP_COUNT,
         expected_cohort="warmup",
+    )
+    _require(
+        authorized_phase == "P06" or counter_clear is not None,
+        "P07 must provide the HEDGE-on clear validator",
     )
     clear_operation = counter_clear or (
         lambda: clear_native_formal_evidence(
@@ -829,8 +882,8 @@ def run_native_formal(
         raise ValueError("formal timing starts before counter clear completed")
     timing = {
         "schema_version": 1,
-        "authorized_phase": "P06",
-        "arm": "native",
+        "authorized_phase": authorized_phase,
+        "arm": arm,
         "clock": "time.monotonic_ns",
         "warmup_record_count": WARMUP_COUNT,
         "warmup_terminal_requests": warmup_summary["terminal_requests"],
@@ -855,8 +908,8 @@ def run_native_formal(
         expected_cohort="formal",
     )
     summary.update(
-        authorized_phase="P06",
-        arm="native",
+        authorized_phase=authorized_phase,
+        arm=arm,
         source_artifacts={
             "formal_outputs_sha256": sha256_file(formal_path),
             "formal_timing_sha256": sha256_file(timing_path),
@@ -883,8 +936,8 @@ def run_native_formal(
     )
     acceptance_summary = {
         "schema_version": 1,
-        "authorized_phase": "P06",
-        "arm": "native",
+        "authorized_phase": authorized_phase,
+        "arm": arm,
         "acceptance": summary["acceptance"],
         "sglang_spec_normalization": spec_summary,
         "hedge": summary["hedge"],
@@ -900,9 +953,7 @@ def run_native_formal(
         base_url.rstrip("/") + "/server_info",
         300.0,
     )
-    counters = validate_native_server_snapshot(
-        server_info, require_exact_zero=False
-    )
+    counters = dict(final_snapshot_validator(server_info, summary))
     counters["fetched_at_utc"] = _utc_now()
     counters["formal_request_interval_monotonic_ns"] = {
         "start": formal_start,
@@ -911,9 +962,9 @@ def run_native_formal(
     write_json(counters_path, counters, immutable=True)
     return {
         "schema_version": 1,
-        "authorized_phase": "P06",
+        "authorized_phase": authorized_phase,
         "status": "PASS",
-        "arm": "native",
+        "arm": arm,
         "started_at_utc": started_at_utc,
         "finished_at_utc": _utc_now(),
         "warmup_count": WARMUP_COUNT,
@@ -928,6 +979,43 @@ def run_native_formal(
             "end_to_end_output_tps"
         ],
     }
+
+
+def run_native_formal(
+    *,
+    base_url: str,
+    warmup_samples: Sequence[Mapping[str, Any]],
+    formal_samples: Sequence[Mapping[str, Any]],
+    artifact_dir: Path,
+    transport: Callable[[str, dict[str, Any], float], Mapping[str, Any]]
+    | None = None,
+    server_info_get: JsonGet | None = None,
+    internal_state_post: JsonPost | None = None,
+    sleeper: Callable[[float], None] = time.sleep,
+    clock_ns: Callable[[], int] = time.monotonic_ns,
+    counter_clear: CounterClear | None = None,
+) -> dict[str, Any]:
+    """Preserve the strict native-only P06 public interface."""
+
+    return run_formal_arm(
+        authorized_phase="P06",
+        arm="native",
+        final_snapshot_validator=lambda payload, _summary: (
+            validate_native_server_snapshot(
+                payload, require_exact_zero=False
+            )
+        ),
+        base_url=base_url,
+        warmup_samples=warmup_samples,
+        formal_samples=formal_samples,
+        artifact_dir=artifact_dir,
+        transport=transport,
+        server_info_get=server_info_get,
+        internal_state_post=internal_state_post,
+        sleeper=sleeper,
+        clock_ns=clock_ns,
+        counter_clear=counter_clear,
+    )
 
 
 def main() -> int:

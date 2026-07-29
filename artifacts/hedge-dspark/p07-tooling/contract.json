@@ -1,0 +1,115 @@
+{
+  "arm": "hedge",
+  "attempt_pattern": "^[0-9]{8}T[0-9]{6}Z-p07-hedge-formal(-[a-z0-9][a-z0-9-]{0,63})?$",
+  "authorized_phase": "P07",
+  "formal_protocol": {
+    "clock": "time.monotonic_ns",
+    "formal_count": 500,
+    "max_total_attempts_per_request": 3,
+    "request_counter_bound": "success_requests <= requests_initialized == requests_finished <= attempts_total",
+    "risk_budget_conservation_basis": "requests_initialized * B",
+    "rerun_for_tps_allowed": false,
+    "resume_or_append_allowed": false,
+    "retry_time_included": true,
+    "single_sequential_pass": true,
+    "warmup_count": 10,
+    "warmup_included": false
+  },
+  "hedge": {
+    "calibration_trace": false,
+    "config": {
+      "B": 2.0625,
+      "block_size": 5,
+      "g": 2.0625,
+      "m": 1,
+      "value_scheme": "normalized_suffix"
+    },
+    "config_fingerprint": "6e6f0ef3e1b715aa0b036d856186cc2ab1612580c96bea7fb65327b259fbd921",
+    "config_path": "artifacts/hedge-dspark/p05-calibration/hedge_config.json",
+    "config_sha256": "760128b85b8c3dd67e3b4dee512cc302ee59bd2e2a1b3ab3390fd186ade36b71",
+    "enabled": true,
+    "environment": {
+      "HEDGE_ENABLED": "1",
+      "SGLANG_DSPARK_HEDGE_CALIBRATION_TRACE": "0"
+    },
+    "runtime_snapshot_identity": {
+      "candidate_alignment": {
+        "anchor_index": 0,
+        "draft_indices": [
+          1,
+          6
+        ],
+        "target_draft_logit_indices": [
+          0,
+          5
+        ]
+      },
+      "counter_schema_version": 1,
+      "score_seam": "native full-vocab next_token_logits after the existing LogitsProcessor TP all-gather; HEDGE adds no TP collective"
+    },
+    "runtime_snapshot_invariants": {
+      "acceptance_positions": "each <= proposals, non-increasing, and sum == hedge_accepted_draft_tokens",
+      "active_budget_conservation": true,
+      "budget_exhaustion_events_bound": "budget_exhaustion_events <= requests_initialized",
+      "cap_trim_bound": "cap_trim_lens <= proposals * 5",
+      "lifecycle": "requests_initialized - requests_finished == active_request_states == state_leaks",
+      "non_natural_bound": "requests_non_natural <= requests_finished"
+    }
+  },
+  "identity": {
+    "checkpoint_snapshot": "bb7ac3172e1a257482d3256d7a720f20ea39ce25625f3cacc1091f59ad43bcae",
+    "dataset_fingerprint": "59ec1b7f9357c7a2",
+    "formal_jsonl_sha256": "33554b90f751252ced2cfd16333d749f427c84cf025dccef4c7934144e9d5108",
+    "integration_commit": "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
+    "integration_patch_sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52",
+    "patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
+    "pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
+    "sglang_base_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "wheel_sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9"
+  },
+  "lifecycle": [
+    "preflight",
+    "pause_keepalive",
+    "prove_contexts_none",
+    "start_registered_server_and_sampler",
+    "run_atomic_warmup_10_and_formal_500",
+    "validate_live_evidence",
+    "terminate_registered_server",
+    "prove_contexts_none",
+    "terminate_registered_sampler",
+    "resume_and_validate_keepalive",
+    "archive_without_overwrite"
+  ],
+  "launcher_entrypoint_marker": {
+    "name": "DEEPSPEC_P07_ENTRYPOINT",
+    "p06_native_default_unchanged": true,
+    "scrubbed_before_child_inheritance": true
+  },
+  "p06_reference": {
+    "allowed_differences": [
+      "authorized_phase",
+      "arm",
+      "attempt_id",
+      "scratch",
+      "hdfs_run",
+      "scratch-scoped cache paths",
+      "HEDGE enable/config fields",
+      "decode_config_fingerprint"
+    ],
+    "archive": "/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1",
+    "artifacts": {
+      "archive_manifest.json": "f0014a88b05761b47a85b841d052a13a2e6d6d4baa21bf4f3640b4e7c96beca7",
+      "artifact_validation.json": "a96166a744053f3a9e126c90ab345a13ff44d05ef1da5ffcbab4e0d6d9c8ba1b",
+      "checkpoint_identity.json": "d70e31a065f81ce994e6b89cc704f5e173f8ccd377a30ecbc6634d9d380651b8",
+      "engine_identity.json": "a848588e731b0423ec8712b263386b14e0ad4e9f850df7e7d20d360dd3a7cce9",
+      "resolved_config.json": "65b8f614b5b70d627f9474606e48488887126040c765127a78984c77c9cade1d"
+    },
+    "attempt_id": "20260729T062241Z-p06-native-formal-r1",
+    "parity": "server command, dataset, formal protocol, static environment, source, wheel, integration, pure core, and checkpoint are exact"
+  },
+  "proposal_width": 5,
+  "schema_version": 1,
+  "static_tooling_status": "PASS",
+  "tp_size": 8,
+  "worker_id": "4106666"
+}
