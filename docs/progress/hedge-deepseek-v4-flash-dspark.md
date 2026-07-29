@@ -3,7 +3,7 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T08:23:59Z`（690 分钟 checkpoint 提前 42 秒）
+- 快照时间：`2026-07-29T08:40:25Z`（P07 tooling 关键 Git 节点）
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
   `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
 - elapsed / deadline：持续执行 / `NONE`
@@ -22,9 +22,10 @@
   - P06：formal tooling 138/138 与主 Agent复验 PASS，commit/push `6a74186`；
     唯一 native formal 500/500、0 retry、74594 tokens、31.76484698125425 TPS；
     主 Agent独立重算与 TP8/GPU/HEDGE-off/cleanup/archive 全 PASS
-  - P07：static 首轮 targeted 11/11、总回归 149/149；主审追加四项
-    fail-closed 修正，marker 已 RED→GREEN，retry 501 fixture 已 RED，
-    summary-bound/schema/counter 修正进行中；尚未登录 worker/live
+  - P07：主审四项 finding 均已 RED→GREEN；executor 与主 Agent全回归
+    153/153，syntax/lock/contract/diff 均 PASS；修改后的共享代码对 P06
+    immutable formal artifact 重放 PASS；tooling commit/push `3253062`；
+    尚未登录 worker/live
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
 - keepalive / server / PID：P06 server/sampler 已定向退出、contexts none；
   dedicated keepalive `107326/107326/107326` 已恢复，8×10 全卡 100%
@@ -33,7 +34,7 @@
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；上一 checkpoint HEAD/origin clean `5dd7acf`
+  branch `exp/hedge-v4-dspark`；HEAD/origin clean `3253062`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -41,12 +42,12 @@
   `eb4962f`；failure docs `fd88b69`；quiescence recovery `fe0aea0`；
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
-  `c244651`；P06 tooling `6a74186`
-- 首要事项：完成 P07 主审四项 static 修正与全回归；PASS 后才启动唯一
-  HEDGE B>0 executor
-- 下一检查点：`2026-07-29T08:54:41Z`
-- 下一 30 分钟动作：完成 retry-aware lifecycle、snapshot identity、物理 counter
-  forged gates、回归/主审/tooling commit；随后执行唯一 B>0 preflight
+  `c244651`；P06 tooling `6a74186`；P07 tooling `3253062`
+- 首要事项：重新核对 worker `4106666`、既有进程与 8×10 keepalive 后，
+  启动唯一 HEDGE B>0 formal executor
+- 下一检查点：`2026-07-29T09:10:25Z`
+- 下一 30 分钟动作：完成 P07 live preflight，紧邻暂停 keepalive、证明八卡
+  context 退出并启动 TP=8 服务；若模型加载跨检查点则持续报告 launcher 状态
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -770,3 +771,17 @@
   forged fixture 尚待 RED→GREEN。executor 仍 static-only，lane 保持 keepalive。
 - 用户指出 P06 500 结果在 docs 中不醒目；`docs/experiment/` 已新增
   `P06 native 正式 500 结果` 专节，列出完整指标、hash、文件名与 HDFS 路径。
+
+### 2026-07-29T08:40:25Z — P07 tooling 主验收
+
+- 四项主审 finding 全部 RED→GREEN：P07 wrapper marker 在 child 继承前清除；
+  500 条逻辑记录允许协议内 retry，并以
+  `success <= initialized == finished <= attempts` 约束真实请求；snapshot 固定
+  counter schema、candidate alignment 与 score seam；逐位置、lifecycle、
+  request-wide budget 及 cap/exhaustion 均有 fail-closed 物理门禁。
+- executor 与主 Agent各自完成 P07/P06/P05/P04/protocol/integration/core
+  全回归 153/153；主 Agent另外用修改后的共享代码重放 P06 immutable HDFS
+  formal archive，500/500、74594 tokens、31.76484698125425 TPS、TP8/GPU 与
+  server-log 证据均继续 PASS。
+- tooling 已 commit/push 为 `3253062`，工作区 clean；未登录 worker、未暂停
+  keepalive、未启动 P07 live。下一步只执行唯一 HEDGE `B>0` formal attempt。
