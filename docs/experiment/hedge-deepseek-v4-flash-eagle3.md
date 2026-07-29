@@ -3,13 +3,13 @@
 ## 实验结果总览
 
 面向结果阅读的独立报告见
-[HEDGE on DeepSeek-V4-Flash Eagle3 结果报告](./hedge-deepseek-v4-flash-eagle3-results.md)；
+[HEDGE × DeepSeek-V4-Flash-Eagle3 实验结果](../results/hedge-deepseek-v4-flash-eagle3.md)；
 本文继续作为 attempt、artifact、故障归因和复现证据的唯一权威账本。
 
-> **当前路线结论：`IN_PROGRESS`。** Native 500 条正式基线已经独立验收为
-> `ACCEPTED/PASS`，`B=0` 等价性为 `B0_PASS`，正预算配置已经冻结；
-> HEDGE B+ 的 500 条正式 arm 正在运行，尚未验收，因此现在不能声称 HEDGE
-> 相对 native 更快、更慢或质量更高/更低。
+> **当前路线结论：Phase 06 `ACCEPTED/PASS`，Phase 07 待最终审计。**
+> Native 与 HEDGE B+ 的 500 条正式 arm 均已完成根线程独立重算并发布唯一
+> accepted marker；`B=0` 等价性为 `B0_PASS`，正预算参数只由 32 条
+> calibration 决定。
 
 ### 一眼结论
 
@@ -27,24 +27,29 @@
   带来 22 个相对 strict 的额外 accepted drafts；三条 request 的 budget
   continuity、accounting、非负约束和 `m<=1` 均无违例。该 smoke 只证明接入，
   **不是**正式性能或质量结论。
-- **B+ formal 正在运行：** `2026-07-29T08:26:13Z` 心跳为 110/500 terminal，
-  chat/trace non-200 均为 0，八卡 context 与显存稳定；最终数字和路线内差值待
-  Phase 06 独立验收后填写。
+- **B+ 正式结果已成立：** 500/500 success，0 failure/retry，75,224
+  completion tokens，客户端计时 4,209.940660915 秒，output TPS
+  `17.8681853401`；GSM8K 488/500 匹配，0 parse failure。
+- **本次路线内观测差值：** B+ output TPS 比 Native 高 `5.682%`，客户端墙钟低
+  `4.559%`，accepted drafts/proposal 高 `8.888%`；两个 arm 的 aggregate
+  GSM8K match 均为 488/500。
 
 ### 正式 500 条结果与路线内差值
 
 | 指标 | Native formal | HEDGE B+ formal | B+ − Native |
 | --- | ---: | ---: | ---: |
-| 验收状态 | `ACCEPTED/PASS` | `LIVE / NOT YET ACCEPTED` | — |
-| Formal terminal | 500/500 | 110/500（08:26:13Z 心跳） | 待完成 |
-| Failure / generation retry / trace retry | 0 / 0 / 0 | 当前 0 / 0 / 0 | 待完成 |
-| Completion tokens | 74,580 | 待完成 | 待完成 |
-| 客户端正式墙钟 | 4,411.045604754 s | 待完成 | 待完成 |
-| Output TPS | 16.9075558683 | 待完成 | 待完成 |
-| Accepted draft tokens / proposal | 1.3440812581 | 待完成 | 待完成 |
-| Mean acceptance length | 2.3440812581 | 待完成 | 待完成 |
-| GSM8K matches | 488/500 | 待完成 | 待完成 |
-| Parse failures | 0 | 待完成 | 待完成 |
+| 验收状态 | `ACCEPTED/PASS` | `ACCEPTED/PASS` | — |
+| Formal terminal / success | 500 / 500 | 500 / 500 | 0 / 0 |
+| Failure / generation retry / trace retry | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| Completion tokens | 74,580 | 75,224 | +644（+0.864%） |
+| 客户端正式墙钟 | 4,411.045604754 s | 4,209.940660915 s | −201.104943839 s（−4.559%） |
+| Output TPS | 16.9075558683 | 17.8681853401 | +0.9606294718（+5.682%） |
+| Proposals | 31,603 | 30,332 | −1,271（−4.022%） |
+| Accepted draft tokens | 42,477 | 44,392 | +1,915（+4.508%） |
+| Accepted draft tokens / proposal | 1.3440812581 | 1.4635368588 | +0.1194556007（+8.888%） |
+| Mean acceptance length | 2.3440812581 | 2.4635368588 | +0.1194556007（+5.096%） |
+| GSM8K matches | 488/500 | 488/500 | 0 |
+| GSM8K mismatches / parse failures | 12 / 0 | 12 / 0 | 0 / 0 |
 
 ### 关键门禁与结果 artifact
 
@@ -55,11 +60,12 @@
 | Native accepted artifact | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02` |
 | Native accepted marker | `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-native-formal.complete.json` |
 | B+ bounded smoke | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T052500Z-phase-04-bplus-smoke-01` |
-| B+ formal live scratch | `/tmp/deepspec-hedge-v4-eagle3/20260729T080100Z-phase-06-bplus-formal-01` |
+| B+ accepted artifact | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T080100Z-phase-06-bplus-formal-01` |
+| B+ accepted marker | `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-bplus-formal.complete.json`；SHA-256 `7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812` |
 
 ## 执行状态与证据摘要
 
-> **状态：`PHASE_06_BPLUS_FORMAL_LIVE`。**
+> **状态：`PHASE_06_BPLUS_FORMAL_ACCEPTED`；Phase 07 待执行。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -144,6 +150,23 @@
 > identity 与 marker-absent gate 均 PASS。历史 Phase 05 mock test 在 native
 > accepted marker 发布后会按其 pre-accept 默认门禁主动失败；该 frozen test
 > 不为 post-accept 状态改写，Phase 06 的实际依赖与独立测试不受影响。
+> 唯一 B+ attempt `20260729T080100Z-phase-06-bplus-formal-01` 已完成
+> 10/10 warmup 和 500/500 formal success，0 failure、generation retry 与
+> trace retry；共 75,224 completion tokens，正式单调时钟
+> 4,209.940660915 秒，output TPS `17.8681853401`。30,332 个 proposals
+> 接受 44,392 个 draft tokens，accepted/proposal `1.4635368588`，mean
+> acceptance length `2.4635368588`。其中 2,121 个 relaxed proposals 相对
+> strict 多接受 3,782 个 drafts；500 条 request 总计消费 3,120 risk budget，
+> 196 条最终余额为 0，continuity、accounting、非负与 `m<=1` 违例均为 0。
+> GSM8K 为 488/500 match、12 mismatch、0 parse failure。根线程逐行重算
+> 500 份完整 response/token IDs、30,332 个 flattened proposal rows、答案、
+> timing、acceptance 和预算，均与 summary 一致；39 个 artifact size/hash
+> 零差异。TP0–7 target/draft/NCCL/aux evidence 完整，正式请求结束前无
+> CUDA/NCCL/Traceback/worker crash。第 500 条 response 后才登记 SIGTERM，
+> `kill_fallback=false`，0 context 后 keepalive owner `378796` 恢复并通过
+> exact-eight 10×1 秒逐卡 100%。根线程于
+> `2026-07-29T09:36:27Z` 发布 accepted marker，SHA-256 为
+> `7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812`。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -209,6 +232,12 @@
 >
 > **权威 Phase 06 tooling freeze 01：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T080000Z-phase-06-tooling-freeze-01`
+>
+> **权威 Phase 06 B+ formal artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T080100Z-phase-06-bplus-formal-01`
+>
+> **Phase 06 accepted marker：**
+> `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-bplus-formal.complete.json`
 
 ## 固定身份与复现配置
 
@@ -227,7 +256,7 @@
 | Target | `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1`; 73 regular files，`159630041626` bytes，manifest `af6f274af9b0b257a6b910ae9b8ac4d0e1dd0a0bbcd96898fc6772c7e158facd`，published |
 | Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; 7 regular files，`1858538499` bytes，manifest `dfa6b2de48c46f4fda0cf7070466d35e6bd3df44b84ba0363616cc0f1f6020a0`，published |
 | HEDGE core | source `9fb903d676254ea5f5d171051fb15c54f331111c`；DSpark publisher `4d96f44065c07030ede67484a262006ec149626a`；Eagle3 import `4cefd0a36ea254e4c14a83f35dc8db15b37a3384`；10-file byte identity 与 33 tests PASS |
-| Formal artifacts | native `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02`；manifest `f9759d5e1826a752221b55367bb873db2ea1d72959092d52112675566105f8c1`；accepted marker SHA-256 `0ce403530e58cdebb1cbbe9dd0d3c0ae534ecd697947f4348ea4e66d9aa7aea4` |
+| Formal artifacts | native `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02`，manifest `f9759d5e1826a752221b55367bb873db2ea1d72959092d52112675566105f8c1`，marker `0ce403530e58cdebb1cbbe9dd0d3c0ae534ecd697947f4348ea4e66d9aa7aea4`；B+ `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T080100Z-phase-06-bplus-formal-01`，manifest `09a341ac5d454cda191814d1970d748d0f1494deb284c0d419e601d7e70b7a1b`，marker `7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812` |
 | Phase 01B runtime | Python 3.11；Torch `2.11.0+cu130`；CUDA `13.0`；NCCL `2.28.9`；FlashInfer `0.6.14`；Triton `3.6.0`；sglang-kernel `0.4.5+cu130`；201 packages，`uv pip check` PASS |
 | Dataset split | GSM8K revision `740312add88f781978c0658806c59bc2815b9866`，fingerprint `59ec1b7f9357c7a2`；seed `980406`；32 calibration + 500 formal，overlap 0 |
 | Runner fixture | 10 warmup + 500 formal，500 terminal/500 success/5 generation retries，最大 in-flight 1；Phase 03 另覆盖 generation 前 clear、成功后 drain、trace-only retry、不重发成功 generation、精确 response ID 归属和正式 timing 边界 |
@@ -563,9 +592,93 @@ sampler 样本，除 GPU3 的短窗口 maximum utilization 为 21% 外，其余�
 恢复为 owner `348863`，准确 8 个 owned worker/context，8×10 样本逐卡
 utilization 均为 100%。
 
+## Phase 05：Native formal 500
+
+### Attempt 历史
+
+| Attempt | 单一变化 | 结果 | 根因/新证据 | Artifact |
+| --- | --- | --- | --- | --- |
+| `20260729T055400Z-phase-05-native-formal-01` | 首次使用冻结 one-shot formal wrapper | INCOMPLETE；0 warmup / 0 formal | repo 外 cwd 缺少 import bootstrap，runner 在请求前报 `ModuleNotFoundError: deepspec`；正式计时未开始，不构成 formal 结果 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T055400Z-phase-05-native-formal-01` |
+| `20260729T061100Z-phase-05-native-formal-02` | 唯一变化为加入与既有 runner 相同的 repo-root import bootstrap | `ACCEPTED/PASS`；10 warmup + 500/500 success | 74,580 tokens、4,411.045604754 秒、16.9075558683 TPS；完整 trace/hash/GPU/cleanup/keeper 经根线程独立验收 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02` |
+
+retry 02 使用最终 SGLang SHA
+`2600c7b16c648d281be060b33ffadc7ae320f7e3`、TP=8、proposal width 3、
+internal verify width 4 和固定请求协议。500 条全部成功，0 failure、
+generation retry、trace retry；GSM8K 488 match、12 mismatch、0 parse
+failure。31,603 个 proposals 接受 42,477 个 draft tokens，
+accepted/proposal `1.3440812581`，mean acceptance length
+`2.3440812581`。
+
+39 个 artifact 的 size/hash、flattened trace、答案、计时和 summary 经根线程
+独立重算无差异。TP0–7 target/draft/NCCL/aux evidence 完整，正式窗口八卡参与，
+无未处理 CUDA/NCCL/worker crash。第 500 条达到终态后才登记 SIGTERM，
+`kill_fallback=false`；0 context 后 exact-eight keepalive 恢复。accepted marker
+于 `2026-07-29T07:42:58Z` 发布，SHA-256
+`0ce403530e58cdebb1cbbe9dd0d3c0ae534ecd697947f4348ea4e66d9aa7aea4`。
+
+## Phase 06：HEDGE B+ formal 500
+
+唯一 B+ formal 工具在
+`20260729T080000Z-phase-06-tooling-freeze-01` 冻结，15 个文件 self-verify
+无差异，freeze SHA-256
+`edc17c791fd0349163708b3dc649abde082af5ac76e1a06dd2c49962a09792d5`。
+Native 与 B+ 的 server command 逐字相同；source、target/draft revisions、TP、
+proposal width、warmup、formal split、请求与计时协议均相同，只切换：
+
+```text
+SGLANG_EAGLE3_HEDGE_MODE=enabled
+g=6.75
+B=6.75
+m=1
+value_scheme=normalized_suffix
+```
+
+唯一 attempt `20260729T080100Z-phase-06-bplus-formal-01` 完成 10/10 warmup
+和 500/500 formal success，0 failure、generation retry、trace retry。
+正式结果为 75,224 completion tokens、4,209.940660915 秒、output TPS
+`17.8681853401`；GSM8K 488 match、12 mismatch、0 parse failure。
+
+30,332 个 proposals 接受 44,392 个 draft tokens，accepted/proposal
+`1.4635368588`，mean acceptance length `2.4635368588`。Strict verifier
+本身接受 40,610 个 drafts；2,121 个 relaxed proposals 相对 strict 多接受
+3,782 个 drafts。500 条 request 的 budget trace 均可检查，总消费 3,120，
+196 条最终余额为 0；budget continuity、accounting、nonnegative 和每 block
+`m<=1` 违例均为 0。
+
+根线程独立重算了 500 条 source order、完整 response/token IDs、答案解析、
+正式 timing、30,332 个 proposal rows、flattened trace、acceptance distribution
+与逐 request budget；summary 和 39 个 manifest artifact 的 size/hash 均零差异。
+关键 hash 为：
+
+```text
+summary             2800474a2a8eb59bb217ed988502c446c24be1e2aa30d50d0edd13f6374baad9
+request_outputs     062c19f6573eaaf709fe2638f74cc4bbda2d19956811827bf25d4eb89bb90b44
+acceptance_trace    cb0c90da0ba686beaae6aedb72815f49de27b33f2b0fedcb07736c2e7474ca16
+artifact_manifest   09a341ac5d454cda191814d1970d748d0f1494deb284c0d419e601d7e70b7a1b
+formal_result       d5ad2dbd8139b590073c945a2e881cf257d03cc47188012a217ac81d1dde0f43
+```
+
+TP0–7 target/draft/NCCL/aux evidence 完整；保守 formal-window 每卡各有
+3,546 个 GPU samples、max utilization 均为 98%，显存不低于 60,267 MiB。
+正式请求结束前精确错误模式下的 CUDA/NCCL/Traceback/worker crash 均为 0。
+第 500 条 response 后才登记 SIGTERM，`kill_fallback=false`；0 context 后
+keepalive owner `378796` 恢复 exact-eight，10×1 秒逐卡 100%。
+
+accepted marker 于 `2026-07-29T09:36:27Z` 发布：
+
+```text
+/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-bplus-formal.complete.json
+SHA-256 7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812
+```
+
+本次路线内差值为：completion tokens `+644`（`+0.864%`），客户端墙钟
+`-201.104943839` 秒（`-4.559%`），output TPS `+0.9606294718`
+（`+5.682%`），accepted draft tokens/proposal `+0.1194556007`
+（`+8.888%`），GSM8K aggregate match 差值为 0。完整单表与 artifact/hash
+入口见独立[结果报告](../results/hedge-deepseek-v4-flash-eagle3.md)。
+
 ## 下一步
 
-Phase 04 已 COMPLETE/PASS。下一阶段为 Phase 05：确认现有
-source/env/model/config freeze，按计划新启动 native Eagle3 服务，执行固定 10 条
-warmup 后唯一一次顺序 500 条正式 baseline。Phase 04 不运行 formal 500；B+ 正式
-arm 留给 Phase 06。
+Phase 06 已 `ACCEPTED/PASS`。下一阶段只执行 Phase 07：独立交叉审计 Native/B+
+marker、artifact/hash、结果报告、复现命令和限制，确认 exact-eight keepalive
+仍健康，完成最终文档/commit/push 收尾；不再运行新的 formal arm。

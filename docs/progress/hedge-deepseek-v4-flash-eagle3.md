@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_06_BPLUS_FORMAL_LIVE`
+> 当前状态：`PHASE_06_BPLUS_FORMAL_ACCEPTED`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
@@ -50,6 +50,7 @@
 | 2026-07-29T08:25:00Z | 11h28m33s | passed | canceled | Phase 06 B+ formal live / `eagle3_phase06` | TP0–7 持续存活，八张卡各有唯一模型 context、约 60.3–60.6 GiB 显存；keeper 仍按协议暂停 | HTTP ready 后 10/10 warmup 完成；formal 96/500 terminal，chat non-200=0、trace non-200=0、error tail 空，严格单请求顺序与正式计时持续 | 同一 active scratch；继续到下一个 30 分钟心跳或异常门禁，完成前不发布 accepted marker |
 | 2026-07-29T08:50:00Z | 11h53m33s | passed | canceled | Phase 06 B+ formal live / `eagle3_phase06` | TP0–7 与八个模型 context 持续稳定，约 60.3–60.6 GiB/卡；keeper 仍按协议暂停 | formal 287/500 terminal，累计 chat non-200=0、trace non-200=0、error tail 空；用户要求的独立结果报告已由根线程提交/push 为 `18dc526`，只改 docs、未触碰 live/frozen files | 同一 active scratch；继续唯一 formal，到完成后由 wrapper 定向清理、复验 0 context、恢复 keeper并封存 candidate |
 | 2026-07-29T09:18:00Z | 12h21m33s | passed | canceled | Phase 06 B+ formal live / `eagle3_phase06` | TP0–7 与八个模型 context 仍稳定，约 60.4–60.7 GiB/卡；keeper 继续按协议暂停 | formal 480/500 terminal，chat non-200=0、trace non-200=0、error tail 空；一条约 33 秒长请求成功且无 retry，其余协议未变 | 同一 active scratch；完成最后 20 条后等待 JSONL/summary/budget 校验、定向清理、0-context、keeper 与 HDFS candidate，不把请求完成等同于 accepted |
+| 2026-07-29T09:36:27Z | 12h40m00s | passed | canceled | Phase 06 B+ formal `ACCEPTED/PASS` / `eagle3_phase06` | TP0–7 target/draft/NCCL/aux 完整；registered SIGTERM、无 KILL fallback、0 model context；keepalive owner `378796` 恢复 exact-eight，10×1 秒逐卡 100% | 根线程独立重算 500/500 success、75,224 tokens、4,209.940660915s、17.8681853401 TPS、488 match、30,332 proposals、44,392 accepted drafts；500 budgets 与 39 hashes 零差异；accepted marker 已发布 | artifact `.../20260729T080100Z-phase-06-bplus-formal-01`；marker SHA `7f6a95dc…1a812`；正式单表与 artifact/hash 已更新，提交/push 后进入独立 Phase 07 最终审计 |
 
 ## 当前依赖
 
@@ -67,10 +68,9 @@
   editable import、201-package
   `uv pip check`、CUDA 13 link-layout 和关键版本均已验证。GSM8K split、runner、
   q25/B0/report/cleanup fixtures 与 4 unit tests PASS。
-- Operational keepalive：Phase 05 native formal 结束后恢复为 owner `364528`，
-  Phase 06 启机前再次通过准确 8 个 owned worker/context 与 10×1 秒逐卡
-  mean=100% 门禁；当前按协议为 Phase 06 live attempt 紧邻暂停，待 registered
-  cleanup 和 0-context gate 后立即恢复并复验。
+- Operational keepalive：Phase 06 B+ formal 已完成 registered cleanup 和
+  0-context gate；当前 owner `378796`，准确 8 个 owned worker/context，
+  10×1 秒逐卡 min/mean/max=100%，状态 HEALTHY。
 
 ## Phase 00 操作边界
 
