@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_04_NATIVE_32_PASS_AWAITING_B0`。**
+> **状态：`PHASE_04_B0_PASS_AWAITING_CALIBRATION`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -41,7 +41,8 @@
 > 60.2–60.55 GiB，TP0–7 load 与 aux evidence 完整。登记 SIGTERM、
 > `kill_fallback=false`，随后 0 CUDA context；keepalive owner `335940`
 > 已恢复并通过 8×10 每卡 100%。
-> `B=0`、`g/B` 与正式 500 条仍 pending。
+> 独立 `B=0` arm 同样完成 32/32、0 retry/failure；与 native 的 32 份完整
+> token IDs 零差异，判定 `B0_PASS`。`g/B` 与正式 500 条仍 pending。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -78,6 +79,9 @@
 >
 > **权威 Phase 04 native calibration artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T044000Z-phase-04-native-calibration-03`
+>
+> **权威 Phase 04 B0 calibration artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T050000Z-phase-04-b0-calibration-01`
 
 ## 快速结果
 
@@ -93,7 +97,7 @@
 | 配置 | 值 |
 | --- | --- |
 | Lane | worker `4099544`, 8×H20, TP=8 |
-| B0 status | pending |
+| B0 status | `B0_PASS`；32/32 完整 token IDs 与 native 相同 |
 | `g=q25` | pending |
 | `B` | pending |
 | `m` | 1 |
@@ -397,8 +401,19 @@ TP0–7 均完成 target 与 `LlamaForCausalLMEagle3` load，并保留 aux evide
 `kill_fallback=false`；随后 CUDA context 精确为空。operational keepalive 恢复为
 owner `335940`，独立 8×10 gate 的逐卡 utilization 均为 100%。
 
+独立 B0 arm 使用完全相同的 SGLang source、server command、checkpoint、TP=8、
+proposal `3` / internal verify `4`；唯一预期差异为 HEDGE mode/config：
+`B=0,g=0,m=1,value_scheme=normalized_suffix`。32/32 terminal/generation/trace
+success，0 retry/failure，5034 completion tokens、2116 proposal rows、32 个
+unique sample IDs。主 Agent逐项比较 native/B0 完整 token IDs，mismatch count
+为 0，故 `B0_PASS`。trace 中有 1486 个正 strict-rejection barrier 可进入固定
+q25 计算。B0 artifact manifest 的 38 个 size/hash 全部匹配；请求窗口每卡 249 个
+采样，八卡 max utilization 95–98%。TP0–7 load/aux evidence 完整，无未处理
+CUDA/NCCL/worker crash。登记 SIGTERM、`kill_fallback=false`、0 context 后，
+keepalive owner `342599` 通过 8×10 每卡 100%。
+
 ## 下一步
 
-下一步仅在主 Agent 放行后，使用同一 freeze 02、Phase 04 canonical source 与
-decode 配置启动独立 B0 服务，运行固定 32 条并对 native artifact 执行可重算的完整
-token-ID diff。B0 完成前不进入 q25 calibration、B+ smoke 或正式 500。
+用冻结脚本对 native/B0 artifact 执行正式、可重算的 token-ID comparison，并从
+1486 个正 `regret/value` 按 NumPy linear q25 冻结唯一 `g=B,m=1` 配置；主 Agent
+验收后只运行 3 条 B+ calibration smoke。Phase 04 不进入正式 500。

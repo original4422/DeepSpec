@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_04_NATIVE_32_PASS_AWAITING_B0`
+> 当前状态：`PHASE_04_B0_PASS_AWAITING_CALIBRATION`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
@@ -35,6 +35,7 @@
 | 2026-07-29T04:14:00Z | 7h17m33s | 1h42m27s | 4h42m27s | Phase 04 native retry 02 fail closed / `eagle3_phase04` | TP0–7、精确八 context、HTTP ready；登记 SIGTERM、无 KILL fallback；0 context 后 keepalive owner `328407` 恢复，8×10 每卡 100% | tooling freeze 校验 PASS；32/32 terminal 均为 pre-generation trace-clear failure，0 generation。resolved `enable_multi_layer_eagle=false` 选择 `EAGLEWorkerV2`，但 Phase 03 只给 `MultiLayerEagleWorkerV2` 接了 HEDGE hooks；blocker 已缩到 concrete worker seam | `.../20260729T040000Z-phase-04-native-calibration-02`；保持 Phase 03 frozen authority 不变，最小 TDD recovery 后生成独立 patch/manifest，主 Agent审核前不启 GPU |
 | 2026-07-29T04:36:24Z | 7h39m57s | 1h20m03s | 4h20m03s | Phase 04 recovery frozen / `eagle3_phase04` | worker 未启机；keepalive 沿用 owner `328407`，最近 8×10 每卡 100%；SGLang source clean | 四个 concrete-worker seam RED→GREEN；主 Agent审计后本地提交 SGLang `2600c7b16c648d281be060b33ffadc7ae320f7e3`（未 push）。Phase04 canonical manifest/14-file patch 为 `96f7a392…8cae` / `73de4048…32cf`；source identity `043100`、17-file freeze02 `043500`（manifest `6470fa21…01ce`）自校验 PASS。executor DeepSpec 19/19、source 11+25；主 Agent独立复核 source/patch/freeze、DeepSpec 19/19、bash/pycompile 全 PASS | `.../20260729T042500Z-phase-04-eagle-worker-recovery-01`、`.../20260729T043100Z-phase-04-source-identity-01`、`.../20260729T043500Z-phase-04-tooling-freeze-02`；下一步仅 native retry03，等待主 Agent放行 |
 | 2026-07-29T04:56:00Z | 7h59m33s | 1h00m27s | 4h00m27s | Phase 04 native retry 03 PASS / `eagle3_phase04` | TP0–7 与八卡请求参与证据完整；registered SIGTERM、无 KILL fallback、0 context；keepalive owner `335940` 恢复，8×10 每卡 100% | 主 Agent独立验收：32/32 terminal/generation/trace success，0 retry/failure，5034 completion tokens，2116 proposal rows，32 unique sample IDs；请求窗口逐卡 245 samples、max util 93–97%、约 60.2–60.55 GiB；38 artifact hashes 精确一致 | `.../20260729T044000Z-phase-04-native-calibration-03`；下一步仅 B0 32 与可重算 token-ID diff，未放行前不启动 |
+| 2026-07-29T05:18:00Z | 8h21m33s | 38m27s | 3h38m27s | Phase 04 B0 PASS / `eagle3_phase04` | TP0–7 与八卡请求参与证据完整；registered SIGTERM、无 KILL fallback、0 context；keepalive owner `342599` 恢复，8×10 每卡 100% | 32/32 terminal/generation/trace success，0 retry/failure；B0 config=`B=0,g=0,m=1,normalized_suffix`，server command/source 与 native 完全相同；完整 token IDs mismatch=0，`B0_PASS`；1486 positive barriers；38 artifact hashes 精确一致 | `.../20260729T050000Z-phase-04-b0-calibration-01`；下一步仅离线 token diff/q25 freeze，未验收前不启动 B+ |
 
 ## 当前依赖
 
@@ -49,7 +50,7 @@
   `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`，editable import、201-package
   `uv pip check`、CUDA 13 link-layout 和关键版本均已验证。GSM8K split、runner、
   q25/B0/report/cleanup fixtures 与 4 unit tests PASS。
-- Operational keepalive：Phase 04 retry 03 结束后恢复为 owner `335940`；
+- Operational keepalive：Phase 04 B0 结束后恢复为 owner `342599`；
   准确 8 个 owned worker/context，10×1 秒逐卡 mean=100%，CUDA visibility、
   UUID 与 lane-local environment 见 native attempt 的 `keepalive_after*` 证据。
 
