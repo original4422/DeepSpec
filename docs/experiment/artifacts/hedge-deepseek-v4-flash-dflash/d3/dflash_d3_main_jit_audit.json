@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "auditor": "main-agent",
+  "audited_at_utc": "2026-07-29T02:44:46Z",
+  "worker_id": "4099543",
+  "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+  "attempt_id": "dflash-d3-jit-prebuild-20260729T021412Z-a02",
+  "scratch": "/tmp/deepspec-hedge-dflash/jit-prebuild/dflash-d3-jit-prebuild-20260729T021412Z-a02",
+  "audit_script": {
+    "path": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/dflash_d3_jit_audit.sh",
+    "sha256": "1033303aaa22382af08ad48e787ebf2ae77b7bb6bf89ffe255f714ee684be881",
+    "execution": "direct worker login with absolute script, absolute scratch, and exact attempt ID",
+    "read_only": true
+  },
+  "status": "PASS",
+  "recomputed_identity": {
+    "flashinfer_version": "0.6.14",
+    "nvcc_version": "V13.0.88",
+    "cuda_home": "/tmp/deepspec-hedge-dflash/toolchains/cuda-13.0",
+    "workspace_base": "/tmp/deepspec-hedge-dflash/cache/flashinfer-workspace",
+    "cuda_visible_devices": "",
+    "ninja_progress": "[183/183]",
+    "build_ninja_sha256": "315758c584b28a78fb45b5c523b9ce6ddb648444b053f4ac4fc81abdaed18a41",
+    "build_ninja_size_bytes": 104796,
+    "shared_object_sha256": "5ec37ba95c14231e6dfb4ace16bd5933064f53ce96a89efad99cf7d840f9671f",
+    "shared_object_size_bytes": 109245264,
+    "summary_sha256": "91afdaaefcdd3bf02597f7f85f956a7b59cbfa7c87eec25c043acf21e67505a8",
+    "jit_prebuild_sha256": "e15c036f48bc144a6699657a141755a437b5513f4e6af341ce7e4a97d2a3569f",
+    "artifact_validation_sha256": "072e30927302fbcc11f20a7f0d130fb2deeed26ed86347941b2d5cef8f6e22a9",
+    "ldd_not_found": false,
+    "forbidden_marker_match_count": 0
+  },
+  "isolation_recheck": {
+    "shared_cache_before_after_equal": true,
+    "shared_cache_fingerprint_sha256": "9417f4cb5163addc4be4ebda446e15c9d322112dffd09462a4ec2d3c8d716bbe",
+    "shared_cache_summary_file_sha256": "b6e544290a6e5fb38814d2f7c3c41ffa38406e54474186955ecbf6e8b26f2ede",
+    "compute_apps_before_after_equal": true,
+    "compute_apps_csv_sha256": "97711ea8c163d381d6f9f640849d76ec1fa880dac6caabfb4779e65958daedfa",
+    "keepalive_pid": 75280,
+    "keepalive_identity_stable": true,
+    "keepalive_gate_before_after_equal": true,
+    "keepalive_gate_sha256": "25d6eb225b71baa8e4a0a6d33aed91b072a77c04650a1a52e8bf7ed0974f36a8",
+    "cuda_view_symlink_count": 6,
+    "cuda_view_symlinks_exact": true
+  },
+  "authorization_conclusion": "jit_link_blocker_resolved_a04_not_started",
+  "jit_link_blocker_resolved": true,
+  "a04_started": false,
+  "model_or_gpu_work_performed_by_audit": false
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "orchestration_attempt": {
+    "attempt_id": "dflash-d3-native-20260729T004040Z-a01",
+    "status": "ORCHESTRATION_INTERRUPTED",
+    "gpu_touched": false,
+    "keepalive_paused": false,
+    "artifact_count": 0,
+    "classification": "calling-tool connection ended before the remote preflight completed; this is not a model attempt"
+  },
+  "accepted_preflight": {
+    "attempt_id": "dflash-d3-native-20260729T004350Z-a02",
+    "status": "PASS",
+    "captured_at_utc": "2026-07-29T00:46:53.381956Z",
+    "worker_id": "4099543",
+    "gpu_count": 8,
+    "port": 31457,
+    "keepalive_pid": 34059,
+    "source_sha": "7245c3d607a1eadc26582bb78ebd603a70c22fa7"
+  },
+  "bash_x_diagnostic": {
+    "status": "PASS",
+    "trace_location": "Codex phase-executor tool transcript for the a02 preflight",
+    "warning_stage": "formal environment import of sglang before the launch-time driver compatibility environment is exported",
+    "warning_fingerprint": "PyTorch cu130 reports host driver 12060 as too old during the metadata import",
+    "impact": "The import continued and every preflight gate passed. The actual server command later exported the fixed CUDA 13.0 driver-compat LD_LIBRARY_PATH.",
+    "script_patch_required": false
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "fix_scope": [
+    "python/sglang/srt/arg_groups/deepseek_v4_hook.py",
+    "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py"
+  ],
+  "diff_stat": "2 files changed, 24 insertions(+), 1 deletion(-)",
+  "source_base_head": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+  "source_final_sha": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+  "source_final_parent": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+  "source_fixed_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "patch_sha256": "44481dad83c447c480af67da40ceb364c8925fb28820d9323075ebdee90e4f42",
+  "patch_apply": {
+    "command": "git apply --unidiff-zero dflash_d3_allowlist_fix.patch",
+    "reverse_check_against_source_final_sha": "PASS"
+  },
+  "tests": {
+    "command": "CUDA_VISIBLE_DEVICES=999 /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_deepseek_v4_primary.py -v",
+    "status": "PASS",
+    "tests_run": 7,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "compileall": "PASS",
+  "git_diff_check": "PASS",
+  "orchestration_note": "An initial python -m unittest file-path invocation reproduced the known test-module path error and imported no production code; direct file execution then ran 7/7 tests successfully.",
+  "source_commit_status": "FIXED_BY_MAIN_AGENT",
+  "gpu_retry_authorized": false
+}

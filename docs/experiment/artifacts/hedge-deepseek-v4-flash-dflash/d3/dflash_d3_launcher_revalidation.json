@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "status": "PASS",
+  "source_identity": {
+    "head": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "parent": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+    "fixed_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "fixed_base_is_ancestor": true,
+    "worktree_clean": true
+  },
+  "launcher_updates": {
+    "head_check": true,
+    "parent_check": true,
+    "fixed_base_ancestor_check": true,
+    "source_identity_artifact_records_head_parent_base": true
+  },
+  "static_checks": {
+    "bash_n": "PASS",
+    "api_python_ast": "PASS",
+    "inline_python_ast": "PASS (11 heredocs)",
+    "shellcheck": "PASS (-S error, shellcheck 0.11.0 via uvx shellcheck-py)",
+    "formal_source_env_checkpoint_dry_run": "PASS"
+  },
+  "dry_run_contract": {
+    "tp_size": 8,
+    "speculative_algorithm": "DFLASH",
+    "dflash_block_size": 8,
+    "draft_candidates": 7,
+    "aux_hidden_state_layer_ids": [
+      3,
+      13,
+      23,
+      32,
+      42
+    ],
+    "moe_runner_backend": "flashinfer_mxfp4",
+    "target_revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+    "draft_revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483"
+  },
+  "gpu_attempt_started": false,
+  "next_gate": "main-agent launcher/source acceptance before a03"
+}

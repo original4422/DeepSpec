@@ -1,0 +1,35 @@
+diff --git a/python/sglang/srt/arg_groups/deepseek_v4_hook.py b/python/sglang/srt/arg_groups/deepseek_v4_hook.py
+index 0ede772..38bfda6 100644
+--- a/python/sglang/srt/arg_groups/deepseek_v4_hook.py
++++ b/python/sglang/srt/arg_groups/deepseek_v4_hook.py
+@@ -59 +59,2 @@ def apply_deepseek_v4_defaults(server_args: ServerArgs, model_arch: str) -> None
+-        ), f"Only EAGLE and DSPARK speculative algorithms are supported for {model_arch}"
++            "DFLASH",
++        ), f"Only EAGLE, DSPARK, and DFLASH speculative algorithms are supported for {model_arch}"
+diff --git a/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py b/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+index ad952f8..20b2d2d 100644
+--- a/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
++++ b/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+@@ -50,0 +51,22 @@ class TestDeepSeekV4PrimaryDFlashConfig(unittest.TestCase):
++    def test_deepseek_v4_defaults_allow_dflash(self) -> None:
++        from sglang.srt.arg_groups.deepseek_v4_hook import (
++            apply_deepseek_v4_defaults,
++        )
++
++        server_args = SimpleNamespace(
++            max_running_requests=1,
++            speculative_algorithm="DFLASH",
++            speculative_eagle_topk=1,
++        )
++        with (
++            patch("sglang.srt.utils.is_hip", return_value=False),
++            patch(
++                "sglang.srt.arg_groups.overrides.run_post_process_pass"
++            ) as post_process,
++        ):
++            apply_deepseek_v4_defaults(
++                server_args, "DeepseekV4ForCausalLM"
++            )
++
++        post_process.assert_called_once()
++

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "attempt_id": "dflash-d3-native-20260729T004350Z-a02",
+  "status": "FAIL",
+  "classification": "native-dflash-server-args-allowlist-blocker",
+  "worker_id": "4099543",
+  "source_head": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+  "source_parent": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+  "hedge_enabled": false,
+  "gpu_model_load_started": false,
+  "api_status": "NOT_RUN",
+  "first_failing_command_stage": "sglang ServerArgs.__post_init__ model-specific adjustments",
+  "root_cause_file": "python/sglang/srt/arg_groups/deepseek_v4_hook.py",
+  "root_cause_line": 56,
+  "root_cause_fingerprint": "DeepseekV4ForCausalLM rejects speculative_algorithm=DFLASH because its fixed allowlist contains only EAGLE and DSPARK",
+  "exception": "AssertionError: Only EAGLE and DSPARK speculative algorithms are supported for DeepseekV4ForCausalLM",
+  "hdfs_run": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d3-native-20260729T004350Z-a02",
+  "hdfs_manifest_sha256": "8cd1ff66df847fe1744bb849960af8e6953f535d8d4fe978479c961014567a9a",
+  "hdfs_manifest_check": "PASS",
+  "cleanup_status": "PASS",
+  "contexts_clear_after_server": true,
+  "keepalive_resume_returncode": 0,
+  "keepalive_resume_gate": {
+    "healthy": true,
+    "sample_count_per_gpu": 10,
+    "minimum_mean_utilization_percent": 40.0,
+    "per_gpu_mean_utilization_percent": {
+      "0": 100.0,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 100.0,
+      "5": 100.0,
+      "6": 100.0,
+      "7": 100.0
+    }
+  },
+  "single_variable_fix": "Add DFLASH to the DeepSeek-V4 speculative algorithm allowlist and cover it with one CPU regression test.",
+  "target_only_diagnostic": false,
+  "finished_at_utc": "2026-07-29T00:54:26.241168Z"
+}

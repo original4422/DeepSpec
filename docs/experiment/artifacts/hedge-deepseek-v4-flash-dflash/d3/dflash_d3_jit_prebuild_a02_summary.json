@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "attempt_id": "dflash-d3-jit-prebuild-20260729T021412Z-a02",
+  "status": "PASS",
+  "scratch": "/tmp/deepspec-hedge-dflash/jit-prebuild/dflash-d3-jit-prebuild-20260729T021412Z-a02",
+  "started_at_utc": "2026-07-29T02:14:51.574964Z",
+  "jit_finished_at_utc": "2026-07-29T02:37:17.223742Z",
+  "wrapper_finished_at_utc": "2026-07-29T02:37:34.579249Z",
+  "toolchain": {
+    "flashinfer_version": "0.6.14",
+    "module_name": "fused_moe_90",
+    "nvcc_release": "13.0",
+    "nvcc_version": "V13.0.88",
+    "cuda_home": "/tmp/deepspec-hedge-dflash/toolchains/cuda-13.0",
+    "cuda_visible_devices": "",
+    "flashinfer_cuda_arch_list": "9.0",
+    "flashinfer_workspace_base": "/tmp/deepspec-hedge-dflash/cache/flashinfer-workspace",
+    "max_jobs": 16,
+    "python_no_user_site": true
+  },
+  "build": {
+    "ninja_progress": "[183/183]",
+    "source_count": 182,
+    "workspace": "/tmp/deepspec-hedge-dflash/cache/flashinfer-workspace/.cache/flashinfer/0.6.14/90a",
+    "build_dir": "/tmp/deepspec-hedge-dflash/cache/flashinfer-workspace/.cache/flashinfer/0.6.14/90a/cached_ops/fused_moe_90",
+    "build_ninja": {
+      "path": "/tmp/deepspec-hedge-dflash/cache/flashinfer-workspace/.cache/flashinfer/0.6.14/90a/cached_ops/fused_moe_90/build.ninja",
+      "size_bytes": 104796,
+      "sha256": "315758c584b28a78fb45b5c523b9ce6ddb648444b053f4ac4fc81abdaed18a41"
+    },
+    "shared_object": {
+      "path": "/tmp/deepspec-hedge-dflash/cache/flashinfer-workspace/.cache/flashinfer/0.6.14/90a/cached_ops/fused_moe_90/fused_moe_90.so",
+      "size_bytes": 109245264,
+      "sha256": "5ec37ba95c14231e6dfb4ace16bd5933064f53ce96a89efad99cf7d840f9671f"
+    },
+    "jit_log": {
+      "size_bytes": 7258724,
+      "sha256": "311bafd2cebe100d6eefff146bb233d9d2f5f709615ee57d53b9b5de42e2e1cb"
+    }
+  },
+  "dynamic_link_audit": {
+    "ldd_not_found": false,
+    "libcudart": "/home/tiger/venvs/deepspec-hedge-dflash/lib/python3.11/site-packages/nvidia/cu13/lib/libcudart.so.13",
+    "libcuda": "/home/tiger/toolchains/deepspec-cuda-compat-13.0-580.173.02/usr/local/cuda-13.0/compat/libcuda.so.1",
+    "ldd_txt_size_bytes": 871,
+    "ldd_txt_sha256": "f872db840b8b62d48e9052bc2ff7a7638aa60146d2ad5a129b697674cac58c3c",
+    "readelf_dynamic_txt_size_bytes": 1776,
+    "readelf_dynamic_txt_sha256": "f7f08959ab8e7f77e6a26ccfb84d8562b349a0eb786536c3df63815c47238458"
+  },
+  "isolation": {
+    "forbidden_marker_matches": {
+      "eagle": 0,
+      "shared_home_cache": 0,
+      "cuda_12_6_dash": 0,
+      "cuda_12_6_compact": 0,
+      "cuda_12_6_space": 0,
+      "cu126": 0
+    },
+    "shared_cache_root": "/home/tiger/.cache/flashinfer",
+    "shared_cache_fingerprint_kind": "lstat-tree-metadata-v1",
+    "shared_cache_fingerprint_sha256": "9417f4cb5163addc4be4ebda446e15c9d322112dffd09462a4ec2d3c8d716bbe",
+    "shared_cache_entry_count": 492,
+    "shared_cache_total_regular_bytes": 298596755,
+    "shared_cache_before_after_equal": true,
+    "shared_cache_summary_file_sha256": "b6e544290a6e5fb38814d2f7c3c41ffa38406e54474186955ecbf6e8b26f2ede"
+  },
+  "operational_evidence": {
+    "keepalive_paused": false,
+    "keepalive_pid": 75280,
+    "keepalive_identity_stable": true,
+    "keepalive_gate_before_after_equal": true,
+    "keepalive_gate_sha256": "25d6eb225b71baa8e4a0a6d33aed91b072a77c04650a1a52e8bf7ed0974f36a8",
+    "keepalive_per_gpu_mean_utilization_percent": {
+      "0": 100.0,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 100.0,
+      "5": 100.0,
+      "6": 100.0,
+      "7": 100.0
+    },
+    "compute_apps_before_after_equal": true,
+    "compute_apps_row_count": 8,
+    "compute_apps_distinct_host_pid_count": 8,
+    "compute_apps_csv_sha256": "97711ea8c163d381d6f9f640849d76ec1fa880dac6caabfb4779e65958daedfa",
+    "compute_apps_json_sha256": "bbe94c01422df61e6d395ee1e9616c9e60d95379584f46a65fee74ec5b2898d1"
+  },
+  "artifact_sha256": {
+    "artifact_validation.json": "072e30927302fbcc11f20a7f0d130fb2deeed26ed86347941b2d5cef8f6e22a9",
+    "jit_prebuild.json": "e15c036f48bc144a6699657a141755a437b5513f4e6af341ce7e4a97d2a3569f",
+    "jit_prebuild.log": "311bafd2cebe100d6eefff146bb233d9d2f5f709615ee57d53b9b5de42e2e1cb",
+    "summary.json": "91afdaaefcdd3bf02597f7f85f956a7b59cbfa7c87eec25c043acf21e67505a8"
+  },
+  "artifact_sizes_bytes": {
+    "artifact_validation.json": 965,
+    "jit_prebuild.json": 2974,
+    "jit_prebuild.log": 7258724,
+    "summary.json": 398
+  },
+  "limitation": {
+    "helper_reported_object_file_count": 0,
+    "interpretation": "The helper derived object paths from JitSpec source basenames, which did not match FlashInfer's actual ninja object naming. This field does not negate the observed [183/183] build, successful final link, or independently hashed shared object.",
+    "object_files_copied": false
+  }
+}
