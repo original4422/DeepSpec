@@ -844,8 +844,15 @@ class P04ArtifactValidatorTests(unittest.TestCase):
 
     @staticmethod
     def _write_samples(
-        path: Path, *, omit_gpu: int | None = None
+        path: Path,
+        *,
+        omit_gpu: int | None = None,
+        omit_ordinal: int | None = None,
+        sample_times_ns: list[int] | None = None,
     ) -> None:
+        times = sample_times_ns or [
+            (ordinal + 1) * 1_000_000_000 for ordinal in range(6)
+        ]
         fields = [
             "sample_ordinal",
             "timestamp_utc",
@@ -859,7 +866,9 @@ class P04ArtifactValidatorTests(unittest.TestCase):
         with path.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=fields)
             writer.writeheader()
-            for ordinal in range(6):
+            for ordinal, sample_time in enumerate(times):
+                if omit_ordinal == ordinal:
+                    continue
                 for index in range(8):
                     if omit_gpu == index and ordinal == 3:
                         continue
@@ -874,7 +883,7 @@ class P04ArtifactValidatorTests(unittest.TestCase):
                                 .isoformat()
                                 .replace("+00:00", "Z")
                             ),
-                            "monotonic_ns": (ordinal + 1) * 1_000_000_000,
+                            "monotonic_ns": sample_time,
                             "gpu_index": index,
                             "gpu_uuid": f"GPU-fixture-{index}",
                             "utilization_gpu_percent": 50 + index,
@@ -889,6 +898,8 @@ class P04ArtifactValidatorTests(unittest.TestCase):
         *,
         arm: str = "b0",
         omit_gpu: int | None = None,
+        omit_ordinal: int | None = None,
+        sample_times_ns: list[int] | None = None,
     ) -> str:
         attempt_id = f"20260729T010203Z-p04-{arm}-fixture"
         resolved = self._resolved(arm, attempt_id, scratch)
@@ -947,9 +958,29 @@ class P04ArtifactValidatorTests(unittest.TestCase):
             self._server_log(), encoding="utf-8"
         )
         self._write_samples(
-            scratch / "gpu_samples.csv", omit_gpu=omit_gpu
+            scratch / "gpu_samples.csv",
+            omit_gpu=omit_gpu,
+            omit_ordinal=omit_ordinal,
+            sample_times_ns=sample_times_ns,
         )
         return attempt_id
+
+    @staticmethod
+    def _set_request_interval(
+        scratch: Path, *, start: int, end: int
+    ) -> None:
+        api_path = scratch / "api_smoke.json"
+        api = json.loads(api_path.read_text(encoding="utf-8"))
+        api["request_started_monotonic_ns"] = start
+        api["request_finished_monotonic_ns"] = end
+        P04ArtifactValidatorTests._write_json(api_path, api)
+        counters_path = scratch / "hedge_counters.json"
+        counters = json.loads(counters_path.read_text(encoding="utf-8"))
+        counters["request_interval_monotonic_ns"] = {
+            "start": start,
+            "end": end,
+        }
+        P04ArtifactValidatorTests._write_json(counters_path, counters)
 
     def test_required_artifact_set_is_the_frozen_eleven(self) -> None:
         self.assertEqual(set(REQUIRED_ARTIFACTS), self.REQUIRED)
@@ -970,6 +1001,35 @@ class P04ArtifactValidatorTests(unittest.TestCase):
         self.assertTrue(audit["gpu_evidence"]["request_bracketed"])
         self.assertEqual(audit["server_log"]["tp_ranks"], list(range(8)))
 
+    def test_off_request_scheduler_jitter_is_diagnostic_not_failure(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            scratch = Path(temporary)
+            attempt_id = self._write_live_fixture(
+                scratch,
+                sample_times_ns=[
+                    1_000_000_000,
+                    2_000_000_000,
+                    3_000_000_000,
+                    4_000_000_000,
+                    6_600_000_000,
+                    7_600_000_000,
+                ],
+            )
+            audit = validate_live(
+                scratch=scratch,
+                arm="b0",
+                attempt_id=attempt_id,
+            )
+        cadence = audit["gpu_evidence"]["cadence"]
+        self.assertEqual(cadence["interval_seconds_target"], 1.0)
+        self.assertEqual(cadence["global"]["outlier_count_gt_2_5s"], 1)
+        self.assertAlmostEqual(cadence["global"]["max_seconds"], 2.6)
+        self.assertEqual(
+            cadence["request_window"]["outlier_count_gt_2_5s"], 0
+        )
+
     def test_live_validator_rejects_any_incomplete_eight_gpu_sample(
         self,
     ) -> None:
@@ -986,6 +1046,72 @@ class P04ArtifactValidatorTests(unittest.TestCase):
                     arm="b0",
                     attempt_id=attempt_id,
                 )
+
+    def test_structural_and_request_window_evidence_remains_fail_closed(
+        self,
+    ) -> None:
+        cases = (
+            {
+                "name": "missing ordinal",
+                "fixture": {"omit_ordinal": 3},
+                "interval": None,
+                "error": "ordinals must be contiguous",
+            },
+            {
+                "name": "missing row",
+                "fixture": {"omit_gpu": 7},
+                "interval": None,
+                "error": "must contain exactly 8 rows",
+            },
+            {
+                "name": "nonmonotonic timestamps",
+                "fixture": {
+                    "sample_times_ns": [
+                        1_000_000_000,
+                        2_000_000_000,
+                        3_000_000_000,
+                        2_500_000_000,
+                        5_000_000_000,
+                        6_000_000_000,
+                    ]
+                },
+                "interval": None,
+                "error": "timestamps are not strictly increasing",
+            },
+            {
+                "name": "no request sample",
+                "fixture": {},
+                "interval": (2_200_000_000, 2_800_000_000),
+                "error": "no observation during the API request",
+            },
+            {
+                "name": "request unbracketed",
+                "fixture": {},
+                "interval": (500_000_000, 4_000_000_000),
+                "error": "do not bracket the API request interval",
+            },
+        )
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                with tempfile.TemporaryDirectory() as temporary:
+                    scratch = Path(temporary)
+                    attempt_id = self._write_live_fixture(
+                        scratch, **case["fixture"]
+                    )
+                    if case["interval"] is not None:
+                        self._set_request_interval(
+                            scratch,
+                            start=case["interval"][0],
+                            end=case["interval"][1],
+                        )
+                    with self.assertRaisesRegex(
+                        ValueError, case["error"]
+                    ):
+                        validate_live(
+                            scratch=scratch,
+                            arm="b0",
+                            attempt_id=attempt_id,
+                        )
 
     def test_failure_placeholders_make_missing_artifacts_explicit(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

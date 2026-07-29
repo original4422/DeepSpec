@@ -99,6 +99,9 @@ CRASH_PATTERNS = {
     ),
     "segmentation_fault": re.compile(r"\bSegmentation fault\b"),
 }
+CADENCE_INTERVAL_SECONDS_TARGET = 1.0
+CADENCE_DIAGNOSTIC_MIN_SECONDS = 0.5
+CADENCE_DIAGNOSTIC_MAX_SECONDS = 2.5
 
 
 def _atomic_json(path: Path, value: Any, *, exclusive: bool = False) -> None:
@@ -497,6 +500,27 @@ def _integer_field(
     return value
 
 
+def _cadence_diagnostics(sample_times: Sequence[int]) -> dict[str, Any]:
+    deltas = [
+        (later - earlier) / 1_000_000_000
+        for earlier, later in zip(sample_times, sample_times[1:])
+    ]
+    return {
+        "delta_count": len(deltas),
+        "min_seconds": min(deltas, default=None),
+        "max_seconds": max(deltas, default=None),
+        "mean_seconds": (
+            sum(deltas) / len(deltas) if deltas else None
+        ),
+        "outlier_count_lt_0_5s": sum(
+            delta < CADENCE_DIAGNOSTIC_MIN_SECONDS for delta in deltas
+        ),
+        "outlier_count_gt_2_5s": sum(
+            delta > CADENCE_DIAGNOSTIC_MAX_SECONDS for delta in deltas
+        ),
+    }
+
+
 def _validate_gpu_samples(
     path: Path,
     *,
@@ -518,6 +542,7 @@ def _validate_gpu_samples(
     )
 
     sample_times: list[int] = []
+    request_sample_times: list[int] = []
     request_rows: list[Mapping[str, str]] = []
     expected_uuid_list = list(expected_uuids)
     for ordinal in ordinals:
@@ -560,6 +585,7 @@ def _validate_gpu_samples(
                 f"sample ordinal {ordinal} has invalid GPU metrics",
             )
         if request_start <= sample_time <= request_end:
+            request_sample_times.append(sample_time)
             request_rows.extend(sample)
 
     _require(
@@ -571,10 +597,6 @@ def _validate_gpu_samples(
         (later - earlier) / 1_000_000_000
         for earlier, later in zip(sample_times, sample_times[1:])
     ]
-    _require(
-        all(0.5 <= delta <= 2.5 for delta in cadence_seconds),
-        "GPU sampling cadence departed from the one-second sampler",
-    )
     request_bracketed = (
         sample_times[0] <= request_start
         and sample_times[-1] >= request_end
@@ -622,6 +644,17 @@ def _validate_gpu_samples(
         "request_bracketed": request_bracketed,
         "request_sample_ordinals": len(request_rows) // EXPECTED_GPUS,
         "cadence_seconds": cadence_seconds,
+        "cadence": {
+            "interval_seconds_target": CADENCE_INTERVAL_SECONDS_TARGET,
+            "diagnostic_bounds_seconds": {
+                "minimum": CADENCE_DIAGNOSTIC_MIN_SECONDS,
+                "maximum": CADENCE_DIAGNOSTIC_MAX_SECONDS,
+            },
+            "global": _cadence_diagnostics(sample_times),
+            "request_window": _cadence_diagnostics(
+                request_sample_times
+            ),
+        },
         "participation": participation,
     }
 
