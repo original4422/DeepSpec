@@ -46,6 +46,9 @@ from hedge_dspark_p05_prepare import (  # noqa: E402
 ARMS = ("native-trace", "b0")
 JsonGet = Callable[[str, float], Mapping[str, Any]]
 JsonPost = Callable[[str, Mapping[str, Any], float], Any]
+CONTROL_HTTP_TIMEOUT_SECONDS = 10.0
+HANDSHAKE_TIMEOUT_SECONDS = 120.0
+HANDSHAKE_POLL_SECONDS = 1.0
 
 
 class _NoProxyJsonPost:
@@ -94,10 +97,10 @@ def _nonnegative_int(value: Any, *, field: str) -> int:
     return value
 
 
-def validate_cleared_server_snapshot(
+def inspect_pre_cohort_server_snapshot(
     server_info: Mapping[str, Any], *, arm: str
-) -> int:
-    """Prove every DSpark HEDGE snapshot is empty before the cohort."""
+) -> dict[str, Any]:
+    """Validate snapshot identity/schema and report quiescence/dirty fields."""
 
     if arm not in ARMS:
         raise ValueError("arm must be exactly native-trace or b0")
@@ -119,7 +122,7 @@ def validate_cleared_server_snapshot(
         ),
     }
     expected_config = None if arm == "native-trace" else dict(B0_CONFIG)
-    zero_scalars = {
+    zero_scalar_fields = {
         "proposals",
         "draft_tokens_verifiable",
         "strict_accepted_draft_tokens",
@@ -138,6 +141,9 @@ def validate_cleared_server_snapshot(
         "trace_rows_seen",
         "trace_rows_dropped",
     }
+    dirty_snapshots: list[dict[str, Any]] = []
+    active_request_states = 0
+    state_leaks = 0
     for snapshot_index, state in enumerate(internal_states):
         if not isinstance(state, Mapping):
             raise ValueError(
@@ -163,32 +169,80 @@ def validate_cleared_server_snapshot(
             raise ValueError(
                 f"cleared HEDGE snapshot {snapshot_index} identity mismatch"
             )
-        nonzero = {
+        malformed = {
             field: snapshot.get(field)
-            for field in zero_scalars
+            for field in zero_scalar_fields
             if (
                 isinstance(snapshot.get(field), bool)
                 or not isinstance(snapshot.get(field), (int, float))
-                or float(snapshot[field]) != 0.0
+                or not math.isfinite(float(snapshot[field]))
+                or float(snapshot[field]) < 0.0
             )
         }
-        if nonzero:
+        if malformed:
             raise ValueError(
-                f"cleared HEDGE snapshot {snapshot_index} has nonzero counters: "
-                f"{nonzero}"
+                f"HEDGE snapshot {snapshot_index} has malformed counters: "
+                f"{malformed}"
             )
-        if snapshot.get("hedge_accepted_draft_tokens_by_position") != [0] * 5:
-            raise ValueError(
-                f"cleared HEDGE snapshot {snapshot_index} has position counters"
-            )
+        positions = snapshot.get("hedge_accepted_draft_tokens_by_position")
         if (
-            snapshot.get("remaining_budget_by_request") != []
-            or snapshot.get("strict_rejection_trace") != []
+            not isinstance(positions, list)
+            or len(positions) != 5
+            or any(
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value < 0
+                for value in positions
+            )
         ):
             raise ValueError(
-                f"cleared HEDGE snapshot {snapshot_index} retains request/trace data"
+                f"HEDGE snapshot {snapshot_index} has malformed position counters"
             )
-    return len(internal_states)
+        remaining = snapshot.get("remaining_budget_by_request")
+        trace = snapshot.get("strict_rejection_trace")
+        if not isinstance(remaining, list) or not isinstance(trace, list):
+            raise ValueError(
+                f"HEDGE snapshot {snapshot_index} request/trace fields are malformed"
+            )
+        active_request_states += int(snapshot["active_request_states"])
+        state_leaks += int(snapshot["state_leaks"])
+        dirty = {
+            field: snapshot[field]
+            for field in zero_scalar_fields
+            if float(snapshot[field]) != 0.0
+        }
+        if positions != [0] * 5:
+            dirty["hedge_accepted_draft_tokens_by_position"] = positions
+        if remaining:
+            dirty["remaining_budget_by_request"] = remaining
+        if trace:
+            dirty["strict_rejection_trace_count"] = len(trace)
+        if dirty:
+            dirty_snapshots.append(
+                {"snapshot_index": snapshot_index, "fields": dirty}
+            )
+    return {
+        "snapshot_count": len(internal_states),
+        "active_request_states": active_request_states,
+        "state_leaks": state_leaks,
+        "quiescent": active_request_states == 0 and state_leaks == 0,
+        "exact_zero": not dirty_snapshots,
+        "dirty_snapshots": dirty_snapshots,
+    }
+
+
+def validate_cleared_server_snapshot(
+    server_info: Mapping[str, Any], *, arm: str
+) -> int:
+    """Prove every DSpark HEDGE snapshot is empty before the cohort."""
+
+    observation = inspect_pre_cohort_server_snapshot(server_info, arm=arm)
+    if not observation["exact_zero"]:
+        raise ValueError(
+            "cleared HEDGE snapshots have nonzero counters: "
+            f"{observation['dirty_snapshots']}"
+        )
+    return int(observation["snapshot_count"])
 
 
 def clear_calibration_evidence(
@@ -197,32 +251,201 @@ def clear_calibration_evidence(
     base_url: str,
     internal_state_post: JsonPost,
     server_info_get: JsonGet,
+    sleeper: Callable[[float], None] = time.sleep,
+    monotonic: Callable[[], float] = time.monotonic,
+    timeout_seconds: float = HANDSHAKE_TIMEOUT_SECONDS,
+    poll_seconds: float = HANDSHAKE_POLL_SECONDS,
 ) -> dict[str, Any]:
-    """Clear ready/preflight evidence and prove the reset took effect."""
+    """Wait for quiescence, clear metrics, and prove exact zero with a bound."""
 
-    response = internal_state_post(
-        base_url.rstrip("/") + "/set_internal_state",
-        {"server_args": {"dspark_clear_info_records": 1}},
-        300.0,
-    )
-    if response != [True]:
-        raise ValueError(
-            "/set_internal_state must return exact DP=1 success list [true]"
+    if (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, (int, float))
+        or not math.isfinite(float(timeout_seconds))
+        or not 0 < float(timeout_seconds) <= 300.0
+    ):
+        raise ValueError("handshake timeout must be in (0, 300] seconds")
+    if (
+        isinstance(poll_seconds, bool)
+        or not isinstance(poll_seconds, (int, float))
+        or not math.isfinite(float(poll_seconds))
+        or not 0 < float(poll_seconds) <= float(timeout_seconds)
+    ):
+        raise ValueError("handshake poll must be in (0, timeout] seconds")
+    timeout_seconds = float(timeout_seconds)
+    poll_seconds = float(poll_seconds)
+    started = monotonic()
+    if isinstance(started, bool) or not isinstance(started, (int, float)):
+        raise ValueError("monotonic clock must return a number")
+    started = float(started)
+    if not math.isfinite(started):
+        raise ValueError("monotonic clock must return a finite number")
+    max_cycles = math.ceil(timeout_seconds / poll_seconds) + 1
+    polls: list[dict[str, Any]] = []
+    clear_attempts: list[dict[str, Any]] = []
+    server_info_url = base_url.rstrip("/") + "/server_info"
+    clear_url = base_url.rstrip("/") + "/set_internal_state"
+    request_body = {"server_args": {"dspark_clear_info_records": 1}}
+
+    def elapsed() -> float:
+        now = monotonic()
+        if (
+            isinstance(now, bool)
+            or not isinstance(now, (int, float))
+            or not math.isfinite(float(now))
+            or float(now) < started
+        ):
+            raise ValueError("monotonic clock returned an invalid value")
+        return float(now) - started
+
+    def evidence(
+        *,
+        status: str,
+        verified_snapshot_count: int | None = None,
+        failure: BaseException | None = None,
+    ) -> dict[str, Any]:
+        record = {
+            "status": status,
+            "source_endpoint": "/set_internal_state",
+            "request_body": request_body,
+            "response": (
+                [True]
+                if clear_attempts
+                and clear_attempts[-1].get("response") == [True]
+                else None
+            ),
+            "verified_snapshot_count": verified_snapshot_count,
+            "timeout_seconds": timeout_seconds,
+            "poll_seconds": poll_seconds,
+            "http_timeout_seconds": CONTROL_HTTP_TIMEOUT_SECONDS,
+            "elapsed_seconds": elapsed(),
+            "poll_count": len(polls),
+            "clear_attempt_count": len(clear_attempts),
+            "polls": polls,
+            "clear_attempts": clear_attempts,
+        }
+        if failure is not None:
+            record["failure"] = {
+                "error_type": type(failure).__name__,
+                "error": str(failure),
+            }
+        return record
+
+    def fail_timeout() -> None:
+        error = TimeoutError(
+            "pre-cohort quiescence handshake timed out: "
+            f"elapsed={elapsed():.6f}s polls={len(polls)} "
+            f"clear_attempts={len(clear_attempts)}"
         )
-    cleared = server_info_get(
-        base_url.rstrip("/") + "/server_info",
-        300.0,
-    )
-    snapshot_count = validate_cleared_server_snapshot(cleared, arm=arm)
-    return {
-        "status": "PASS",
-        "source_endpoint": "/set_internal_state",
-        "request_body": {
-            "server_args": {"dspark_clear_info_records": 1}
-        },
-        "response": [True],
-        "verified_snapshot_count": snapshot_count,
-    }
+        error.pre_cohort_clear_evidence = evidence(
+            status="FAIL", failure=error
+        )
+        raise error
+
+    def fail_with_evidence(error: BaseException) -> None:
+        error.pre_cohort_clear_evidence = evidence(
+            status="FAIL", failure=error
+        )
+        raise error
+
+    for cycle in range(1, max_cycles + 1):
+        remaining = timeout_seconds - elapsed()
+        if remaining <= 0:
+            fail_timeout()
+        wait_poll = {
+            "poll_ordinal": len(polls) + 1,
+            "cycle": cycle,
+            "stage": "wait_quiescent",
+            "elapsed_seconds": elapsed(),
+        }
+        polls.append(wait_poll)
+        try:
+            server_info = server_info_get(
+                server_info_url,
+                min(CONTROL_HTTP_TIMEOUT_SECONDS, remaining),
+            )
+            observation = inspect_pre_cohort_server_snapshot(
+                server_info, arm=arm
+            )
+        except BaseException as error:
+            wait_poll["error_type"] = type(error).__name__
+            wait_poll["error"] = str(error)
+            fail_with_evidence(error)
+        wait_poll.update(observation)
+        if not observation["quiescent"]:
+            remaining = timeout_seconds - elapsed()
+            if remaining <= 0:
+                fail_timeout()
+            try:
+                sleeper(min(poll_seconds, remaining))
+            except BaseException as error:
+                fail_with_evidence(error)
+            continue
+
+        remaining = timeout_seconds - elapsed()
+        if remaining <= 0:
+            fail_timeout()
+        clear_attempt = {
+            "clear_ordinal": len(clear_attempts) + 1,
+            "cycle": cycle,
+            "elapsed_seconds": elapsed(),
+            "verified_exact_zero": False,
+        }
+        clear_attempts.append(clear_attempt)
+        try:
+            response = internal_state_post(
+                clear_url,
+                request_body,
+                min(CONTROL_HTTP_TIMEOUT_SECONDS, remaining),
+            )
+        except BaseException as error:
+            clear_attempt["error_type"] = type(error).__name__
+            clear_attempt["error"] = str(error)
+            fail_with_evidence(error)
+        clear_attempt["response"] = response
+        if response != [True]:
+            error = ValueError(
+                "/set_internal_state must return exact DP=1 success list [true]"
+            )
+            fail_with_evidence(error)
+
+        remaining = timeout_seconds - elapsed()
+        if remaining <= 0:
+            fail_timeout()
+        verify_poll = {
+            "poll_ordinal": len(polls) + 1,
+            "cycle": cycle,
+            "stage": "verify_clear",
+            "elapsed_seconds": elapsed(),
+        }
+        polls.append(verify_poll)
+        try:
+            cleared = server_info_get(
+                server_info_url,
+                min(CONTROL_HTTP_TIMEOUT_SECONDS, remaining),
+            )
+            verified = inspect_pre_cohort_server_snapshot(cleared, arm=arm)
+        except BaseException as error:
+            verify_poll["error_type"] = type(error).__name__
+            verify_poll["error"] = str(error)
+            fail_with_evidence(error)
+        verify_poll.update(verified)
+        clear_attempt["verified_exact_zero"] = bool(verified["exact_zero"])
+        if not verified["exact_zero"]:
+            remaining = timeout_seconds - elapsed()
+            if remaining <= 0:
+                fail_timeout()
+            try:
+                sleeper(min(poll_seconds, remaining))
+            except BaseException as error:
+                fail_with_evidence(error)
+            continue
+        return evidence(
+            status="PASS",
+            verified_snapshot_count=int(verified["snapshot_count"]),
+        )
+    fail_timeout()
+    raise AssertionError("unreachable after timeout")
 
 
 def _trace_row(
@@ -607,6 +830,9 @@ def run_scoped_calibration_arm(
     server_info_get: JsonGet | None = None,
     internal_state_post: JsonPost | None = None,
     sleeper: Callable[[float], None] = time.sleep,
+    monotonic: Callable[[], float] = time.monotonic,
+    handshake_timeout_seconds: float = HANDSHAKE_TIMEOUT_SECONDS,
+    handshake_poll_seconds: float = HANDSHAKE_POLL_SECONDS,
 ) -> dict[str, Any]:
     """Clear preflight evidence, then run one trace-scoped calibration arm."""
 
@@ -617,6 +843,10 @@ def run_scoped_calibration_arm(
         base_url=base_url,
         internal_state_post=poster,
         server_info_get=getter,
+        sleeper=sleeper,
+        monotonic=monotonic,
+        timeout_seconds=handshake_timeout_seconds,
+        poll_seconds=handshake_poll_seconds,
     )
     return run_calibration_arm(
         arm=arm,
@@ -632,6 +862,25 @@ def run_scoped_calibration_arm(
         require_trace_scope=True,
         pre_cohort_clear=clear_evidence,
     )
+
+
+def calibration_failure_summary(
+    *, arm: str, error: BaseException
+) -> dict[str, Any]:
+    """Build the immutable CLI failure record, including handshake evidence."""
+
+    failure = {
+        "schema_version": 1,
+        "authorized_phase": "P05",
+        "status": "FAIL",
+        "arm": arm,
+        "error_type": type(error).__name__,
+        "error": str(error),
+    }
+    clear_evidence = getattr(error, "pre_cohort_clear_evidence", None)
+    if isinstance(clear_evidence, Mapping):
+        failure["pre_cohort_clear"] = dict(clear_evidence)
+    return failure
 
 
 def main() -> int:
@@ -676,14 +925,9 @@ def main() -> int:
                 trace_path=args.trace,
             )
         except BaseException as error:
-            failure = {
-                "schema_version": 1,
-                "authorized_phase": "P05",
-                "status": "FAIL",
-                "arm": args.arm,
-                "error_type": type(error).__name__,
-                "error": str(error),
-            }
+            failure = calibration_failure_summary(
+                arm=args.arm, error=error
+            )
             if not args.summary.exists():
                 write_json(args.summary, failure, immutable=True)
             raise

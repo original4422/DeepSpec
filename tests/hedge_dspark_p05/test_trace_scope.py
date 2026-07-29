@@ -37,7 +37,11 @@ class P05TraceScopeClientTests(unittest.TestCase):
         trace: list[dict[str, Any]],
         requests_initialized: int,
         requests_finished: int,
+        active_request_states: int = 0,
+        state_leaks: int | None = None,
     ) -> dict[str, Any]:
+        if state_leaks is None:
+            state_leaks = active_request_states
         return {
             "mode": "calibration",
             "experiment_switches": {
@@ -69,8 +73,8 @@ class P05TraceScopeClientTests(unittest.TestCase):
             "requests_finished": requests_finished,
             "requests_non_natural": 0,
             "slot_reuse_resets": 0,
-            "active_request_states": 0,
-            "state_leaks": 0,
+            "active_request_states": active_request_states,
+            "state_leaks": state_leaks,
             "remaining_budget_by_request": [],
             "strict_rejection_trace": trace,
             "trace_rows_seen": len(trace),
@@ -96,7 +100,7 @@ class P05TraceScopeClientTests(unittest.TestCase):
             ],
         }
 
-    def test_scoped_client_clears_and_verifies_before_first_cohort_request(
+    def test_scoped_client_waits_for_warmup_then_clears_before_first_request(
         self,
     ) -> None:
         temporary = tempfile.TemporaryDirectory()
@@ -105,7 +109,21 @@ class P05TraceScopeClientTests(unittest.TestCase):
         events: list[str] = []
         posts: list[tuple[str, Mapping[str, Any], float]] = []
         response_ids = [f"cohort-{ordinal:02d}" for ordinal in range(32)]
+        clock_value = 0.0
 
+        warmup_active = self._snapshot(
+            proposals=1,
+            trace=[],
+            requests_initialized=1,
+            requests_finished=0,
+            active_request_states=1,
+        )
+        warmup_quiescent = self._snapshot(
+            proposals=2,
+            trace=[],
+            requests_initialized=1,
+            requests_finished=1,
+        )
         cleared = self._snapshot(
             proposals=0,
             trace=[],
@@ -144,10 +162,24 @@ class P05TraceScopeClientTests(unittest.TestCase):
             nonlocal get_count
             get_count += 1
             if get_count == 1:
+                events.append("wait-active")
+                return self._server_info(warmup_active)
+            if get_count == 2:
+                events.append("wait-quiescent")
+                return self._server_info(warmup_quiescent)
+            if get_count == 3:
                 events.append("verify-clear")
                 return self._server_info(cleared)
             events.append("post-snapshot")
             return self._server_info(post_cohort)
+
+        def monotonic() -> float:
+            return clock_value
+
+        def sleeper(seconds: float) -> None:
+            nonlocal clock_value
+            events.append(f"sleep:{seconds}")
+            clock_value += seconds
 
         def transport(
             _url: str, _payload: dict[str, Any], _timeout: float
@@ -180,11 +212,24 @@ class P05TraceScopeClientTests(unittest.TestCase):
             transport=transport,
             server_info_get=state_get,
             internal_state_post=state_post,
-            sleeper=lambda _seconds: None,
+            sleeper=sleeper,
+            monotonic=monotonic,
+            handshake_timeout_seconds=10.0,
+            handshake_poll_seconds=1.0,
         )
 
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(events[:3], ["clear", "verify-clear", "request"])
+        self.assertEqual(
+            events[:6],
+            [
+                "wait-active",
+                "sleep:1.0",
+                "wait-quiescent",
+                "clear",
+                "verify-clear",
+                "request",
+            ],
+        )
         self.assertEqual(events.count("request"), 32)
         self.assertEqual(events[-1], "post-snapshot")
         self.assertEqual(
@@ -193,7 +238,7 @@ class P05TraceScopeClientTests(unittest.TestCase):
                 (
                     "http://127.0.0.1:31066/set_internal_state",
                     {"server_args": {"dspark_clear_info_records": 1}},
-                    300.0,
+                    9.0,
                 )
             ],
         )
@@ -202,17 +247,46 @@ class P05TraceScopeClientTests(unittest.TestCase):
         )
         self.assertTrue(counters["trace_scope_proven"])
         self.assertEqual(counters["cohort_response_ids"], response_ids)
+        clear_evidence = counters["pre_cohort_clear"]
+        self.assertEqual(clear_evidence["status"], "PASS")
         self.assertEqual(
-            counters["pre_cohort_clear"],
-            {
-                "status": "PASS",
-                "source_endpoint": "/set_internal_state",
-                "request_body": {
-                    "server_args": {"dspark_clear_info_records": 1}
-                },
-                "response": [True],
-                "verified_snapshot_count": 1,
-            },
+            clear_evidence["request_body"],
+            {"server_args": {"dspark_clear_info_records": 1}},
+        )
+        self.assertEqual(clear_evidence["response"], [True])
+        self.assertEqual(clear_evidence["timeout_seconds"], 10.0)
+        self.assertEqual(clear_evidence["poll_seconds"], 1.0)
+        self.assertEqual(clear_evidence["elapsed_seconds"], 1.0)
+        self.assertEqual(clear_evidence["poll_count"], 3)
+        self.assertEqual(clear_evidence["clear_attempt_count"], 1)
+        self.assertEqual(
+            [
+                (
+                    poll["stage"],
+                    poll["active_request_states"],
+                    poll["state_leaks"],
+                    poll["quiescent"],
+                    poll["exact_zero"],
+                )
+                for poll in clear_evidence["polls"]
+            ],
+            [
+                ("wait_quiescent", 1, 1, False, False),
+                ("wait_quiescent", 0, 0, True, False),
+                ("verify_clear", 0, 0, True, True),
+            ],
+        )
+        self.assertEqual(
+            clear_evidence["clear_attempts"],
+            [
+                {
+                    "clear_ordinal": 1,
+                    "cycle": 2,
+                    "elapsed_seconds": 1.0,
+                    "response": [True],
+                    "verified_exact_zero": True,
+                }
+            ],
         )
 
     def test_post_cohort_snapshot_rejects_ready_probe_trace_rid(self) -> None:
@@ -255,18 +329,22 @@ class P05TraceScopeClientTests(unittest.TestCase):
                 cohort_response_ids=response_ids,
             )
 
-    def test_scoped_client_refuses_dirty_clear_snapshot_before_requests(
+    def test_scoped_client_times_out_on_permanent_warmup_without_requests(
         self,
     ) -> None:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         artifact_dir = Path(temporary.name)
         requests_sent = 0
+        clear_calls = 0
+        get_calls = 0
+        clock_value = 0.0
         dirty = self._snapshot(
             proposals=1,
             trace=[],
             requests_initialized=1,
-            requests_finished=1,
+            requests_finished=0,
+            active_request_states=1,
         )
 
         def transport(
@@ -276,7 +354,26 @@ class P05TraceScopeClientTests(unittest.TestCase):
             requests_sent += 1
             raise AssertionError("cohort request must not be sent")
 
-        with self.assertRaisesRegex(ValueError, "nonzero counters"):
+        def state_get(_url: str, _timeout: float) -> Mapping[str, Any]:
+            nonlocal get_calls
+            get_calls += 1
+            return self._server_info(dirty)
+
+        def state_post(
+            _url: str, _payload: Mapping[str, Any], _timeout: float
+        ) -> Any:
+            nonlocal clear_calls
+            clear_calls += 1
+            return [True]
+
+        def monotonic() -> float:
+            return clock_value
+
+        def sleeper(seconds: float) -> None:
+            nonlocal clock_value
+            clock_value += seconds
+
+        with self.assertRaisesRegex(TimeoutError, "timed out") as captured:
             client.run_scoped_calibration_arm(
                 arm="native-trace",
                 base_url="http://127.0.0.1:31066",
@@ -286,12 +383,274 @@ class P05TraceScopeClientTests(unittest.TestCase):
                 counters_path=artifact_dir / "counters.json",
                 trace_path=artifact_dir / "trace.jsonl",
                 transport=transport,
-                server_info_get=lambda _url, _timeout: self._server_info(dirty),
-                internal_state_post=lambda _url, _payload, _timeout: [True],
-                sleeper=lambda _seconds: None,
+                server_info_get=state_get,
+                internal_state_post=state_post,
+                sleeper=sleeper,
+                monotonic=monotonic,
+                handshake_timeout_seconds=3.0,
+                handshake_poll_seconds=1.0,
             )
         self.assertEqual(requests_sent, 0)
+        self.assertEqual(clear_calls, 0)
+        self.assertEqual(get_calls, 3)
         self.assertFalse((artifact_dir / "native.jsonl").exists())
+        evidence = captured.exception.pre_cohort_clear_evidence
+        self.assertEqual(evidence["status"], "FAIL")
+        self.assertEqual(evidence["poll_count"], 3)
+        self.assertEqual(evidence["clear_attempt_count"], 0)
+        self.assertEqual(evidence["failure"]["error_type"], "TimeoutError")
+        failure = client.calibration_failure_summary(
+            arm="native-trace", error=captured.exception
+        )
+        self.assertEqual(failure["pre_cohort_clear"], evidence)
+
+    def test_clear_handshake_retries_if_verify_observes_a_new_request(
+        self,
+    ) -> None:
+        clock_value = 0.0
+        events: list[str] = []
+        quiescent_dirty = self._snapshot(
+            proposals=1,
+            trace=[],
+            requests_initialized=1,
+            requests_finished=1,
+        )
+        race_active = self._snapshot(
+            proposals=0,
+            trace=[],
+            requests_initialized=1,
+            requests_finished=0,
+            active_request_states=1,
+        )
+        race_finished = self._snapshot(
+            proposals=2,
+            trace=[],
+            requests_initialized=1,
+            requests_finished=1,
+        )
+        exact_zero = self._snapshot(
+            proposals=0,
+            trace=[],
+            requests_initialized=0,
+            requests_finished=0,
+        )
+        snapshots = iter(
+            [
+                ("wait-quiescent", quiescent_dirty),
+                ("verify-race-active", race_active),
+                ("wait-race-active", race_active),
+                ("wait-race-finished", race_finished),
+                ("verify-zero", exact_zero),
+            ]
+        )
+
+        def state_get(_url: str, _timeout: float) -> Mapping[str, Any]:
+            event, snapshot = next(snapshots)
+            events.append(event)
+            return self._server_info(snapshot)
+
+        def state_post(
+            _url: str, _payload: Mapping[str, Any], _timeout: float
+        ) -> Any:
+            events.append("clear")
+            return [True]
+
+        def monotonic() -> float:
+            return clock_value
+
+        def sleeper(seconds: float) -> None:
+            nonlocal clock_value
+            events.append(f"sleep:{seconds}")
+            clock_value += seconds
+
+        evidence = client.clear_calibration_evidence(
+            arm="native-trace",
+            base_url="http://127.0.0.1:31066",
+            internal_state_post=state_post,
+            server_info_get=state_get,
+            sleeper=sleeper,
+            monotonic=monotonic,
+            timeout_seconds=10.0,
+            poll_seconds=1.0,
+        )
+
+        self.assertEqual(
+            events,
+            [
+                "wait-quiescent",
+                "clear",
+                "verify-race-active",
+                "sleep:1.0",
+                "wait-race-active",
+                "sleep:1.0",
+                "wait-race-finished",
+                "clear",
+                "verify-zero",
+            ],
+        )
+        self.assertEqual(evidence["clear_attempt_count"], 2)
+        self.assertEqual(evidence["poll_count"], 5)
+        self.assertEqual(
+            [
+                attempt["verified_exact_zero"]
+                for attempt in evidence["clear_attempts"]
+            ],
+            [False, True],
+        )
+
+    def test_handshake_identity_and_http_errors_are_not_retried(self) -> None:
+        quiescent = self._server_info(
+            self._snapshot(
+                proposals=1,
+                trace=[],
+                requests_initialized=1,
+                requests_finished=1,
+            )
+        )
+        bad_identity = dict(quiescent)
+        bad_identity["tp_size"] = 7
+
+        get_calls = 0
+        post_calls = 0
+
+        def bad_identity_get(
+            _url: str, _timeout: float
+        ) -> Mapping[str, Any]:
+            nonlocal get_calls
+            get_calls += 1
+            return bad_identity
+
+        def counting_post(
+            _url: str, _payload: Mapping[str, Any], _timeout: float
+        ) -> Any:
+            nonlocal post_calls
+            post_calls += 1
+            return [True]
+
+        with self.assertRaisesRegex(
+            ValueError, "decode config mismatch"
+        ) as identity_error:
+            client.clear_calibration_evidence(
+                arm="native-trace",
+                base_url="http://127.0.0.1:31066",
+                internal_state_post=counting_post,
+                server_info_get=bad_identity_get,
+            )
+        self.assertEqual((get_calls, post_calls), (1, 0))
+        identity_failure = client.calibration_failure_summary(
+            arm="native-trace", error=identity_error.exception
+        )["pre_cohort_clear"]
+        self.assertEqual(identity_failure["poll_count"], 1)
+        self.assertEqual(identity_failure["clear_attempt_count"], 0)
+        self.assertEqual(
+            identity_failure["polls"][0]["error_type"], "ValueError"
+        )
+
+        get_calls = 0
+        post_calls = 0
+
+        def failing_get(_url: str, _timeout: float) -> Mapping[str, Any]:
+            nonlocal get_calls
+            get_calls += 1
+            raise RuntimeError("HTTP 503")
+
+        with self.assertRaisesRegex(RuntimeError, "HTTP 503") as get_error:
+            client.clear_calibration_evidence(
+                arm="native-trace",
+                base_url="http://127.0.0.1:31066",
+                internal_state_post=counting_post,
+                server_info_get=failing_get,
+            )
+        self.assertEqual((get_calls, post_calls), (1, 0))
+        get_failure = client.calibration_failure_summary(
+            arm="native-trace", error=get_error.exception
+        )["pre_cohort_clear"]
+        self.assertEqual(get_failure["poll_count"], 1)
+        self.assertEqual(get_failure["clear_attempt_count"], 0)
+        self.assertEqual(
+            get_failure["polls"][0]["error_type"], "RuntimeError"
+        )
+
+        get_calls = 0
+        post_calls = 0
+
+        def quiescent_get(
+            _url: str, _timeout: float
+        ) -> Mapping[str, Any]:
+            nonlocal get_calls
+            get_calls += 1
+            return quiescent
+
+        def failing_post(
+            _url: str, _payload: Mapping[str, Any], _timeout: float
+        ) -> Any:
+            nonlocal post_calls
+            post_calls += 1
+            raise RuntimeError("HTTP 500")
+
+        with self.assertRaisesRegex(RuntimeError, "HTTP 500") as post_error:
+            client.clear_calibration_evidence(
+                arm="native-trace",
+                base_url="http://127.0.0.1:31066",
+                internal_state_post=failing_post,
+                server_info_get=quiescent_get,
+            )
+        self.assertEqual((get_calls, post_calls), (1, 1))
+        post_failure = client.calibration_failure_summary(
+            arm="native-trace", error=post_error.exception
+        )["pre_cohort_clear"]
+        self.assertEqual(post_failure["poll_count"], 1)
+        self.assertEqual(post_failure["clear_attempt_count"], 1)
+        self.assertEqual(
+            post_failure["clear_attempts"][0]["error_type"], "RuntimeError"
+        )
+
+    def test_b0_uses_the_same_quiescent_clear_handshake(self) -> None:
+        snapshot = self._snapshot(
+            proposals=0,
+            trace=[],
+            requests_initialized=0,
+            requests_finished=0,
+        )
+        snapshot.update(
+            mode="enabled",
+            experiment_switches={
+                "HEDGE_ENABLED": 1,
+                "SGLANG_DSPARK_HEDGE_CALIBRATION_TRACE": 0,
+            },
+            config={
+                "B": 0,
+                "g": 1e30,
+                "m": 5,
+                "value_scheme": "normalized_suffix",
+                "block_size": 5,
+            },
+        )
+        get_calls = 0
+        post_calls = 0
+
+        def state_get(_url: str, _timeout: float) -> Mapping[str, Any]:
+            nonlocal get_calls
+            get_calls += 1
+            return self._server_info(snapshot)
+
+        def state_post(
+            _url: str, _payload: Mapping[str, Any], _timeout: float
+        ) -> Any:
+            nonlocal post_calls
+            post_calls += 1
+            return [True]
+
+        evidence = client.clear_calibration_evidence(
+            arm="b0",
+            base_url="http://127.0.0.1:31066",
+            internal_state_post=state_post,
+            server_info_get=state_get,
+        )
+
+        self.assertEqual((get_calls, post_calls), (2, 1))
+        self.assertEqual(evidence["status"], "PASS")
+        self.assertEqual(evidence["clear_attempt_count"], 1)
 
 
 class P05TraceScopeReducerTests(unittest.TestCase):
