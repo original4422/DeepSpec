@@ -392,3 +392,28 @@
 - 主 Agent验收 P04 `PASS`：native r4 `RECOVERED_PASS` + B0 r1 `PASS` 已满足
   计划全部 P04 门禁。下一 eligible phase 为 P05 calibration；正式 32/500
   仍未运行。
+
+### 2026-07-29T01:54:41Z — 300 分钟 checkpoint
+
+- P04 阶段结果与主验收已由 `3e10b780264557e84a3cab5c1a196dc7c2a00496`
+  commit/push；计划状态已切换为 P05 `IN_PROGRESS`，P06–P08 未开始。
+- 独立 P05 executor 依 `tdd` skill 在公共 CLI/artifact/reducer seam 做离线
+  vertical RED→GREEN；尚未登录 worker、pause keepalive、启动模型或创建 HDFS
+  attempt。当前只新增 P05 attempt/client/prepare/reduce/validate 工具与测试，
+  未改 docs/index、SGLang source 或 wheel。
+- 首个 launcher contract 在文件不存在时 rc=127 RED，最小
+  `--print-contract` 后 GREEN；随后 resolver 锁定 calibration SHA
+  `28a708…e47d`、32 个原始 index/order/prompt bytes、native-trace env 与 P04
+  exact B0 config bytes。
+- runner/trace 与 q25 reducer 当前行为 gate 12/12 GREEN：32 个 frozen prompt
+  经 mock HTTP 边界发出，原始 token IDs 原样保存；trace capacity=65536、
+  dropped=0；worked example `[1,2,3,5]` 按计划公式得到 q25=1.75。错误 worker、
+  broad cleanup、trace overflow/empty、B0 relaxed token、非法 ratio/q25 和完整
+  token-ID mismatch 均 fail-closed。
+- `bash -n`、4 个 Python module compile、launcher contract JSON 与
+  `git diff --check` PASS；executor 尚在补 failure artifact/全回归与清理
+  bytecode。主 Agent要求每个真实 attempt 在 preflight 生成当时 UTC ID并先证明
+  NVMe/HDFS 不存在，不采用预写的未来 timestamp。
+- 主 Agent `01:51Z` 远端独立核查 worker `4106666` keepalive
+  `32894/32894/32894`，8×10 全卡 mean/min/max 100%，每卡 815 MiB；P05 GPU
+  preflight 仍未放行。
