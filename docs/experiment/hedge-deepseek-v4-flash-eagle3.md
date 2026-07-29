@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_04_RECOVERY_FROZEN_AWAITING_NATIVE_RETRY_03`。**
+> **状态：`PHASE_04_NATIVE_32_PASS_AWAITING_B0`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -34,7 +34,13 @@
 > `73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf`。
 > post-commit source identity 与 17-file live-tool freeze 02 均已封存、自校验
 > PASS；主 Agent再次复跑 DeepSpec 19/19、bash/pycompile 并确认 source clean。
-> 下一步仅为 native retry 03，尚未启动。
+> native retry 03 已在该冻结 source/tooling 上完成并由主 Agent 独立验收：
+> 32/32 terminal、generation、trace success，0 retry/failure，5034 completion
+> tokens，2116 proposal rows，32 个 unique sample IDs；38 个 artifact hash
+> 逐项一致。请求窗口八卡均有 245 个样本、max utilization 93–97%、显存约
+> 60.2–60.55 GiB，TP0–7 load 与 aux evidence 完整。登记 SIGTERM、
+> `kill_fallback=false`，随后 0 CUDA context；keepalive owner `335940`
+> 已恢复并通过 8×10 每卡 100%。
 > `B=0`、`g/B` 与正式 500 条仍 pending。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
@@ -69,13 +75,16 @@
 >
 > **权威 Phase 04 live-tool freeze 02：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T043500Z-phase-04-tooling-freeze-02`
+>
+> **权威 Phase 04 native calibration artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T044000Z-phase-04-native-calibration-03`
 
 ## 快速结果
 
 | 快速结果 | Native | HEDGE B+ |
 | --- | ---: | ---: |
-| Status | pending | pending |
-| Requests terminal | — | — |
+| Status | calibration PASS；formal pending | pending |
+| Requests terminal | 32/32 calibration | — |
 | Output TPS | — | — |
 | Mean accept length | — | — |
 | GSM8K matches | — | — |
@@ -337,6 +346,7 @@ enable/B/g 字段按 native、B0、B+ 变化。trace capacity 固定 `1024`，
 | --- | --- | --- | --- | --- |
 | `20260729T034000Z-phase-04-native-calibration-01` | 首次用 Phase 04 runner 启动 native 32 | INVALID；0 outputs | live repo script 被改写，运行中的 Bash 混读旧 offset 与新 bytes；属于 orchestration mutation，不是模型或 SGLang crash | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T034000Z-phase-04-native-calibration-01` |
 | `20260729T040000Z-phase-04-native-calibration-02` | 16-file tooling freeze 校验 PASS 后原样重试 | FAIL CLOSED；32 terminal、0 generation、32 trace failures、64 trace retries | HTTP ready 后每次 pre-generation clear 都返回 `eagle3_hedge_clear_info_records requires an Eagle3 draft worker`；resolved config 的 `enable_multi_layer_eagle=false` 使 registry 选择缺少 HEDGE hooks 的 `EAGLEWorkerV2`，而不是已接入的 `MultiLayerEagleWorkerV2` | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T040000Z-phase-04-native-calibration-02` |
+| `20260729T044000Z-phase-04-native-calibration-03` | 唯一变化为使用已审计的 concrete-worker recovery source 与 freeze 02 原样重试 | PASS；32/32 terminal/generation/trace success，0 retry/failure | blocker 已解除；5034 completion tokens、2116 proposal rows、32 unique sample IDs，38 个 artifact hash 精确一致；主 Agent 独立验收通过 | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T044000Z-phase-04-native-calibration-03` |
 
 retry 02 的服务命令、checkpoint、TP=8、proposal `3` / internal verify `4` 和
 decode 配置与冻结 preflight 一致；TP0–7 全部初始化，八卡均有约 60.4 GiB model
@@ -373,9 +383,22 @@ executor 回归为 DeepSpec Phase 03+04 19/19、source aux 11/11、HEDGE 25/25�
 主 Agent另行复核 source SHA/patch、freeze self-check、DeepSpec 19/19 与
 bash/pycompile 全部 PASS。
 
+native retry 03 使用 SGLang final SHA
+`2600c7b16c648d281be060b33ffadc7ae320f7e3`、14-file patch
+`73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf`
+和 freeze 02 未变配置。32 条 calibration 全部 generation 与 trace 成功，0
+generation/trace retry、0 failure，最大 in-flight 为 1；完整输出与 token IDs、
+5034 completion tokens、2116 proposal rows 和 32 个 unique sample IDs 均已封存。
+artifact manifest 的 38 个文件 size/hash 经主 Agent 独立重算全部一致。
+
+TP0–7 均完成 target 与 `LlamaForCausalLMEagle3` load，并保留 aux evidence。
+请求窗口八张物理 H20 各有 245 个 sampler 样本，逐卡 maximum utilization 为
+93–97%，模型显存约 60.2–60.55 GiB。服务只向登记 process group 发送 SIGTERM，
+`kill_fallback=false`；随后 CUDA context 精确为空。operational keepalive 恢复为
+owner `335940`，独立 8×10 gate 的逐卡 utilization 均为 100%。
+
 ## 下一步
 
-等待主 Agent放行后，只使用 freeze 02 与 Phase 04 canonical source 启动 native
-retry 03，完成 32 条后定向清理并恢复 keepalive；再从新服务运行 B0 32、执行可重算
-token-ID diff，以固定 NumPy linear q25 冻结 `g=B`、`m=1`，最后只做少量 B+
-calibration smoke。Phase 04 不进入正式 500。
+下一步仅在主 Agent 放行后，使用同一 freeze 02、Phase 04 canonical source 与
+decode 配置启动独立 B0 服务，运行固定 32 条并对 native artifact 执行可重算的完整
+token-ID diff。B0 完成前不进入 q25 calibration、B+ smoke 或正式 500。
