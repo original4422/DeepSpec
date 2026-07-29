@@ -70,7 +70,7 @@ calibration。
 - `scripts/dflash_d7_remote_audit.sh`
 
 manifest 三条记录全部 PASS；manifest 自身 SHA-256 为
-`4e5348e622244b3f9b14b47ee48bc5e0b725586f6ecc50bf92bc72fce1f1c50e`。
+`2ca891756d410971cee655b314987cfd9a6368012a14c545437ec8d606e5aef3`。
 
 ## 最终 worker 状态
 
@@ -101,3 +101,12 @@ PID/PGID/SID 均为 `123914`，argv、hostname、CVD 和八张 UUID 全匹配；
 3. 只显式暂存 DFlash D7 小文件，按 `$git-commit-message` 流程生成最终提交；
 4. commit/push `exp/hedge-v4-dflash`，并再次确认 keepalive healthy；
 5. 不进入 D6，不把 D4-C short smoke 写成 protocol B0 或正式结果。
+
+## 主 Agent 验收
+
+主 Agent 已独立复核 D7 staged diff、JSON/manifest、67 个 CPU cases、target/draft/core
+identity、D4-C 39/39 HDFS manifest，并在 `2026-07-29T06:13:14Z` 再次远端确认
+worker `4099543` 的 owned keepalive PID/PGID/SID `123914`、八卡 10×1 秒均值全部
+100%、端口空闲且无 owned model context。D7 evidence 已以
+`711747ad2e80d69de38fa93c10a42e78569413c0` commit 并 push；本 handoff 的交还事项
+已完成。

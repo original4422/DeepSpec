@@ -45,15 +45,15 @@ Formal artifact: `NONE`；D4-C short-smoke HDFS run
 D7 final audit
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json`
 
-Git commit: D5 tooling/blocker `af6e4a6`；latest pushed progress `207ac36`；D4
+Git commit: D7 final audit `711747ad2e80d69de38fa93c10a42e78569413c0`；
+latest pushed progress `fc71d0c`；D5 tooling/blocker `af6e4a6`；D4
 source/evidence `a80031a`；D4-C live evidence `a18655a`；DeepSpec canonical core
 `86231e536573ccc43cda732b4eca920d5ce0a28a`；SGLang HEDGE-final
-`9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`；D7 final commit/push 待主
-Agent 完成
+`9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`
 
-下一步：主 Agent 复核 D7 evidence/manifest，按 `$git-commit-message` 工作流只
-提交本路线 D7 小文件并 push；保持 worker `4099543` owned keepalive，不进入 D6，
-不声称存在 q25/protocol B0/B+ 或 formal 结果。
+下一步：本 timebox 不进入 D6；保持 worker `4099543` owned keepalive。任何未来
+续跑都需要新的授权窗口，并从 native calibration 开始；不得声称本次存在
+q25/protocol B0/B+ 或 formal 结果。
 
 ## 快速结果
 
@@ -368,7 +368,7 @@ D7 evidence 为
 manifest 为
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/artifact_manifest.sha256`，
 三条记录全部 PASS，manifest 自身 SHA-256
-`4e5348e622244b3f9b14b47ee48bc5e0b725586f6ecc50bf92bc72fce1f1c50e`；
+`2ca891756d410971cee655b314987cfd9a6368012a14c545437ec8d606e5aef3`；
 复现命令为
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/reproduction_commands.txt`。
 

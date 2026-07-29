@@ -58,7 +58,7 @@
     "d4c_commit": "a18655a",
     "source_freeze_commit": "a80031a",
     "canonical_core_commit": "86231e536573ccc43cda732b4eca920d5ce0a28a",
-    "final_d7_commit": "PENDING_MAIN_AGENT_COMMIT_AND_PUSH"
+    "final_d7_commit": "711747ad2e80d69de38fa93c10a42e78569413c0"
   },
   "source_identity": {
     "repository": "/home/tiger/src/deepspec-sglang-hedge-dflash",
@@ -516,7 +516,7 @@
     "native_and_b_plus_formal_arms": "NOT_RUN",
     "short_live_tp8_gpu_api_crash_evidence": "PASS_WITH_DOCUMENTED_SUBSECOND_SAMPLER_LIMITATION",
     "progress_and_key_commits_through_d5_pushed": "PASS",
-    "d7_final_commit_and_push": "PENDING_MAIN_AGENT",
+    "d7_final_commit_and_push": "PASS",
     "timebox_stop_and_final_owned_context_cleanup": "PASS",
     "canonical_experiment_consistency": "PASS"
   },
@@ -538,8 +538,7 @@
     "No protocol B0 full-output token-ID comparison exists; its status is NOT_RUN, not FAIL.",
     "Neither the native 500-example formal arm nor the B+ 500-example formal arm was run, so there is no throughput, acceptance, answer-match, retry, or route-local delta result.",
     "The D4-C request was shorter than the one-second GPU sampler interval; participation relies on TP0-7 load, eight-card memory, and the immediate post-response snapshot.",
-    "The D5 mlx wrapper did not surface its recoverable return code/stdout. D7 corrects the retained scratch inventory and preflight status but does not reinterpret metadata generation as calibration.",
-    "The final D7 commit and push remain the main agent's responsibility."
+    "The D5 mlx wrapper did not surface its recoverable return code/stdout. D7 corrects the retained scratch inventory and preflight status but does not reinterpret metadata generation as calibration."
   ],
-  "next_action": "Do not start D6 in this timebox. The main agent must review this audit, seal the D7 manifest, explicitly stage only DFlash D7 files, commit, push, and leave worker 4099543 under the healthy owned keepalive."
+  "next_action": "Do not start D6 in this timebox. Leave worker 4099543 under the healthy owned keepalive; any future continuation must begin from native calibration under a newly authorized window."
 }
