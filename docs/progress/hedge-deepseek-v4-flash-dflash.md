@@ -3,15 +3,15 @@
 当前标签：`IN_PROGRESS`
 
 - Timebox：`2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；若 B0 未完成，`2026-07-29T05:55:58Z` 停止实现。
-- 已用/剩余：约 `3h45m`；距 9 小时实现停止点约 `5h15m`，距 12 小时硬停止约 `8h15m`。
-- 当前 phase：D3 native TP8 short smoke 已完成 repo-hosted 执行脚本静态验收，并移交唯一 operational executor 实机执行；D0–D2 均已通过主 Agent 验收。
+- 已用/剩余：约 `4h09m`；距 9 小时实现停止点约 `4h51m`，距 12 小时硬停止约 `7h51m`。
+- 当前 phase：D3 native TP8 short smoke 的首个真实 attempt 已固定 server-args blocker 并安全收尾；单变量 allowlist 修复已验收、提交并授权第二个真实 attempt；D0–D2 均已通过主 Agent 验收。
 - Worker：`4099543`，`g340-cd51-4b00-4d69-9088-7ae6-6253`，8×H20。
-- Keepalive：移交前最后确认 `HEALTHY`，PID/PGID `34059`，23:53Z 的 10×1 秒门禁逐卡平均利用率均为 100%；当前仅由 D3 operational executor 按 `pause→context-clear→launch→cleanup→resume/gate` 生命周期控制，主 Agent 不并发登录或改变 lane。
+- Keepalive：a02 cleanup 后恢复为 PID/PGID/SID `48680`，10×1 秒门禁逐卡平均利用率均为 100%；a03 启动窗口仍仅由 D3 operational executor 按 `pause→context-clear→launch→cleanup→resume/gate` 生命周期控制，主 Agent 不并发登录或改变 lane。
 - Eagle target marker：`READY`；23:04:53Z 发布的 immutable marker、provider commit/OID、manifest SHA、formal entity、46-shard index、config/tokenizer、73 files/159,630,041,626 bytes 与零 symlink/hardlink 已由主 Agent 只读复核 PASS。
 - Draft：`READY`；primary D1A attempt `dflash-d1a-primary-20260728T213507Z` 的同一 curl second pass 自然完成，6 files / 3,607,606,957 bytes 经 NVMe/HDFS 独立实体核查与原子发布 PASS；`.complete` SHA `f26d5899…338b`、pointer SHA `d2b43994…1add`。首次约 3.40 GB 后的 reset 已归因为 `curl-internal-retry-restarts-from-invocation-offset-zero`，fallback 未启用。
 - DSpark pure-core pointer：`READY`；主 Agent 已验证 `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/hedge-core.json`、commit `4d96f44065c07030ede67484a262006ec149626a`、parent `77053dd3ea84bb1c8dde7971f5f12759c1375e1f`、HEDGE source `9fb903d676254ea5f5d171051fb15c54f331111c`、10 个逐文件 hash 与 33 tests PASS。按计划尚未 cherry-pick，须等 D3 后由 D4 executor 消费。
-- 当前 blocker：`NONE`；`scripts/dflash_d3_attempt.sh` 与 `scripts/dflash_d3_api.py` 已通过 shell/Python syntax、inline heredoc AST、error-level shellcheck、formal source/env/checkpoint dry-run 和生命周期审计；两处审计修正确保 trap 在 pause 前安装、server PID/start ticks 在 spawn 后立即持久化。
-- 下一检查点：唯一 D3 operational executor 完成 fresh worker inventory、TP8 native DFlash short smoke、API/八 rank/GPU 参与核查及定向 cleanup-resume；主 Agent随后独立验收 sealed attempt。
+- 当前 blocker：a02 在权重/rank/CUDA 初始化前被 `deepseek_v4_hook.py:56` 的旧 allowlist 拒绝 `DFLASH`；单变量修复已由主 Agent提交为 SGLang `d49a890b5b4d779a8a88ad8735f7cbf645d62759`，7/7 CPU tests 与 launcher head/parent/fixed-base identity 复核 PASS，因此该 blocker 已解除，下一 blocker 未知。
+- 下一检查点：唯一 D3 operational executor 以 source `d49a890…` 运行 fresh a03，其他 TP/block/backend/checkpoint/runtime 配置不变；完成 API/八 rank/GPU 参与核查及定向 cleanup-resume 后由主 Agent独立验收 sealed attempt。
 
 | UTC | Phase | 动作 | 结论 | Artifact | 下一步 |
 | --- | --- | --- | --- | --- | --- |
@@ -28,3 +28,4 @@
 | 2026-07-28T23:25:00Z | D1A/D3 readiness | 2.5 小时 checkpoint：复核 worker list 与 10×1 秒 keepalive gate；独立审计 Eagle target marker/provider/manifest/formal entity；监控 D1A retry recovery | worker `4099543` 仍为 8×H20，八卡均值 100%；target READY，revision/73 files/159,630,041,626 bytes/46 shards/index/config/tokenizer/OID/manifest/immutable publication 全部 PASS；D1A second pass 2.876/3.608 GB 且单调 | target complete marker `af6f274a…facd`；D1A retry trajectory；keepalive PID `34059` | 只提交本 progress 文件；完成并验收 D1A 后立即调度独立 D3 executor |
 | 2026-07-28T23:54:00Z | D1A/D3 | 3 小时 checkpoint：主验并提交 D1A；派发独立 D3 executor；D3 fresh 复核治理、handoff、source/checkpoint identity 与 keepalive gate | D1A PASS 并以 `9441067` push；target/draft/source/env 全部 READY；D3 尚未 pause/启动，23:53Z keepalive PID `34059` 与八卡 10×1 秒均值 100%，无 blocker | `9441067`；D1A handoff/main acceptance；D3 executor preflight 回报 | 只提交本 progress 文件；D3 继续 fresh inventory/marker 后执行 pause→clear-context→TP8 smoke→cleanup/resume |
 | 2026-07-29T00:40:32Z | D3 | 补记 3.75 小时 checkpoint：验收 repo-hosted D3 launcher/API helper，修正 trap 与 server identity 持久化时序；将 worker 操作重新收敛给唯一 executor | shell/Python/inline AST/shellcheck/source-env-checkpoint dry-run 全部 PASS；尚无模型结果可写，主 Agent 不并发登录 lane；无 blocker | `scripts/dflash_d3_attempt.sh`、`scripts/dflash_d3_api.py`（待 D3 结果一并提交） | executor 完成 preflight→pause-launch→status→cleanup-resume；主 Agent独立复核 HDFS sealed attempt、八 rank/GPU/API 与 keepalive 恢复证据 |
+| 2026-07-29T01:04:46Z | D3 | 补记 4 小时 checkpoint：验收 a02 sealed attempt，按实际 blocker 仅扩展 DeepSeek-V4 DFLASH allowlist并固定新 source；授权 a03 | a02 在 server args 阶段 FAIL，未进入 rank/load，manifest 27/27、context-clear、cleanup 和 keepalive resume gate 全部 PASS；source `d49a890…`、7/7 tests 与 launcher identity PASS；a03 尚无结果 | HDFS `dflash-d3-native-20260729T004350Z-a02`；`d3/dflash_d3_a02_failure_summary.json`；SGLang `d49a890…` | a03 仅改变 source allowlist fix，继续 fresh preflight→pause-launch→status→cleanup-resume；完成后独立验收 D3 |
