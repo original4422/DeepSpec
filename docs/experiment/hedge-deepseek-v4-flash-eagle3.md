@@ -2,6 +2,10 @@
 
 ## 实验结果总览
 
+面向结果阅读的独立报告见
+[HEDGE on DeepSeek-V4-Flash Eagle3 结果报告](./hedge-deepseek-v4-flash-eagle3-results.md)；
+本文继续作为 attempt、artifact、故障归因和复现证据的唯一权威账本。
+
 > **当前路线结论：`IN_PROGRESS`。** Native 500 条正式基线已经独立验收为
 > `ACCEPTED/PASS`，`B=0` 等价性为 `B0_PASS`，正预算配置已经冻结；
 > HEDGE B+ 的 500 条正式 arm 正在运行，尚未验收，因此现在不能声称 HEDGE
