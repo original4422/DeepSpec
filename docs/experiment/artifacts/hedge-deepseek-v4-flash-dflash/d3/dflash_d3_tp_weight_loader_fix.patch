@@ -1,0 +1,137 @@
+diff --git a/python/sglang/srt/models/dflash.py b/python/sglang/srt/models/dflash.py
+index 572a6e2..a287da6 100644
+--- a/python/sglang/srt/models/dflash.py
++++ b/python/sglang/srt/models/dflash.py
+@@ -565 +565,9 @@ class DFlashDraftModel(nn.Module):
+-                if tuple(loaded_weight.shape) != tuple(target.shape):
++                custom_weight_loader = getattr(target, "weight_loader", None)
++                requires_exact_shape = (
++                    resolved_name in buffers_dict
++                    or custom_weight_loader is None
++                )
++                if (
++                    requires_exact_shape
++                    and tuple(loaded_weight.shape) != tuple(target.shape)
++                ):
+@@ -587,3 +595 @@ class DFlashDraftModel(nn.Module):
+-                    weight_loader = getattr(
+-                        target, "weight_loader", default_weight_loader
+-                    )
++                    weight_loader = custom_weight_loader or default_weight_loader
+diff --git a/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py b/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+index 20b2d2d..49374a8 100644
+--- a/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
++++ b/test/registered/unit/spec/test_dflash_deepseek_v4_primary.py
+@@ -368,0 +369,112 @@ class TestDeepSeekV4PrimaryDFlashConfig(unittest.TestCase):
++    def test_tp8_row_parallel_weight_uses_checkpoint_global_shape(self) -> None:
++        from sglang.srt.models.dflash import DFlashDraftModel, DFlashMLP
++        from sglang.srt.runtime_context import get_context, get_parallel
++
++        class Layer(torch.nn.Module):
++            def __init__(self, mlp: DFlashMLP) -> None:
++                super().__init__()
++                self.mlp = mlp
++
++        config = SimpleNamespace(
++            hidden_act="silu",
++            hidden_size=8,
++            intermediate_size=16,
++        )
++        global_weight = torch.arange(8 * 16, dtype=torch.float32).view(8, 16)
++
++        for tp_rank in (0, 3, 7):
++            model = DFlashDraftModel.__new__(DFlashDraftModel)
++            torch.nn.Module.__init__(model)
++            with get_context().override_server_args():
++                with get_parallel().override(tp_size=8, tp_rank=tp_rank):
++                    model.layers = torch.nn.ModuleList(
++                        [Layer(DFlashMLP(config))]
++                    )
++                    local_weight = (
++                        model.layers[0].mlp.down_proj.weight
++                    )
++                    self.assertEqual(list(local_weight.shape), [8, 2])
++                    model.load_weights(
++                        [
++                            (
++                                "layers.0.mlp.down_proj.weight",
++                                global_weight,
++                            )
++                        ]
++                    )
++
++            expected = global_weight[:, tp_rank * 2 : (tp_rank + 1) * 2]
++            self.assertTrue(torch.equal(local_weight, expected))
++
++    def test_primary_tp8_row_parallel_shapes_accept_global_weights(
++        self,
++    ) -> None:
++        from sglang.srt.configs.dflash import DFlashConfig
++        from sglang.srt.models.dflash import DFlashDraftModel
++        from sglang.srt.runtime_context import get_context, get_parallel
++
++        class DummyRope(torch.nn.Module):
++            is_neox_style = True
++
++            def forward(self, positions, q, k):
++                return q, k
++
++        config = DFlashConfig(**PRIMARY_CONFIG)
++        with patch(
++            "sglang.srt.models.dflash.get_rope",
++            return_value=DummyRope(),
++        ):
++            with torch.device("meta"):
++                with get_context().override_server_args():
++                    with get_parallel().override(tp_size=8, tp_rank=3):
++                        model = DFlashDraftModel(config)
++
++        parameters = dict(model.named_parameters())
++        self.assertEqual(
++            list(parameters["layers.0.mlp.down_proj.weight"].shape),
++            [4096, 256],
++        )
++        self.assertEqual(
++            list(
++                parameters[
++                    "layers.0.self_attn.o_proj.weight"
++                ].shape
++            ),
++            [4096, 2048],
++        )
++        model.load_weights(
++            [
++                (
++                    "layers.0.mlp.down_proj.weight",
++                    torch.empty((4096, 2048), device="meta"),
++                ),
++                (
++                    "layers.0.self_attn.o_proj.weight",
++                    torch.empty((4096, 16384), device="meta"),
++                ),
++            ]
++        )
++
++    def test_replicated_parameter_and_buffer_keep_exact_shape_guard(self) -> None:
++        from sglang.srt.models.dflash import DFlashDraftModel
++
++        model = DFlashDraftModel.__new__(DFlashDraftModel)
++        torch.nn.Module.__init__(model)
++        model.fc = torch.nn.Linear(4, 8, bias=False)
++        model.register_buffer("t2d", torch.zeros(10, dtype=torch.bool))
++
++        with self.assertRaisesRegex(
++            ValueError,
++            r"Expected fc.weight.shape=\(8, 4\), but got \(8, 2\)",
++        ):
++            model.load_weights(
++                [("fc.weight", torch.empty(8, 2))]
++            )
++        with self.assertRaisesRegex(
++            ValueError,
++            r"Expected t2d.shape=\(10,\), but got \(9,\)",
++        ):
++            model.load_weights(
++                [("t2d", torch.empty(9, dtype=torch.bool))]
++            )
++

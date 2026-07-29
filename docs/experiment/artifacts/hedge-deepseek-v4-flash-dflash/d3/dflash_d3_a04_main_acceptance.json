@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "auditor": "main-agent",
+  "audited_at_utc": "2026-07-29T03:25:18Z",
+  "status": "SOURCE_FIX_ACCEPTED_GPU_RETRY_AUTHORIZED",
+  "failed_attempt": {
+    "attempt_id": "dflash-d3-native-20260729T025617Z-a04",
+    "hdfs_run": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d3-native-20260729T025617Z-a04",
+    "manifest_sha256": "4f73970ee6ce274b98ebbe6101da3ef7345795267db80450a7dd64acaf2f9809",
+    "manifest_entries_checked": 33,
+    "manifest_check": "PASS",
+    "cleanup_status": "PASS",
+    "api_status": "NOT_RUN"
+  },
+  "diagnosis": {
+    "tight_loop_command": "CUDA_VISIBLE_DEVICES=999 PYTHONNOUSERSITE=1 /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_deepseek_v4_primary.py TestDeepSeekV4PrimaryDFlashConfig.test_tp8_row_parallel_weight_uses_checkpoint_global_shape -v",
+    "red_runs_before_fix": 2,
+    "red_fingerprint": "Expected layers.0.mlp.down_proj.weight.shape=(8, 2), but got (8, 16)",
+    "ranked_hypotheses": [
+      "DFlash loader exact-shape precheck rejects a global checkpoint tensor before the custom TP loader can shard it.",
+      "The checkpoint or config declares the wrong intermediate_size.",
+      "The TP=8 RowParallelLinear layer is constructed with the wrong local shape.",
+      "The checkpoint shard is corrupt or has an unexpected tensor header."
+    ],
+    "accepted_root_cause": "The first hypothesis is proven. TP=8 correctly constructs a 2048/8 local input shard, while the fixed checkpoint correctly stores the global 2048-wide tensor. The premature exact-shape guard, not either shape, was wrong.",
+    "shutdown_classification": "SGLang called kill_process_tree after the deterministic eight-rank ValueError; the downstream shell Killed message is not an OOM classification."
+  },
+  "source": {
+    "fixed_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "integration_commit": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+    "allowlist_fix_commit": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "final_candidate_commit": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "final_candidate_parent": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "worktree_clean": true,
+    "commit_message": "fix(dflash): load global row-parallel weights",
+    "file_sha256": {
+      "python/sglang/srt/models/dflash.py": "58ba7ee93d784da3969550e9906b459e4c1a96b6603cf8efb503f99245806d28",
+      "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py": "45f35ed33b10a98e3c4795b6f20aba3649d784db07fed7337ba809a6bd161aa8"
+    }
+  },
+  "reproducible_patch": {
+    "path": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d3/dflash_d3_tp_weight_loader_fix.patch",
+    "sha256": "f30027d8ad650a7d7b182be755de993f2fbf9ff5d7f9424a4a2b22bc13c0902a",
+    "apply_command": "git apply --unidiff-zero dflash_d3_tp_weight_loader_fix.patch",
+    "reverse_check_against_final_candidate_commit": "PASS"
+  },
+  "main_agent_validation": {
+    "primary_dflash_suite": {
+      "tests_run": 10,
+      "status": "PASS"
+    },
+    "existing_overlap_suite": {
+      "tests_run": 7,
+      "status": "PASS",
+      "cuda_only_skips": 1
+    },
+    "compileall": "PASS",
+    "git_diff_check": "PASS",
+    "content_hashes_match_executor_handoff": true,
+    "tp8_rank_slice_values_checked": [
+      0,
+      3,
+      7
+    ],
+    "replicated_parameter_and_buffer_shape_guards_preserved": true
+  },
+  "diagnosis_completion": {
+    "minimal_reproducer_green": true,
+    "original_unminimized_tp8_reproducer": "PENDING_FRESH_NATIVE_ATTEMPT",
+    "d3_status": "IN_PROGRESS"
+  },
+  "operational_state": {
+    "worker_id": "4099543",
+    "keepalive_pid": 94182,
+    "keepalive_gate_healthy": true,
+    "sample_count_per_gpu": 10,
+    "per_gpu_mean_utilization_percent": {
+      "0": 100.0,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 100.0,
+      "5": 100.0,
+      "6": 100.0,
+      "7": 100.0
+    }
+  },
+  "authorization": {
+    "gpu_retry_authorized": true,
+    "maximum_fresh_attempts": 1,
+    "required_attempt_suffix": "a05",
+    "only_primary_variable_from_a04": "SGLang source d49a890b5b4d779a8a88ad8735f7cbf645d62759 -> 1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "all_model_checkpoint_decode_backend_jit_and_request_settings_fixed": true,
+    "d4_authorized": false
+  }
+}

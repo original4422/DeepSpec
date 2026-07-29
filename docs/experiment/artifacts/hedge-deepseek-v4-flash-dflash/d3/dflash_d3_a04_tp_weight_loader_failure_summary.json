@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "phase": "D3",
+  "attempt_id": "dflash-d3-native-20260729T025617Z-a04",
+  "status": "FAIL",
+  "classification": "dflash-tp-weight-loader-precheck-rejects-global-checkpoint-weight",
+  "api_status": "NOT_RUN",
+  "startup_status": "NOT_READY",
+  "benchmark": false,
+  "hedge_enabled": false,
+  "hdfs_run": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d3-native-20260729T025617Z-a04",
+  "hdfs_manifest_sha256": "4f73970ee6ce274b98ebbe6101da3ef7345795267db80450a7dd64acaf2f9809",
+  "source_at_attempt": {
+    "checkout": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+    "head": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "parent": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+    "fixed_base": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "fixed_base_is_ancestor": true,
+    "status_porcelain": ""
+  },
+  "fixed_run_identity": {
+    "worker_id": "4099543",
+    "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+    "gpu_count": 8,
+    "gpu_model": "NVIDIA H20",
+    "tp_size": 8,
+    "target_repo_id": "deepseek-ai/DeepSeek-V4-Flash",
+    "target_revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+    "target_weight_shard_count": 46,
+    "draft_repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+    "draft_revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+    "speculative_algorithm": "DFLASH",
+    "dflash_block_size": 8,
+    "moe_runner_backend": "flashinfer_mxfp4"
+  },
+  "single_variable_from_a03": {
+    "variable": "Use the audited lane-local CUDA 13.0 link view and isolated prebuilt FlashInfer fused_moe_90 workspace.",
+    "cuda_home": "/tmp/deepspec-hedge-dflash/toolchains/cuda-13.0",
+    "flashinfer_workspace_base": "/tmp/deepspec-hedge-dflash/cache/flashinfer-workspace",
+    "prebuilt_shared_object_sha256": "5ec37ba95c14231e6dfb4ace16bd5933064f53ce96a89efad99cf7d840f9671f",
+    "prebuilt_shared_object_size_bytes": 109245264,
+    "prelaunch_audit": "PASS",
+    "outcome": "The a03 -lcudart/-lnvrtc link fingerprint did not recur. All eight target ranks crossed backend initialization, MHC prewarm, and target weight loading before the next blocker appeared in draft weight loading."
+  },
+  "last_complete_stage": {
+    "tp_ranks_initialized": 8,
+    "backend_observed_tp_ranks": 8,
+    "mhc_prewarm_completed_tp_ranks": 8,
+    "target_load_completed_tp_ranks": 8,
+    "target_model_type": "DeepseekV4ForCausalLM",
+    "target_memory_usage_gb_per_rank": 20.45,
+    "target_load_end_server_log_lines": [
+      2802,
+      2814,
+      2824,
+      2834,
+      2844,
+      2854,
+      2856,
+      2858
+    ],
+    "draft_model_construction_started_tp_ranks": 8,
+    "draft_weight_load_completed": false
+  },
+  "checkpoint_and_runtime_contract": {
+    "config_intermediate_size": 2048,
+    "checkpoint_layer_0_mlp_shapes": {
+      "gate_proj.weight": [
+        2048,
+        4096
+      ],
+      "up_proj.weight": [
+        2048,
+        4096
+      ],
+      "down_proj.weight": [
+        4096,
+        2048
+      ]
+    },
+    "tp8_local_down_proj_shape": [
+      4096,
+      256
+    ],
+    "required_loader_operation": "RowParallelLinear.weight_loader slices checkpoint dimension 1 by tp_rank before checking/copying the local shard.",
+    "source_contract": "python/sglang/srt/layers/linear.py:1467-1528"
+  },
+  "failure": {
+    "fingerprint": "ValueError: DFLASH layers.0.mlp.down_proj.weight shape mismatch. Expected layers.0.mlp.down_proj.weight.shape=(4096, 256), but got (4096, 2048) for weight 'layers.0.mlp.down_proj.weight'.",
+    "identical_exception_count": 8,
+    "value_error_server_log_lines": [
+      2921,
+      2961,
+      3001,
+      3041,
+      3081,
+      3121,
+      3161,
+      3204
+    ],
+    "root_cause_file": "python/sglang/srt/models/dflash.py",
+    "root_cause_line_at_attempt": 565,
+    "root_cause": "DFlashDraftModel.load_weights performed a global checkpoint tensor versus local TP parameter exact-shape check before invoking the parameter's custom RowParallelLinear.weight_loader. It therefore rejected the valid global weight before the loader could select the TP-rank shard.",
+    "not_checkpoint_corruption": "The checkpoint shape matches config intermediate_size=2048 and the provider safetensors header.",
+    "not_layer_construction_error": "The TP=8 local shape 4096x256 is exactly the expected 2048/8 row-parallel partition.",
+    "shutdown_classification": "SGLang invoked kill_process_tree on its registered server PID after the deterministic eight-rank initialization exception. The shell Killed message is downstream cleanup, not an OOM classification.",
+    "sglang_internal_kill_process_tree_server_log_lines": [
+      3165,
+      3207
+    ]
+  },
+  "minimal_reproducer": {
+    "seam": "DFlashDraftModel.load_weights with a real RowParallelLinear parameter",
+    "device": "CPU",
+    "tp_size": 8,
+    "sampled_tp_ranks": [
+      0,
+      3,
+      7
+    ],
+    "tiny_global_shape": [
+      8,
+      16
+    ],
+    "tiny_local_shape": [
+      8,
+      2
+    ],
+    "red_before_fix": {
+      "runs": 2,
+      "status": "FAIL",
+      "fingerprint": "Expected layers.0.mlp.down_proj.weight.shape=(8, 2), but got (8, 16)"
+    },
+    "green_after_fix": {
+      "status": "PASS",
+      "assertion": "Each sampled rank received global_weight[:, rank*2:(rank+1)*2]."
+    },
+    "exact_primary_meta_fixture": {
+      "status": "PASS",
+      "down_proj_local_and_global_shapes": [
+        [
+          4096,
+          256
+        ],
+        [
+          4096,
+          2048
+        ]
+      ],
+      "o_proj_local_and_global_shapes": [
+        [
+          4096,
+          2048
+        ],
+        [
+          4096,
+          16384
+        ]
+      ]
+    }
+  },
+  "uncommitted_source_candidate": {
+    "base_head": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "files": [
+      "python/sglang/srt/models/dflash.py",
+      "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py"
+    ],
+    "diff_stat": "2 files changed, 122 insertions(+), 4 deletions(-)",
+    "production_change": "Skip only the loader-level precheck for parameters that declare a custom weight_loader; let that loader validate and shard the global tensor. Preserve exact-shape checks for ordinary replicated parameters and all buffers.",
+    "guard_regressions": [
+      "Malformed fc.weight remains a ValueError.",
+      "Malformed replicated t2d buffer remains a ValueError.",
+      "Primary TP=8 down_proj and o_proj global checkpoint shapes are accepted.",
+      "Actual TP=8 rank slices are value-checked on ranks 0, 3, and 7."
+    ],
+    "validation": {
+      "targeted_regressions": "3 tests PASS",
+      "primary_dflash_suite": "10 tests PASS",
+      "existing_dflash_overlap_suite": "7 tests run, 6 PASS, 1 skipped",
+      "compileall": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "sha256": {
+      "python/sglang/srt/models/dflash.py": "58ba7ee93d784da3969550e9906b459e4c1a96b6603cf8efb503f99245806d28",
+      "test/registered/unit/spec/test_dflash_deepseek_v4_primary.py": "45f35ed33b10a98e3c4795b6f20aba3649d784db07fed7337ba809a6bd161aa8",
+      "git_diff": "53a80de53105691279a470991982f2a7675f2f94606eeb982a48ed4f93eb322d"
+    },
+    "commit_created": false
+  },
+  "sealed_evidence": {
+    "manifest_entry_count": 33,
+    "sha256_check": "PASS",
+    "artifact_sha256": {
+      ".complete.json": "d45757db84714f10bae9b71a8b70576369f894e54c96cc8c923c811149cb4a5f",
+      "artifact_manifest.sha256": "4f73970ee6ce274b98ebbe6101da3ef7345795267db80450a7dd64acaf2f9809",
+      "checkpoint_identity.json": "6f1b50e890b9bbf56faed60221ca60562954a8a1eff9c0520d0f86f70effc8d5",
+      "cleanup.json": "2392312aa52d9593fcd5ccababf73f6561446f46d4f0f553d706cd2e1fe655cd",
+      "gpu_samples.csv": "932b624fc72ff16ab75651526d6a885af4c99499cb817644ae2e05870eac2c74",
+      "process_identity.json": "9c4c15519e8a1045448d3e7a2ab19b7621cc48bb4e4ef743581aca4c570bc117",
+      "resolved_config.json": "406f116e712130a2c9dbd692e632cdd0442b84c594655d133f44791987bac7b8",
+      "server.log": "9b93c1a320fc5ac15afc0be11bca2c5eb16ab5d977c68c005ee694a45364b2b7",
+      "source_identity.json": "b6c12fadb3996140a9b77bd53e36ad4670ea372ec95076ff5281d81abb2e5947",
+      "summary.json": "f30fd8614d248aa63417db9886086de626d891167e86b95e2076e2536a7ba1ee"
+    }
+  },
+  "cleanup": {
+    "status": "PASS",
+    "contexts_clear": true,
+    "keepalive_resume_returncode": 0,
+    "keepalive_pid": 94182,
+    "keepalive_gate_healthy": true,
+    "keepalive_sample_count_per_gpu": 10,
+    "keepalive_per_gpu_mean_utilization_percent": {
+      "0": 100.0,
+      "1": 100.0,
+      "2": 100.0,
+      "3": 100.0,
+      "4": 100.0,
+      "5": 100.0,
+      "6": 100.0,
+      "7": 100.0
+    }
+  },
+  "single_next_strategy": "Main-agent review the two-file source candidate. Only after explicit acceptance, keep every model/decode variable fixed and use the candidate in one separately authorized fresh native DFlash attempt.",
+  "executor_scope": {
+    "model_attempts_started": 1,
+    "second_model_attempt_started": false,
+    "gpu_retry_after_a04": false,
+    "other_worker_used": false,
+    "source_or_test_commit_created": false
+  },
+  "finished_at_utc": "2026-07-29T03:19:44Z"
+}
