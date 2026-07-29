@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T02:24:11Z`（330 分钟 checkpoint 前 30 秒；长模型命令仍在前台）
+- 快照时间：`2026-07-29T02:50:06Z`（360 分钟 checkpoint 前恢复结论已固化）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`05:29:30` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`05:55:25` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -13,27 +13,30 @@
   - P02：主 Agent 验收 `PASS`；新正式 venv 33/33 tests PASS，commit/push `4d96f44065c07030ede67484a262006ec149626a`，READY marker 已发布
   - P03：主验收 `PASS`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc` 与 identity/progress `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3` 均已 push
   - P04：主 Agent 验收 `PASS`；结果 commit/push `3e10b780264557e84a3cab5c1a196dc7c2a00496`
-  - P05：离线 tooling commit/push `ce5d67216953f3fceaec38ce2469ba47582d4e8d`；
-    唯一 native-trace attempt 已 ready，32 条顺序 calibration 正在收尾，尚未验收或运行 B0
+  - P05：native r1 `FAIL_TRACE_SCOPE`；sampler recovery `6b7145d` 与
+    trace-scope recovery `eb4962f` 均已主审、commit/push；B0 未运行
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：attempt 前 keepalive `32894/32894/32894`、8×10 全卡
-  100%；`02:02:34Z` 按协议暂停，contexts none 后启动唯一 TP=8 server
-  `34445/34445/34445` 与 sampler `34452/34452/34452`；当前服务仍在运行
-- 最新 attempt：`20260729T020144Z-p05-native-calibration-r1`；`02:20:24Z`
-  ready，`02:20:31Z` 开始 32 条顺序请求，最近只读快照为 31/32
-- HDFS artifact：attempt 尚在 worker NVMe 活动目录，未归档、未形成 P05 PASS
+- keepalive / server / PID：native r1 已定向清理且 contexts none；keepalive
+  `44844/44844/44844`，attempt 与主 Agent `02:35Z` 独立复核均为 8×10 全卡
+  100%；当前无模型 server
+- 最新 attempt：`20260729T020144Z-p05-native-calibration-r1`；
+  `FAIL_TRACE_SCOPE`，不是可冻结参数的 calibration PASS
+- HDFS artifact：
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T020144Z-p05-native-calibration-r1`
+  immutable 保留
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；运行前 HEAD/pushed
-  `ce5d67216953f3fceaec38ce2469ba47582d4e8d`
+  branch `exp/hedge-v4-dspark`；HEAD/pushed
+  `eb4962f49a16ec88721c9fc96be5daffcc1367d1`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
-  P05 tooling `ce5d672`；calibration config / result 尚未创建
-- 首要事项：完成第 32 条、validator、定向清理、keepalive 恢复与 immutable archive；
-  主 Agent独立验收 native trace 后才允许唯一 P05 B0 attempt
-- 下一检查点：`2026-07-29T02:54:41Z`
-- 下一 30 分钟动作：验收 native trace；若 PASS，再动态创建并运行 32 条 B0，
-  最后由 immutable native trace 自动计算并冻结 `g=B=q25,m=1`
+  P05 tooling `ce5d672`；sampler recovery `6b7145d`；trace-scope recovery
+  `eb4962f`；calibration config / result 尚未创建
+- 首要事项：从新 HEAD 动态创建 scoped native r2；主 Agent独立验收 clean trace
+  与 sampler terminal status 后才允许唯一 P05 B0 attempt
+- 下一检查点：`2026-07-29T03:24:41Z`
+- 下一 30 分钟动作：运行新的 32 条 scoped native attempt；保留 r1 全部失败证据，
+  不沿用其 q25
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -451,3 +454,30 @@
   marker。
 - attempt 尚未完成 validator、定向 cleanup、contexts-none、keepalive 恢复或
   immutable HDFS archive，故 native trace 尚未由主 Agent验收；B0 未启动。
+
+### 2026-07-29T02:54:41Z — 360 分钟 checkpoint
+
+- 恢复结论于 `02:50:06Z` 提前固化，确保新的长模型 attempt 前先提交 r1 的真实
+  failure 与两项单变量修复；这不是把 r1 改写为成功。
+- native r1 已完成并 immutable 归档，但主 Agent验收为 `FAIL_TRACE_SCOPE`。
+  32/32 请求成功、0 retry、5183 completion tokens；TP/target/draft ranks
+  0–7、两次 48/48、请求期每卡 149 samples、cleanup/contexts/keepalive 成立。
+- 主 Agent逐条复核 32 个冻结 dataset identity、prompt/request bytes 与完整 token
+  IDs 全部 PASS；35 个 archive 条目的 size/SHA 与 exact file set 全匹配。这些
+  有效证据不能抵消 trace scope 与 sampler terminal status 的失败。
+- trace 有 488 行/33 RID；32 个真实 output RID 对应 484 行，额外 warmup RID
+  `505959725a104b34a193d3f481be36ac` 对应 4 行。全量 q25
+  `2.083333333333333`，cohort-only q25 `2.0625`，故 r1 参数不采用。
+- sampler 在请求完成、live validator PASS、server 定向停止之后，恰于 sampler
+  PGID SIGTERM 边界把受信号打断的 `nvidia-smi` query 写成 FAIL。旧 finalizer
+  漏验该文件；r1 的原 artifact 保持不变。
+- sampler recovery `6b7145d` 与 trace-scope recovery `eb4962f` 已分别
+  commit/push。前者只在 stop 已请求时把 query interruption 视为 clean stop，并
+  新增 sampler terminal status/count 门禁；后者在 cohort 前 clear+验零，并由
+  client/reducer 两层以 32 个 response RID fail-closed 封闭 trace。
+- executor 和主 Agent最终相关回归均为 118/118 PASS；旧 r1 被两个新 gate 精确
+  拒绝，strict reducer 没有创建 output directory。修复不改 SGLang wheel、
+  checkpoint 或 decode 配置。
+- r1 结束后 keepalive 更新为 `44844/44844/44844`；主 Agent `02:35Z` 远端复核
+  worker `4106666` 仍为 exact 8×H20、8×10 全卡 100%，每卡 815 MiB。P05 B0
+  仍未启动；下一动作是从 HEAD `eb4962f` 动态创建 scoped native r2。
