@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T05:10:24Z`
+- 快照时间：`2026-07-29T05:22:26Z`（510 分钟 checkpoint 提前 2 分 15 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`08:15:43` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`08:27:45` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -16,17 +16,18 @@
   - P05：native r1/r2/r3 的三类失败证据保持；最小 engine recovery
     `e028d2c31658a06b4f5a5ee072d7e21c79d51c36` 与新 formal wheel
     `a5c14bd7…71f9` 已主审/push；唯一 native r4 已 32/32、scoped trace、
-    TP8/GPU/cleanup/archive 主审 `PASS`，候选 q25=`2.0625`；B0 未运行
+    TP8/GPU/cleanup/archive 主审 `PASS`，候选 q25=`2.0625`；唯一 B0 已通过
+    preflight 并处于 TP=8 `wait_ready`
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：r4 登记 launcher/server/sampler 已正常退出，server
-  `71408` 与 sampler `71415` 仅按登记 identity 定向停止，contexts none；
-  dedicated keepalive 已恢复为 `80819/80819/80819`，8×10 全卡 100%
-- 最新 attempt：`20260729T044309Z-p05-native-calibration-r4`；launcher rc=0，
-  32/32、0 retry、5183 completion tokens；live/artifact/shutdown/archive PASS
+- keepalive / server / PID：B0 启动前 keepalive `80819/80819/80819` 的 8×10
+  全卡 100%；已按生命周期暂停并启动唯一 launcher `82254`、server `82443`、
+  sampler `82450`，TP0–7 scheduler 均属于同一 server PGID
+- 最新 attempt：`20260729T051340Z-p05-b0-calibration-r1`；preflight PASS，
+  当前 `wait_ready`，尚未 handshake 或发送 32 条请求
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；当前已 push checkpoint `72a4a46`
+  branch `exp/hedge-v4-dspark`；当前已 push native PASS `e58027e`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -35,11 +36,11 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration config /
   result 尚未创建
-- 首要事项：封存 r4 PASS Git 节点后运行唯一 P05 B0 32 条；随后逐样本比较完整
-  token IDs，并由 reducer 冻结 `g=B=2.0625,m=1`
-- 下一检查点：`2026-07-29T05:24:41Z`
-- 下一 30 分钟动作：完成 r4 文档 commit/push，派发唯一 B0 attempt；B0 归档前
-  不运行 reducer，不提前冻结 q25
+- 首要事项：等待唯一 B0 ready，依次完成 handshake、32 条、cleanup、archive；
+  主审等价 PASS 后才由 reducer 冻结 `g=B=2.0625,m=1`
+- 下一检查点：`2026-07-29T05:54:41Z`
+- 下一 30 分钟动作：完成唯一 B0 attempt 与主审；若 PASS，运行唯一 CPU reducer
+  并提交 calibration freeze 节点
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -619,3 +620,19 @@
   keepalive 恢复为 `80819/80819/80819`，8×10 全卡 100%。
 - r4 已具备 P05 B0 入口条件。q25 目前只是 native 候选值；必须等唯一 B0 32 条
   完整 token-ID 等价 PASS 后，才运行 reducer 并冻结 `g=B=q25,m=1`。
+
+### 2026-07-29T05:24:41Z — 510 分钟 checkpoint
+
+- 实际快照于 `05:22:26Z` 提前 2 分 15 秒落盘。native r4 PASS 已作为关键节点
+  commit/push：`e58027e927cb4be5f9cc410a6df08fd19531a128`。
+- 唯一 P05 B0 attempt 为
+  `20260729T051340Z-p05-b0-calibration-r1`。preflight 确认 HEAD/origin clean、
+  r4 入口四类 validator 全 PASS、worker `4106666` exact 8×H20、HDFS/NVMe
+  新目标 ENOENT、port 31066 可用、engine probe 无 false check。
+- 启动前 dedicated keepalive `80819/80819/80819` 的 8×10 gate 每卡
+  mean/min/max 100%。launcher 按生命周期暂停 keepalive并登记唯一 launcher
+  `82254`、server `82443`、sampler `82450`；TP0–7 scheduler 均是同一 server
+  PGID `82443` 的子进程。
+- 当前 stage 为 `wait_ready`；尚未执行 quiescent→clear→exact-zero handshake，
+  也尚未发送 32 条请求。没有 retry、第二 launcher/server/sampler 或 reducer。
+  q25=`2.0625` 仍只是 native 候选值。
