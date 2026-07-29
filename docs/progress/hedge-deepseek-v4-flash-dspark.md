@@ -307,3 +307,21 @@
   权重加载前段，尚未 ready、未发请求，没有已知 error 或 cleanup。
 - 本 checkpoint 不构成 native PASS、八 rank 参与证明、API 成功或 P04 验收；
   B0 仍 `NOT_RUN`。
+
+### 2026-07-29T00:54:41Z — 240 分钟 checkpoint
+
+- 状态快照始于 `2026-07-29T00:52:12Z`。native r4
+  `20260729T001700Z-p04-native-smoke-r4` 已完成并完整封存到同名 HDFS run
+  目录；没有运行第二个 attempt，B0 仍为 `NOT_RUN`。
+- 服务在 1726.254 秒冷启动后 ready；TP0–TP7 均完成初始化，48/48 target
+  shards 已加载，日志确认 target/draft 均为 `flashinfer_mxfp4`。固定 native
+  smoke 请求成功返回 91 个 completion token，`api_smoke.json` 与
+  `hedge_counters.json` 均 PASS；native HEDGE disabled/config-null 证据成立。
+- r4 整体仍记为 `FAIL_VALIDATION`，不记作 native PASS：live validator 的唯一
+  blocker 是 `GPU sampling cadence departed from the one-second sampler`。当前
+  正在只读量化 archived `gpu_samples.csv`，区分全局冷启动期间的调度抖动与真实
+  漏采；修正前不运行 B0。
+- 这不是 server/API crash 或远程登录中断。失败路径已按登记的 PID/PGID/SID
+  定向停止 server 与 sampler，证明 CUDA contexts none；无外部 signal。随后恢复
+  dedicated keepalive，新 PID/PGID/SID `21792/21792/21792`，8 卡各 10 个样本
+  mean/min/max 均为 100%。`archive_manifest.json` PASS。
