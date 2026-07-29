@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_06_BPLUS_FORMAL_ACCEPTED`
+> 当前状态：`PHASE_07_COMPLETE`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
@@ -51,6 +51,7 @@
 | 2026-07-29T08:50:00Z | 11h53m33s | passed | canceled | Phase 06 B+ formal live / `eagle3_phase06` | TP0–7 与八个模型 context 持续稳定，约 60.3–60.6 GiB/卡；keeper 仍按协议暂停 | formal 287/500 terminal，累计 chat non-200=0、trace non-200=0、error tail 空；用户要求的独立结果报告已由根线程提交/push 为 `18dc526`，只改 docs、未触碰 live/frozen files | 同一 active scratch；继续唯一 formal，到完成后由 wrapper 定向清理、复验 0 context、恢复 keeper并封存 candidate |
 | 2026-07-29T09:18:00Z | 12h21m33s | passed | canceled | Phase 06 B+ formal live / `eagle3_phase06` | TP0–7 与八个模型 context 仍稳定，约 60.4–60.7 GiB/卡；keeper 继续按协议暂停 | formal 480/500 terminal，chat non-200=0、trace non-200=0、error tail 空；一条约 33 秒长请求成功且无 retry，其余协议未变 | 同一 active scratch；完成最后 20 条后等待 JSONL/summary/budget 校验、定向清理、0-context、keeper 与 HDFS candidate，不把请求完成等同于 accepted |
 | 2026-07-29T09:36:27Z | 12h40m00s | passed | canceled | Phase 06 B+ formal `ACCEPTED/PASS` / `eagle3_phase06` | TP0–7 target/draft/NCCL/aux 完整；registered SIGTERM、无 KILL fallback、0 model context；keepalive owner `378796` 恢复 exact-eight，10×1 秒逐卡 100% | 根线程独立重算 500/500 success、75,224 tokens、4,209.940660915s、17.8681853401 TPS、488 match、30,332 proposals、44,392 accepted drafts；500 budgets 与 39 hashes 零差异；accepted marker 已发布 | artifact `.../20260729T080100Z-phase-06-bplus-formal-01`；marker SHA `7f6a95dc…1a812`；正式单表与 artifact/hash 已更新，提交/push 后进入独立 Phase 07 最终审计 |
+| 2026-07-29T09:55:59Z | 12h59m32s | passed | canceled | Phase 07 `COMPLETE` / `eagle3_phase07` | worker `4099544` 仍为 8×H20；只读核查 keepalive owner `378796` exact-eight，8×10 逐卡 100%；无模型服务 context、未发 signal | Native/B+ marker→artifact/summary/shutdown/context、正式单表/delta、正常停机语义、target shared marker、Git 边界与只读复核命令均 PASS | Phase 07 无新运行 artifact；最终 Git 节点仅包含 experiment/progress/results 三份小型文档 |
 
 ## 当前依赖
 

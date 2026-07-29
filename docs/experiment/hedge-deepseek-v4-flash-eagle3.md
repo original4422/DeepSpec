@@ -6,7 +6,7 @@
 [HEDGE × DeepSeek-V4-Flash-Eagle3 实验结果](../results/hedge-deepseek-v4-flash-eagle3.md)；
 本文继续作为 attempt、artifact、故障归因和复现证据的唯一权威账本。
 
-> **当前路线结论：Phase 06 `ACCEPTED/PASS`，Phase 07 待最终审计。**
+> **当前路线结论：`COMPLETE`；Phase 07 最终审计 PASS。**
 > Native 与 HEDGE B+ 的 500 条正式 arm 均已完成根线程独立重算并发布唯一
 > accepted marker；`B=0` 等价性为 `B0_PASS`，正预算参数只由 32 条
 > calibration 决定。
@@ -65,7 +65,7 @@
 
 ## 执行状态与证据摘要
 
-> **状态：`PHASE_06_BPLUS_FORMAL_ACCEPTED`；Phase 07 待执行。**
+> **状态：`PHASE_07_COMPLETE`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -677,8 +677,38 @@ SHA-256 7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812
 （`+8.888%`），GSM8K aggregate match 差值为 0。完整单表与 artifact/hash
 入口见独立[结果报告](../results/hedge-deepseek-v4-flash-eagle3.md)。
 
-## 下一步
+## Phase 07：最终审计与交接
 
-Phase 06 已 `ACCEPTED/PASS`。下一阶段只执行 Phase 07：独立交叉审计 Native/B+
-marker、artifact/hash、结果报告、复现命令和限制，确认 exact-eight keepalive
-仍健康，完成最终文档/commit/push 收尾；不再运行新的 formal arm。
+最终只读审计于 `2026-07-29T09:55:59Z` 完成，结论为 `COMPLETE`：
+
+- Native/B+ accepted marker 均为 `ACCEPTED`，marker SHA-256 分别为
+  `0ce403530e58cdebb1cbbe9dd0d3c0ae534ecd697947f4348ea4e66d9aa7aea4`
+  和 `7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812`；
+  marker 指向的绝对 HDFS artifact、summary、formal result、shutdown、context
+  和 manifest 文件均存在。
+- 正式 summary、accepted marker 与
+  [结果报告](../results/hedge-deepseek-v4-flash-eagle3.md) 的唯一正式 500
+  纵向对照表一致；结果报告总计仅保留固定身份、正式 500、artifact/hash 三张表，
+  正式表头精确为
+  `指标 | Native formal | HEDGE B+ formal | B+ − Native`。
+- 两个 arm 都在 500/500 success 后才向登记 process group 发送 SIGTERM，
+  `kill_fallback=false`，随后 `cuda_contexts_after.status=PASS` 且 contexts 为空。
+  server log 中 detokenizer `exit code -15` 与 SIGQUIT 出现在登记 SIGTERM 之后，
+  是受控停机清理序列，不是正式请求窗口内的 worker crash；请求结束前没有
+  Traceback、CUDA/NCCL hard error。
+- 共享 target marker 状态为 `complete`、`immutable=true`，固定 revision
+  `60d8d70770c6776ff598c94bb586a859a38244f1`；manifest SHA-256 匹配，
+  73 个 manifest 路径与 46 个 index referent 均可读，因此 DFlash 可继续只读复用。
+- `mlx worker list` 仍显示 worker `4099544` 为准确 8×H20。只读实时核查确认
+  operational keepalive owner `378796`、八个 owned worker/context，10×1 秒逐卡
+  min/mean/max 均为 100%；没有 Eagle3 模型服务 context，未发送 signal。
+- 审计从与 remote 同步的 clean commit
+  `6b61f487dca81194a2daab242e5bbaa67fd976ee` 开始；tracked tree 中没有模型、
+  checkpoint、venv、cache 或大型运行日志。Phase 07 最终 Git 节点仅包含本路线的
+  experiment/progress/results 三份小型文档。
+
+只读复核命令集中列在
+[结果报告的“只读复核命令”](../results/hedge-deepseek-v4-flash-eagle3.md#只读复核命令)；
+正式 server command、环境和 source/model identity 以两份 accepted artifact 的
+`resolved_config.json` 为准。后续无需再运行 formal arm；若扩展结论，应新建独立
+实验，不覆盖本次一次性 accepted 结果。

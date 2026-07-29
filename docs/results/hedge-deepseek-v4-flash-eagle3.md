@@ -1,9 +1,10 @@
 # HEDGE × DeepSeek-V4-Flash-Eagle3 实验结果
 
-> **状态：Phase 06 `ACCEPTED/PASS`；更新时间
-> `2026-07-29T09:36:27Z`。**
+> **状态：`COMPLETE`；Phase 07 最终审计于
+> `2026-07-29T09:55:59Z` PASS。**
 > Native 与 HEDGE B+ 的 500 条正式结果均已完成根线程独立重算并发布 accepted
-> marker；Phase 07 最终审计尚待执行。
+> marker；marker、artifact/hash、停机语义、共享 target、Git 边界与当前
+> exact-eight keepalive 已再次只读交叉核对。
 >
 > 本文是面向读者的结果视图，数字从冻结的 JSON/HDFS artifacts 派生。attempt、
 > 故障归因和复现证据的权威账本见
@@ -278,6 +279,36 @@ target token，因此等于 accepted draft tokens/proposal 加 1。
 | B+ accepted marker | `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-bplus-formal.complete.json` |
 | B+ accepted marker SHA-256 | `7f6a95dc7e98b87c7de242887f32459bfa00050f67c0373e61f00f265661a812` |
 
+## 只读复核命令
+
+下面的命令只读取 accepted marker、正式 summary、停机/context 证据与共享 target
+marker；不会启动服务、暂停 keepalive 或重读 checkpoint 权重：
+
+```bash
+EAGLE3_NATIVE_DIR=/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02
+EAGLE3_BPLUS_DIR=/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T080100Z-phase-06-bplus-formal-01
+EAGLE3_COORD=/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4
+
+sha256sum \
+  "$EAGLE3_COORD/eagle3-native-formal.complete.json" \
+  "$EAGLE3_COORD/eagle3-bplus-formal.complete.json"
+python -m json.tool "$EAGLE3_NATIVE_DIR/summary.json"
+python -m json.tool "$EAGLE3_BPLUS_DIR/summary.json"
+python -m json.tool "$EAGLE3_NATIVE_DIR/shutdown.json"
+python -m json.tool "$EAGLE3_BPLUS_DIR/shutdown.json"
+python -m json.tool "$EAGLE3_NATIVE_DIR/cuda_contexts_after.json"
+python -m json.tool "$EAGLE3_BPLUS_DIR/cuda_contexts_after.json"
+python -m json.tool \
+  "$EAGLE3_COORD/target-deepseek-v4-flash-60d8d70770c6776ff598c94bb586a859a38244f1.complete.json"
+mlx worker list
+git status --short --branch
+git diff --check
+```
+
+正式运行的完整 server command、显式环境、source/model identity 和 generation
+协议分别封存在两个 artifact 的 `resolved_config.json`；39-file 内容清单及 hash
+封存在各自的 `artifact_manifest.json`。
+
 ## 限制
 
 - Native 和 B+ 各只允许一次 accepted formal 500 运行；这是确定性协议内的单次
@@ -289,5 +320,6 @@ target token，因此等于 accepted draft tokens/proposal 加 1。
 - 不设置 TPS、acceptance length 或 GSM8K match 门槛。
 - GSM8K match 只展示，不把质量门槛反向用于挑选参数。
 - 不做跨 DSpark/Eagle3/DFlash 的绝对 TPS 排名。
-- Phase 07 尚需对最终文档、marker、artifact 交叉引用和 keepalive 状态做一次
-  收尾审计。
+- Phase 07 只读终审确认 worker `4099544` 仍为 8×H20，当前 operational
+  keepalive owner `378796` 为 exact-eight，10×1 秒逐卡均为 100%；它不是实验负载，
+  也不进入正式指标。
