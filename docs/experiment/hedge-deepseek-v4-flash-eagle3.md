@@ -1,6 +1,61 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_06_BPLUS_FORMAL_READY`。**
+## 实验结果总览
+
+> **当前路线结论：`IN_PROGRESS`。** Native 500 条正式基线已经独立验收为
+> `ACCEPTED/PASS`，`B=0` 等价性为 `B0_PASS`，正预算配置已经冻结；
+> HEDGE B+ 的 500 条正式 arm 正在运行，尚未验收，因此现在不能声称 HEDGE
+> 相对 native 更快、更慢或质量更高/更低。
+
+### 一眼结论
+
+- **Native 正式结果已成立：** 500/500 请求成功，0 failure/retry，
+  74,580 completion tokens，客户端计时 4,411.045604754 秒，
+  output TPS `16.9075558683`；GSM8K 488/500 匹配，0 parse failure。
+- **Native speculative 指标：** 31,603 proposals、42,477 accepted draft
+  tokens，accepted drafts/proposal `1.3440812581`，mean acceptance length
+  `2.3440812581`。
+- **零预算正确性已成立：** calibration 32/32 的完整输出 token IDs 与 native
+  完全相同，结论为 `B0_PASS`。
+- **正预算只由 calibration 决定：** `g=q25=6.75`、`B=6.75`、`m=1`、
+  `value_scheme=normalized_suffix`；没有根据 formal 结果回调。
+- **B+ 接入已通过 bounded smoke：** 3/3 成功，14 个 relaxed proposals
+  带来 22 个相对 strict 的额外 accepted drafts；三条 request 的 budget
+  continuity、accounting、非负约束和 `m<=1` 均无违例。该 smoke 只证明接入，
+  **不是**正式性能或质量结论。
+- **B+ formal 正在运行：** `2026-07-29T08:26:13Z` 心跳为 110/500 terminal，
+  chat/trace non-200 均为 0，八卡 context 与显存稳定；最终数字和路线内差值待
+  Phase 06 独立验收后填写。
+
+### 正式 500 条结果与路线内差值
+
+| 指标 | Native formal | HEDGE B+ formal | B+ − Native |
+| --- | ---: | ---: | ---: |
+| 验收状态 | `ACCEPTED/PASS` | `LIVE / NOT YET ACCEPTED` | — |
+| Formal terminal | 500/500 | 110/500（08:26:13Z 心跳） | 待完成 |
+| Failure / generation retry / trace retry | 0 / 0 / 0 | 当前 0 / 0 / 0 | 待完成 |
+| Completion tokens | 74,580 | 待完成 | 待完成 |
+| 客户端正式墙钟 | 4,411.045604754 s | 待完成 | 待完成 |
+| Output TPS | 16.9075558683 | 待完成 | 待完成 |
+| Accepted draft tokens / proposal | 1.3440812581 | 待完成 | 待完成 |
+| Mean acceptance length | 2.3440812581 | 待完成 | 待完成 |
+| GSM8K matches | 488/500 | 待完成 | 待完成 |
+| Parse failures | 0 | 待完成 | 待完成 |
+
+### 关键门禁与结果 artifact
+
+| 项目 | 结果 / 路径 |
+| --- | --- |
+| B0 | `B0_PASS`；32/32 完整 token IDs 零差异 |
+| 自动校准 | `g=B=6.75,m=1`；calibration SHA-256 `836ca7c46274cfa3546f5f36d8b1e49e51edd68db2d125b2dbfe57c1075e2e60` |
+| Native accepted artifact | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T061100Z-phase-05-native-formal-02` |
+| Native accepted marker | `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-native-formal.complete.json` |
+| B+ bounded smoke | `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T052500Z-phase-04-bplus-smoke-01` |
+| B+ formal live scratch | `/tmp/deepspec-hedge-v4-eagle3/20260729T080100Z-phase-06-bplus-formal-01` |
+
+## 执行状态与证据摘要
+
+> **状态：`PHASE_06_BPLUS_FORMAL_LIVE`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -151,16 +206,7 @@
 > **权威 Phase 06 tooling freeze 01：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T080000Z-phase-06-tooling-freeze-01`
 
-## 快速结果
-
-| 快速结果 | Native | HEDGE B+ |
-| --- | ---: | ---: |
-| Status | formal `ACCEPTED/PASS` | Phase 04 bounded smoke PASS；formal pending |
-| Requests terminal | 500/500 formal；0 failure/retry | 3/3 bounded smoke |
-| Output TPS | `16.9075558683` | — |
-| Mean accept length | `2.3440812581` | — |
-| GSM8K matches | 488/500 | 3/3（smoke only） |
-| Parse failures | 0 | 0 |
+## 固定身份与复现配置
 
 | 配置 | 值 |
 | --- | --- |
