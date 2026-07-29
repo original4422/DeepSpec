@@ -37,6 +37,7 @@ from hedge_dspark_p04_validate import (  # noqa: E402
     _validate_identity_artifacts,
     _validate_keepalive,
     _validate_server_log,
+    validate_gpu_sampler_status,
 )
 from hedge_dspark_p05_client import (  # noqa: E402
     SERVER_FIELDS,
@@ -59,6 +60,7 @@ COMMON_REQUIRED = (
     "dataset_manifest.json",
     "server.log",
     "gpu_samples.csv",
+    "gpu_sampler_status.json",
     "calibration_request_summary.json",
     "hedge_counters.json",
     "strict_rejection_trace.jsonl",
@@ -508,6 +510,13 @@ def finalize_attempt(
         "live_evidence",
         lambda: validate_live(
             scratch=scratch, arm=arm, attempt_id=attempt_id
+        ),
+    )
+    capture(
+        "gpu_sampler_status",
+        lambda: validate_gpu_sampler_status(
+            scratch / "gpu_sampler_status.json",
+            scratch / "gpu_samples.csv",
         ),
     )
 

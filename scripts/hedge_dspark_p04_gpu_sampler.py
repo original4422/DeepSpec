@@ -121,7 +121,13 @@ def run_sampler(
         writer.writeheader()
         stream.flush()
         while should_continue():
-            rows = parse_gpu_sample(query())
+            try:
+                payload = query()
+            except Exception:
+                if not should_continue():
+                    break
+                raise
+            rows = parse_gpu_sample(payload)
             uuids = [str(row["gpu_uuid"]) for row in rows]
             if expected_uuids is None:
                 expected_uuids = uuids

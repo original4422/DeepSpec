@@ -51,6 +51,7 @@ from hedge_dspark_p04_validate import (  # noqa: E402
     REQUIRED_ARTIFACTS,
     archive_attempt,
     ensure_required_artifacts,
+    finalize_attempt,
     validate_lifecycle_events,
     validate_live,
 )
@@ -454,6 +455,54 @@ class EightGpuSamplerTests(unittest.TestCase):
             [1_000_000_000, 2_000_000_000],
         )
 
+    def test_sampler_stops_cleanly_when_stop_interrupts_active_query(
+        self,
+    ) -> None:
+        running = True
+
+        def interrupted_query() -> str:
+            nonlocal running
+            running = False
+            raise RuntimeError("nvidia-smi sampling failed: terminated")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            status = run_sampler(
+                output=Path(temporary) / "gpu_samples.csv",
+                query=interrupted_query,
+                should_continue=lambda: running,
+                sleeper=lambda _: None,
+                interval_seconds=1.0,
+            )
+
+        self.assertEqual(
+            status,
+            {
+                "schema_version": 1,
+                "status": "stopped",
+                "sample_count": 0,
+                "expected_gpus": 8,
+                "gpu_uuids": [],
+                "interval_seconds": 1.0,
+            },
+        )
+
+    def test_sampler_fails_when_active_query_has_real_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(
+                RuntimeError, "nvidia-smi sampling failed: device lost"
+            ):
+                run_sampler(
+                    output=Path(temporary) / "gpu_samples.csv",
+                    query=lambda: (_ for _ in ()).throw(
+                        RuntimeError(
+                            "nvidia-smi sampling failed: device lost"
+                        )
+                    ),
+                    should_continue=lambda: True,
+                    sleeper=lambda _: None,
+                    interval_seconds=1.0,
+                )
+
 
 class P04ClientAndCounterTests(unittest.TestCase):
     @staticmethod
@@ -780,6 +829,7 @@ class P04ArtifactValidatorTests(unittest.TestCase):
         "checkpoint_identity.json",
         "server.log",
         "gpu_samples.csv",
+        "gpu_sampler_status.json",
         "api_smoke.json",
         "hedge_counters.json",
         "shutdown.json",
@@ -982,9 +1032,9 @@ class P04ArtifactValidatorTests(unittest.TestCase):
         }
         P04ArtifactValidatorTests._write_json(counters_path, counters)
 
-    def test_required_artifact_set_is_the_frozen_eleven(self) -> None:
+    def test_required_artifact_set_includes_sampler_terminal_status(self) -> None:
         self.assertEqual(set(REQUIRED_ARTIFACTS), self.REQUIRED)
-        self.assertEqual(len(REQUIRED_ARTIFACTS), 11)
+        self.assertEqual(len(REQUIRED_ARTIFACTS), 12)
 
     def test_live_validator_accepts_exact_b0_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1000,6 +1050,83 @@ class P04ArtifactValidatorTests(unittest.TestCase):
         self.assertEqual(len(audit["gpu_evidence"]["gpu_uuids"]), 8)
         self.assertTrue(audit["gpu_evidence"]["request_bracketed"])
         self.assertEqual(audit["server_log"]["tp_ranks"], list(range(8)))
+
+    def test_final_artifact_gate_rejects_failed_sampler_status(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            scratch = Path(temporary)
+            self._write_samples(scratch / "gpu_samples.csv")
+            self._write_json(
+                scratch / "gpu_sampler_status.json",
+                {
+                    "schema_version": 1,
+                    "status": "FAIL",
+                    "error": "nvidia-smi sampling failed",
+                },
+            )
+            audit = finalize_attempt(
+                scratch=scratch,
+                arm="b0",
+                attempt_id="20260729T010203Z-p04-b0-fixture",
+            )
+
+        self.assertEqual(
+            audit["checks"]["gpu_sampler_status"]["status"],
+            "FAIL",
+        )
+
+    def test_final_artifact_gate_rejects_sampler_csv_count_mismatch(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            scratch = Path(temporary)
+            self._write_samples(scratch / "gpu_samples.csv")
+            self._write_json(
+                scratch / "gpu_sampler_status.json",
+                {
+                    "schema_version": 1,
+                    "status": "stopped",
+                    "sample_count": 5,
+                },
+            )
+            audit = finalize_attempt(
+                scratch=scratch,
+                arm="b0",
+                attempt_id="20260729T010203Z-p04-b0-fixture",
+            )
+
+        self.assertEqual(
+            audit["checks"]["gpu_sampler_status"]["status"],
+            "FAIL",
+        )
+
+    def test_final_artifact_gate_accepts_stopped_sampler_with_csv_count(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            scratch = Path(temporary)
+            self._write_samples(scratch / "gpu_samples.csv")
+            self._write_json(
+                scratch / "gpu_sampler_status.json",
+                {
+                    "schema_version": 1,
+                    "status": "stopped",
+                    "sample_count": 6,
+                },
+            )
+            audit = finalize_attempt(
+                scratch=scratch,
+                arm="b0",
+                attempt_id="20260729T010203Z-p04-b0-fixture",
+            )
+
+        self.assertEqual(
+            audit["checks"]["gpu_sampler_status"],
+            {
+                "status": "PASS",
+                "sample_count": 6,
+                "csv_sample_ordinal_count": 6,
+            },
+        )
 
     def test_off_request_scheduler_jitter_is_diagnostic_not_failure(
         self,

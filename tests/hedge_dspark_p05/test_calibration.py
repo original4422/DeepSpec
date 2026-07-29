@@ -23,7 +23,9 @@ from scripts.hedge_dspark_p05_reduce import (
 )
 from scripts.hedge_dspark_p05_validate import (
     archive_attempt,
+    finalize_attempt,
     record_shutdown,
+    required_artifacts,
 )
 
 
@@ -620,6 +622,42 @@ class P05ReducerTests(unittest.TestCase):
 
 
 class P05LifecycleEvidenceTests(unittest.TestCase):
+    def test_required_artifacts_include_sampler_terminal_status(self) -> None:
+        required = required_artifacts("native-trace")
+        self.assertIn("gpu_sampler_status.json", required)
+        self.assertEqual(len(required), 15)
+
+    def test_final_artifact_gate_rejects_failed_sampler_status(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        scratch = Path(temporary.name)
+        (scratch / "gpu_samples.csv").write_text(
+            "sample_ordinal\n0\n",
+            encoding="utf-8",
+        )
+        (scratch / "gpu_sampler_status.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "status": "FAIL",
+                    "error": "nvidia-smi sampling failed",
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        audit = finalize_attempt(
+            scratch=scratch,
+            arm="native-trace",
+            attempt_id="20260729T020000Z-p05-native-calibration-r1",
+        )
+
+        self.assertEqual(
+            audit["checks"]["gpu_sampler_status"]["status"],
+            "FAIL",
+        )
+
     def test_shutdown_artifact_requires_main_cleanup_contexts_and_keepalive(
         self,
     ) -> None:

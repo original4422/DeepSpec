@@ -33,6 +33,7 @@ REQUIRED_ARTIFACTS: tuple[str, ...] = (
     "checkpoint_identity.json",
     "server.log",
     "gpu_samples.csv",
+    "gpu_sampler_status.json",
     "api_smoke.json",
     "hedge_counters.json",
     "shutdown.json",
@@ -137,6 +138,39 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"{path.name} must contain a JSON object")
     return value
+
+
+def validate_gpu_sampler_status(
+    status_path: Path, samples_path: Path
+) -> dict[str, Any]:
+    """Require the sampler's observable terminal status to be clean."""
+
+    status = _load_json(status_path)
+    _require(
+        status.get("status") == "stopped",
+        "GPU sampler terminal status is not stopped",
+    )
+    sample_count = status.get("sample_count")
+    _require(
+        isinstance(sample_count, int)
+        and not isinstance(sample_count, bool)
+        and sample_count >= 0,
+        "GPU sampler terminal sample_count is invalid",
+    )
+    with samples_path.open("r", encoding="utf-8", newline="") as stream:
+        ordinals = {
+            int(row["sample_ordinal"])
+            for row in csv.DictReader(stream)
+        }
+    _require(
+        sample_count == len(ordinals),
+        "GPU sampler terminal sample_count does not match CSV ordinal count",
+    )
+    return {
+        "status": "PASS",
+        "sample_count": sample_count,
+        "csv_sample_ordinal_count": len(ordinals),
+    }
 
 
 def _sha256_file(path: Path) -> str:
@@ -1015,6 +1049,13 @@ def finalize_attempt(
         "live_evidence",
         lambda: validate_live(
             scratch=scratch, arm=arm, attempt_id=attempt_id
+        ),
+    )
+    capture(
+        "gpu_sampler_status",
+        lambda: validate_gpu_sampler_status(
+            scratch / "gpu_sampler_status.json",
+            scratch / "gpu_samples.csv",
         ),
     )
 
