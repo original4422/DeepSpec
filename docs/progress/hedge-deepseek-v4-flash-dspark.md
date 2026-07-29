@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T03:25:14Z`（390 分钟 checkpoint 实际心跳，晚 33 秒）
+- 快照时间：`2026-07-29T03:55:00Z`（420 分钟 checkpoint 实际心跳，晚 19 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`06:30:33` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`07:00:19` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -14,28 +14,31 @@
   - P03：主验收 `PASS`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc` 与 identity/progress `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3` 均已 push
   - P04：主 Agent 验收 `PASS`；结果 commit/push `3e10b780264557e84a3cab5c1a196dc7c2a00496`
   - P05：native r1 `FAIL_TRACE_SCOPE`；native r2 `FAIL_PRE_COHORT_QUIESCENCE`；
-    r2 的 bounded quiescence recovery 正在 CPU TDD；B0 未运行
+    recovery `fe0aea0` 已主审/push；唯一 native r3 正在冷加载；B0 未运行
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：native r2 已定向清理且 contexts none；keepalive
-  `57902/57902/57902`，attempt after gate 为 8×10 全卡 100%；当前无模型 server
-- 最新 attempt：`20260729T025543Z-p05-native-calibration-r2`；
-  `FAIL_PRE_COHORT_QUIESCENCE`，0/32 请求、0 trace
-- HDFS artifact：
+- keepalive / server / PID：native r3 已于 `03:40:38Z` 暂停 keepalive，
+  `03:40:41.234729Z` contexts none；当前登记 server `59735/59735/59735`、
+  sampler `59742/59742/59742`，无第二套 context
+- 最新 attempt：`20260729T033920Z-p05-native-calibration-r3`；冷加载中，
+  尚未 ready、尚未执行 quiescence handshake、尚未发送 cohort 请求
+- 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T025543Z-p05-native-calibration-r2`
-  immutable 保留
+  （r2，immutable）；r3 活动 scratch：
+  `/tmp/deepspec-hedge-dspark-20260729T033920Z-p05-native-calibration-r3`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
   branch `exp/hedge-v4-dspark`；HEAD/pushed
-  `fd88b69a2912e699ed05ec152b82f7cf25cd2b2d`
+  `3c37a41ef0bf80f83399ca16b29b85c94e282e87`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
   P05 tooling `ce5d672`；sampler recovery `6b7145d`；trace-scope recovery
-  `eb4962f`；failure docs `fd88b69`；calibration config / result 尚未创建
-- 首要事项：完成“等待 warmup quiescent→clear→验零”的有界 fail-closed recovery；
-  主审/commit 后才允许 scoped native r3，B0 继续锁住
-- 下一检查点：`2026-07-29T03:54:41Z`
-- 下一 30 分钟动作：完成 quiescence TDD 与总回归；不放宽 state-leak 门禁，
-  不采用 r1 q25，不把 r2 的 0/32 写成 calibration 输出
+  `eb4962f`；failure docs `fd88b69`；quiescence recovery `fe0aea0`；
+  r2/recovery experiment `3c37a41`；calibration config / result 尚未创建
+- 首要事项：让 r3 自然完成 target/draft 冷加载；ready 后先通过有界
+  quiescence→clear→exact-zero handshake，才允许第一个 cohort 请求
+- 下一检查点：`2026-07-29T04:24:41Z`
+- 下一 30 分钟动作：完成 r3 handshake、32 条 scoped native 与定向 cleanup；
+  主验收前不运行 B0，不采用 r1 q25
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -503,3 +506,28 @@
   `wait quiescent → clear → exact-zero verify`：startup warmup 只触发有界等待，
   永久 active/race/identity/HTTP 错误保持 fail-closed，不放宽 state-leak 门禁。
   native r3 与 P05 B0 均尚未启动。
+
+### 2026-07-29T03:54:41Z — 420 分钟 checkpoint
+
+- 实际快照于 `03:55:00Z` 落盘，晚 19 秒。quiescence recovery 已由 bounded
+  executor 和主 Agent分别完成 fresh-process 回归；主复验 P05 24、P04 29、
+  protocol+core 46、integration 22，合计 121/121 PASS，另有 compile、shell 与
+  diff gates PASS。代码 `fe0aea0`、权威 r2/recovery experiment `3c37a41` 均已
+  commit/push。
+- 唯一 native r3 为
+  `20260729T033920Z-p05-native-calibration-r3`。preflight 固定
+  HEAD/origin `3c37a41ef0bf80f83399ca16b29b85c94e282e87` 且 clean，
+  `fe0aea0` 为 ancestor；worker `4106666` 精确 8×H20，NVMe/HDFS 目标均预先
+  ENOENT，keepalive `57902/57902/57902` 的 8×10 gate 全卡 100%。
+- keepalive 于 `03:40:38Z` 暂停，`03:40:41.234729Z` 证明 contexts none 后
+  紧邻启动登记 server `59735/59735/59735` 与 sampler
+  `59742/59742/59742`。TP0–TP7 已全部 distributed init；target 48/48 shards
+  已读完，各 rank 确认
+  `flashinfer_mxfp4 / Mxfp4FlashinferCutlassMoEMethod`，目前仍在固定 SM90
+  CUTLASS expert prepare。
+- sampler 最近快照为 630 个连续 ordinal、5,041 CSV 行，每组精确 8 GPU。
+  server foreground/identity 存活，日志无 Traceback、CUDA/NCCL、OOM 或 worker
+  crash marker；attempt 尚未 ready，故 quiescence handshake、32 条请求、q25、
+  cleanup、archive 与 keepalive 恢复均尚未完成，不能宣称 r3 或 P05 PASS。
+- P05 B0 继续锁住；冷加载期间没有其他 GPU load、第二 attempt 或 decode/source
+  改动。
