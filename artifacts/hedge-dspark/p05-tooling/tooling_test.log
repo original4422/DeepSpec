@@ -1,0 +1,46 @@
+P05 OFFLINE TOOLING GATE
+generated_at_utc=2026-07-29T01:53:10Z
+gpu_touched=false
+keepalive_paused=false
+server_started=false
+
+P05 public-seam tests
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest -v tests.hedge_dspark_p05.test_calibration
+result=PASS
+tests=14
+
+Frozen protocol and pure HEDGE core regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest tests.hedge_protocol.test_protocol tests.hedge_spec.test_budget tests.hedge_spec.test_config tests.hedge_spec.test_public_surface tests.hedge_spec.test_torch_rule
+result=PASS
+tests=46
+
+DSpark integration regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest tests.hedge_dspark_integration.test_dspark_hedge_integration
+result=PASS
+tests=22
+
+P04 lifecycle/identity regression
+command=/home/tiger/venvs/hedge-v4-dspark/bin/python -m unittest -v tests.hedge_dspark_p04.test_tooling
+result=PASS
+tests=24
+
+Static gates
+bash_n=PASS
+py_compile=PASS
+launcher_contract_json=PASS
+git_diff_check=PASS
+exact_worker=4106666
+exact_arms=native-trace,b0
+tp_size=8
+proposal_width=5
+port=31066
+sample_count=32
+
+Test-process isolation note
+The four suites above pass in fresh canonical Python processes (106 total).
+When integration and P04 are deliberately combined in one interpreter,
+the integration fixture prepends the SGLang source tree to sys.path, so
+importlib.metadata.distribution("sglang").locate_file("") resolves the source
+egg-info instead of the installed wheel. Three P04 installation-identity
+assertions then fail for that synthetic shared-interpreter order. The isolated
+P04 runtime-identity suite and its read-only engine probe both pass 24/24.
