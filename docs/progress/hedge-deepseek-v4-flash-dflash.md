@@ -6,7 +6,7 @@
 - Continuation timebox：`T1=2026-07-29T07:31:39Z`；
   `T+9=2026-07-29T16:31:39Z`；`T+12=2026-07-29T19:31:39Z`。
 - 当前 phase：continuation C3 native formal `RUNNING`；a01 live attempt
-  `1/3`，10/10 warmup 已在计时前完成，正式请求进度 241/500。
+  `1/3`，10/10 warmup 已在计时前完成，正式请求进度 331/500。
 - 校准：32/32 terminal success、0 retry；4991 条 positive ratio、dropped=0；
   linear `q25=12.5`，冻结 `B=g=12.5,m=1,value_scheme=normalized_suffix,
   block_size=7`，config SHA `ef9003cd…7746`。
@@ -64,3 +64,4 @@
 | 2026-07-29T10:02:44Z | continuation C3 heartbeat | 新增并验证 D6 native-formal tooling；a01 fresh server 完成 10/10 warmup 后进入唯一 500 条正式计时 | `RUNNING`，live `1/3`；49/500 success、7638 completion tokens、49 match、0 retry、fatal scan 0；中途数据不作为正式 TPS/acceptance 结论 | scratch `dflash-d6-native-20260729T093000Z-a01`；D6 6/6 + D5/D4-C 11/11 PASS | 不中断当前 arm；500 终态后最小验收并立即启动 C4/B+ |
 | 2026-07-29T10:33:30Z | continuation C3 heartbeat | 唯一 native formal arm 持续顺序计时；B+ CPU tooling 已并行完成并以 `cb94418` push | `RUNNING`，live `1/3`；148/500 success、21636 completion tokens、147 match / 1 mismatch、0 retry、fatal scan 0；不发布中途 TPS | scratch `dflash-d6-native-20260729T093000Z-a01`；B+ prep `cb94418` | 不中断 native；完成、seal、cleanup 后立即启动 B+ preflight |
 | 2026-07-29T11:03:20Z | continuation C3 heartbeat | 唯一 native formal arm 持续顺序计时 | `RUNNING`，live `1/3`；241/500 success、35038 completion tokens、237 match / 4 mismatch、0 retry、fatal scan 0；不发布中途 TPS | scratch `dflash-d6-native-20260729T093000Z-a01` | 不中断 native；完成、seal、cleanup 后立即启动已就绪 B+ preflight |
+| 2026-07-29T11:33:55Z | continuation C3 heartbeat | 唯一 native formal arm 持续顺序计时 | `RUNNING`，live `1/3`；331/500 success、48749 completion tokens、323 match / 8 mismatch、0 parse failure、0 retry、fatal scan 0；不发布中途 TPS | scratch `dflash-d6-native-20260729T093000Z-a01` | 不中断 native；完成、seal、cleanup 后立即移交已就绪 C4/B+ |
