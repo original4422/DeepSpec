@@ -1,12 +1,19 @@
 # HEDGE × DeepSeek-V4-Flash × DFlash 实验记录
 
-Status / outcome label: `BEST-EFFORT EARLY STOP — D0–D3 ACCEPTED; D4-C SHORT B0 INFRASTRUCTURE PASS; D5 BLOCKED BEFORE MODEL LAUNCH`
+Status / outcome label: `BEST_EFFORT_BLOCKED_IMPLEMENTATION`
+（具体 outcome：`BEST_EFFORT_EARLY_STOP_INCOMPLETE`；D7 evidence/cleanup audit：
+`PASS`）
 
 Timebox: `2026-07-28T20:55:58Z` → `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为 `2026-07-29T05:55:58Z`
 
-Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8
+Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8；D7 最终
+owned keepalive PID/PGID/SID `123914`，八卡 fresh 10×1 秒均值全部 100%，无
+owned model context
 
-Target repo@revision / HDFS `.complete`: `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1` / `READY — immutable completion pointer published by Eagle at 2026-07-28T23:04:53Z`
+Target repo@revision / HDFS completion marker:
+`deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1` /
+`READY — target-deepseek-v4-flash-60d8d70770c6776ff598c94bb586a859a38244f1.complete.json`,
+immutable and published by Eagle at `2026-07-28T23:04:53Z`
 
 Draft repo@revision / HDFS `.complete`: `RedHatAI/DeepSeek-V4-Flash-speculator.dflash@e44fc94ceb1e7ed45550d15e782aeadd08050483` / `READY — primary .complete published at 2026-07-28T23:39:20Z`
 
@@ -26,15 +33,63 @@ B+ result: `NOT_RUN`
 
 Canonical or exploratory: `NO D5/D6 RESULT`
 
-Primary blocker: `T+9 WINDOW INSUFFICIENT AFTER D5 PREFLIGHT IMPORT STALL`；a01 在 keepalive pause/model launch 前停于隔离 SGLang import，剩余窗口不足以安全完成冷启动、32 请求、cleanup 和 seal。
+Primary blocker: `D5 PREFLIGHT PASS NOT SURFACED TO ORCHESTRATOR + T+9 WINDOW
+INSUFFICIENT`；a01 的 `preflight.json` 于 `05:40:13Z` 写出 PASS，但 mlx PTY
+wrapper 没有向主 Agent 返回可恢复的 rc/stdout；剩余窗口不足以安全完成冷启动、
+32 请求、cleanup 和 seal，因此在 keepalive pause/model launch 前 early-stop。
 
 Artifact root: `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/`
 
-Formal artifact: `NONE`；D4-C short-smoke HDFS run `/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d4-b0-20260729T045317Z-a01`；D5 blocker `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d5/dflash_d5_preflight_blocker.json`
+Formal artifact: `NONE`；D4-C short-smoke HDFS run
+`/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d4-b0-20260729T045317Z-a01`；
+D7 final audit
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json`
 
-Git commit: latest pushed progress `207ac36`; D4 source/evidence `a80031a`; D4-C live evidence `a18655a`; DeepSpec canonical core `86231e536573ccc43cda732b4eca920d5ce0a28a`; SGLang HEDGE-final `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`; D5 tooling/blocker pending main commit/push
+Git commit: D5 tooling/blocker `af6e4a6`；latest pushed progress `207ac36`；D4
+source/evidence `a80031a`；D4-C live evidence `a18655a`；DeepSpec canonical core
+`86231e536573ccc43cda732b4eca920d5ce0a28a`；SGLang HEDGE-final
+`9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`；D7 final commit/push 待主
+Agent 完成
 
-下一步：主 Agent 复核 D5 early-stop evidence，提交/push 当前可复现状态并进入 D7 最终整理；不得进入 D6 或声称存在 q25/B0/B+ 结果。
+下一步：主 Agent 复核 D7 evidence/manifest，按 `$git-commit-message` 工作流只
+提交本路线 D7 小文件并 push；保持 worker `4099543` owned keepalive，不进入 D6，
+不声称存在 q25/protocol B0/B+ 或 formal 结果。
+
+## 快速结果
+
+### 协议状态
+
+| 项目 | 状态 | 证据/解释 |
+| --- | --- | --- |
+| D4-C one-prompt live `B=0` | `INFRASTRUCTURE PASS` | output token IDs `[22,1]` 与 D3 一致；39/39 HDFS manifest PASS；不是 GSM8K calibration |
+| native calibration 32 | `NOT_RUN` | D5 仅完成 preflight metadata，`requests.jsonl` 为 0 bytes / 0 rows |
+| positive ratio / q25 | `NOT_RUN` / `NOT_CALIBRATED` | 无 native trace，不能生成 q25 |
+| protocol B0 32 | `NOT_RUN` | 没有 32 条完整 output token-ID comparison；不是 FAIL |
+| native formal 500 | `NOT_RUN` | D6 未启动 |
+| HEDGE B+ formal 500 | `NOT_RUN` | D6 未启动 |
+| formal result class | `NONE` | 没有 canonical 或 exploratory formal result |
+
+### 正式结果表
+
+| Arm | HEDGE | B | g | m | Source SHA | Samples | Success/Fail | Mean accepted drafts (0–7) | Completion tokens | Timed sec | E2E TPS | Match/Mismatch/Parse fail | Retries | Result class |
+| --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: | ---: | ---: | --- | ---: | --- |
+| native | off | — | — | — | `9a01e2d` | 0/500 | `NOT_RUN` | — | — | — | — | — | — | `NONE` |
+| B+ | on | — | — | — | `9a01e2d` | 0/500 | `NOT_RUN` | — | — | — | — | — | — | `NONE` |
+
+### `B0` 表
+
+| Native samples | B0 samples | Full token-ID identical | First divergent sample | First divergent token | Evidence |
+| ---: | ---: | --- | --- | --- | --- |
+| 0/32 | 0/32 | `NOT_RUN` | — | — | D5 final scratch：preflight-only，0 requests |
+
+### 最终 attempt 摘要
+
+| Time | Phase | Attempt | Single changed variable | Outcome/root-cause fingerprint | New evidence | Next strategy |
+| --- | --- | --- | --- | --- | --- | --- |
+| 03:33Z | D3 | `dflash-d3-native-20260729T033321Z-a05` | TP loader source fix only | short native smoke PASS | TP0–7 target/draft、API 200、7 proposals | D4 HEDGE integration |
+| 04:53Z | D4-C | `dflash-d4-b0-20260729T045317Z-a01` | HEDGE enabled with `B=0` | one-prompt infrastructure PASS | token IDs exact、zero relaxation/leak、39/39 manifest | D5 protocol calibration |
+| 05:37Z | D5 | `dflash-d5-native-20260729T053735Z-a01` | native calibration preflight | preflight PASS 未及时 surfaced；模型未启动 | 14 个 preflight-only 文件、0 requests、zero GPU side effect | T+9 early-stop，转 D7 |
+| — | D6 | `NONE` | — | `NOT_RUN` | 无 formal artifact | 不在本 timebox 启动 |
 
 ## D0 会话与资源基线
 
@@ -253,16 +308,22 @@ CPU gate 为 D5 4/4、D4-C regression 3/3，合计 7/7 PASS；shell syntax、API
 launcher 在 D5 开发后仍与 HEAD 完全相同。
 
 唯一 D5 preflight ID 为
-`dflash-d5-native-20260729T053735Z-a01`。其 scratch 只产生
-`cuda_view_ensure.json` 与 `cuda_view_verify.json`；worker 8×H20、固定 repo
-inputs、SGLang final SHA/parent/base 和 clean source 均已确认，随后 mlx PTY 在隔离
-`import sglang` 停顿且没有保留原始 wrapper rc。该执行从未到达 keepalive pause、
-server/sampler/API 或 HDFS publication，因此不是模型 attempt 成功或失败结果。
+`dflash-d5-native-20260729T053735Z-a01`。执行时 mlx PTY 没有向 orchestrator 返回
+隔离 `import sglang` 之后的完整 stdout/rc；主线程基于当时可见的陈旧 inventory
+记录了两个 CUDA-view 文件。D7 最终逐文件审计纠正了这项 inventory：
+`preflight.json` 实际于 `05:40:13.212797Z` 写出 `PASS`，最终 scratch 有 14 个
+preflight-only 小文件，mtime 均不晚于 `05:40:13.581845Z`。
+
+这项纠正不改变 GPU/实验结论：`requests.jsonl` 是 0 bytes / 0 rows，
+`hedge_counters.status=NOT_RUN`，没有 keepalive pause、server/sampler/startup/smoke
+artifact、API 或 HDFS publication。正确 blocker 是
+`PREFLIGHT_PASS_NOT_SURFACED_TO_ORCHESTRATOR`，不是 calibration 成功，也不是模型
+attempt 成功或失败。
 
 此时距 DFlash 在无完整 B0 时的 T+9 实现停止点已不足以完成实测约 6 分 51 秒冷启动、
 32 请求、定向 cleanup 与 seal。主 Agent 接受安全判断并在模型启动前 early-stop；
-没有启动第二个 preflight/model attempt，后续只读 PTY diagnostic 自然退出、未发送
-signal。`2026-07-29T05:42:45Z` fresh operational audit 证明 keepalive
+没有启动第二个 model attempt，后续只读 PTY diagnostic 自然退出、未发送 signal。
+`2026-07-29T05:42:45Z` operational audit 证明 keepalive
 PID/PGID/SID `123914` 仍在运行，8 卡 10×1 秒均值全部 100%，无 pause marker、模型
 server 或模型 CUDA context。
 
@@ -270,4 +331,48 @@ server 或模型 CUDA context。
 `NOT_CALIBRATED`、protocol B0 `NOT_RUN`。不进入 D6，不产生 canonical/exploratory
 B+ 指标。权威 blocker artifact 与 handoff 分别为
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d5/dflash_d5_preflight_blocker.json`
-和 `docs/plan/handoffs/dflash-phase-d5-handoff.md`。
+和 `docs/plan/handoffs/dflash-phase-d5-handoff.md`。前者的
+`preflight.result=BLOCKED_BEFORE_PASS` 与两文件 inventory 已被 D7 标为
+`SUPERSEDED_IN_PART_BY_D7_AUDIT`；其 zero-GPU、NOT_RUN 与 early-stop 结论仍有效。
+
+## D7 最终审计与收尾
+
+D7 在不启动模型、不发送 signal 的前提下完成 source/checkpoint/dataset/Git/HDFS
+与 worker 终态审计。DeepSpec D7 起点 HEAD 与 origin 均为 `af6e4a6`，
+ahead/behind `0/0`；SGLang final
+`9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`、tree
+`53fc45b1b04963736254dc7ed582047313b8075a`、parent `1ac1f382…2c5` 与 fixed
+base ancestry 全部一致，checkout clean。
+
+target marker、73-file manifest、46 shards 与 `159,630,041,626` bytes 一致；
+primary draft pointer/`.complete`、6 files 与 `3,607,606,957` bytes 一致。D4-C
+实际 completion marker 名为 `.complete.json`，marker 外另有 39 条 manifest
+records；D7 重算 39/39 PASS，manifest SHA-256
+`eae4f4b21dd89c55a39133ecd5acd29f3ad356e5587304887bbd9732cdee43d6`。
+HDFS run inventory 只有 D3 a02–a05 和 D4-C a01，没有 D5、D6 或 formal run。
+
+最终 CPU 复验为 canonical core 33/33、integration 9/9、D4-C tooling 3/3、
+D4 source capture 1/1、D5 tooling 4/4、DFlash primary 10/10、overlap
+6 PASS/1 CUDA-only skip；合计 67 cases、66 PASS、1 skip、0 FAIL。core injection
+逐文件 hash 和 `--check` PASS。inject CLI 的 aggregate
+`7a82564b…e22f208c` 与 capture 的 `2c868811…ac732c348` 使用不同序列化算法，
+不能直接比较；逐文件 byte identity 才是门禁，两者不存在 identity 冲突。
+
+worker `4099543` 的 final remote audit 证明 owned keepalive PID/PGID/SID
+`123914`、argv、hostname、CVD 和八个 GPU UUID 均匹配；fresh 8×10×1 秒均值全部
+100%，无 pause marker，端口 `31457` 空闲，无 owned model process。八卡只存在每
+UUID 一个约 804 MiB 的 operational keepalive context；D7 没有模型 launch 或 signal。
+
+D7 evidence 为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json`，
+manifest 为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/artifact_manifest.sha256`，
+三条记录全部 PASS，manifest 自身 SHA-256
+`4e5348e622244b3f9b14b47ee48bc5e0b725586f6ecc50bf92bc72fce1f1c50e`；
+复现命令为
+`docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/reproduction_commands.txt`。
+
+最终限制保持明确：D4-C 只证明 one-prompt infrastructure path；没有 native
+calibration trace、ratio/q25、protocol B0、native formal 或 B+ formal。故 D7
+`audit_status=PASS` 只表示证据一致与 operational cleanup 健康，不能提升实验结果；
+最终 `formal_result=NONE`。

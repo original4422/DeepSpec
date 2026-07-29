@@ -1,0 +1,545 @@
+{
+  "schema_version": 1,
+  "phase": "D7",
+  "assembled_at_utc": "2026-07-29T06:07:18.536174Z",
+  "audit_status": "PASS",
+  "completion_label": "BEST_EFFORT_BLOCKED_IMPLEMENTATION",
+  "experiment_outcome": "BEST_EFFORT_EARLY_STOP_INCOMPLETE",
+  "formal_result": "NONE",
+  "conclusion": "The frozen DFlash plus HEDGE source, one-prompt B=0 infrastructure path, artifacts, and final operational cleanup are auditable. The required 32-example native calibration and protocol B0 were not run, q25/B/g were not calibrated, and neither 500-example formal arm was run.",
+  "timebox": {
+    "t0_utc": "2026-07-28T20:55:58Z",
+    "implementation_stop_if_b0_incomplete_utc": "2026-07-29T05:55:58Z",
+    "hard_stop_utc": "2026-07-29T08:55:58Z",
+    "implementation_stopped_before_t_plus_9": true,
+    "new_gpu_attempts_after_early_stop": 0,
+    "d6_started": false
+  },
+  "phase_status": {
+    "D0": "PASS",
+    "D1A": "PASS",
+    "D1B": "PASS",
+    "D1C": "PASS",
+    "D2": "PASS",
+    "D3": "SHORT_NATIVE_SMOKE_PASS",
+    "D4_SOURCE_FREEZE": "PASS",
+    "D4C": "ONE_PROMPT_B0_INFRASTRUCTURE_PASS",
+    "D5": "EARLY_STOPPED_BEFORE_MODEL_LAUNCH",
+    "D6": "NOT_RUN",
+    "D7": "PASS"
+  },
+  "protocol_results": {
+    "native_calibration_32": "NOT_RUN",
+    "positive_first_rejection_ratio_distribution": "NOT_RUN",
+    "q25": null,
+    "frozen_B": null,
+    "frozen_g": null,
+    "frozen_m": null,
+    "frozen_config": "NOT_CALIBRATED",
+    "protocol_b0_32": "NOT_RUN",
+    "b0_full_token_id_comparison": "NOT_RUN",
+    "b0_minimal_counterexample": "NOT_APPLICABLE",
+    "native_formal_500": "NOT_RUN",
+    "b_plus_formal_500": "NOT_RUN",
+    "canonical_or_exploratory_formal_result": "NONE"
+  },
+  "git": {
+    "repository": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash",
+    "branch": "exp/hedge-v4-dflash",
+    "head_at_d7_start": "af6e4a6cd10eabaf9580a58e7f3a722d6f659ecd",
+    "head_tree_at_d7_start": "137d03a8c02c0256e5dceccb36b00a94fbdf14b6",
+    "origin_head_at_d7_start": "af6e4a6cd10eabaf9580a58e7f3a722d6f659ecd",
+    "ahead_behind_at_d7_start": [
+      0,
+      0
+    ],
+    "worktree_clean_at_d7_start": true,
+    "d5_commit": "af6e4a6cd10eabaf9580a58e7f3a722d6f659ecd",
+    "d4c_commit": "a18655a",
+    "source_freeze_commit": "a80031a",
+    "canonical_core_commit": "86231e536573ccc43cda732b4eca920d5ce0a28a",
+    "final_d7_commit": "PENDING_MAIN_AGENT_COMMIT_AND_PUSH"
+  },
+  "source_identity": {
+    "repository": "/home/tiger/src/deepspec-sglang-hedge-dflash",
+    "base_commit": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "native_integration_commit": "7245c3d607a1eadc26582bb78ebd603a70c22fa7",
+    "allowlist_fix_commit": "d49a890b5b4d779a8a88ad8735f7cbf645d62759",
+    "tp_weight_loader_fix_and_pre_hedge_parent": "1ac1f38205adf08db53cd7cbb2a56c5bccdc62c5",
+    "final_commit": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+    "final_tree": "53fc45b1b04963736254dc7ed582047313b8075a",
+    "base_is_ancestor": true,
+    "final_parent_matches": true,
+    "worktree_clean": true,
+    "git_diff_check": "PASS",
+    "integration_patch": {
+      "path": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4_sglang_integration.patch",
+      "format": "unified-zero",
+      "apply_args": [
+        "--unidiff-zero"
+      ],
+      "sha256": "1788696ec488d1844a061f4a1a37cb32af2754c0b6146094f1255f08fb226024",
+      "bytes": 34457,
+      "lines": 873,
+      "prior_reconstruction_matches_final_tree": "PASS"
+    }
+  },
+  "hedge_core_identity": {
+    "hedge_source_commit": "9fb903d676254ea5f5d171051fb15c54f331111c",
+    "upstream_pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
+    "dflash_canonical_commit": "86231e536573ccc43cda732b4eca920d5ce0a28a",
+    "coordination_pointer_path": "/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/hedge-core.json",
+    "coordination_pointer_sha256": "c9c09cd23655e395d3f3b85cbc7e1740194f9e4e174938cb5f54594afe31b80c",
+    "injection_check": "PASS",
+    "per_file_byte_identity": "PASS",
+    "per_file_sha256": {
+      "__init__.py": "e51bba48b8a67895270b3285775dfc3741421eb4a0c3cdf566a1cf0e9360daca",
+      "budget.py": "c573fe2381416c70511f97968fe14fa9ef1e16d08c805eb55982efc0d23a5ce8",
+      "config.py": "03079c13b327b1c31374421060d07217401dc3049c7b8fb5fb6c68d30b6db176",
+      "hedge_core_identity.json": "acd9ebe5cd71bd50313a06c5a7ebb2e02289aa010bc92d9fcd72e9f8ded80d2a",
+      "torch_rule.py": "92bb84a3bf3f03fd127636c5d5ef6b7bb9e22d4198cc57dac320606ae1256c72"
+    },
+    "aggregate_hashes": {
+      "inject_cli_path_and_digest_serialization": "7a82564b72058cfd22b062a11ee897e711f620c9e88f51ee08560365e22f208c",
+      "capture_combined_content_serialization": "2c8688110ce0fab8450df5c12b1e6d6c535f2c9f8836ef9ae02aea4ac732c348",
+      "interpretation": "These aggregate hashes use different serialization algorithms and are not directly comparable; exact per-file hashes and injection --check are the identity gate."
+    }
+  },
+  "checkpoint_identity": {
+    "target": {
+      "repo_id": "deepseek-ai/DeepSeek-V4-Flash",
+      "revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+      "provider": "huggingface",
+      "owner_session": "eagle3",
+      "marker_path": "/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/target-deepseek-v4-flash-60d8d70770c6776ff598c94bb586a859a38244f1.complete.json",
+      "marker_sha256": "ced95993ac9936d6ef61727e6072b251743f26cf6e0e652ae1bfb0781f10d42b",
+      "snapshot_path": "/mnt/hdfs/pengzegang/DeepSpec/models/deepseek-ai__DeepSeek-V4-Flash/snapshots/huggingface-60d8d70770c6776ff598c94bb586a859a38244f1",
+      "manifest_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T211500Z-phase-01a-acquisition-01/target_manifest.jsonl",
+      "manifest_sha256": "af6f274af9b0b257a6b910ae9b8ac4d0e1dd0a0bbcd96898fc6772c7e158facd",
+      "file_count": 73,
+      "total_bytes": 159630041626,
+      "weight_shard_count": 46,
+      "read_only_consumption": "PASS",
+      "loaded_by_d3_and_d4c_tp8": true
+    },
+    "draft": {
+      "repo_id": "RedHatAI/DeepSeek-V4-Flash-speculator.dflash",
+      "revision": "e44fc94ceb1e7ed45550d15e782aeadd08050483",
+      "provider": "huggingface",
+      "formal_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483",
+      "complete_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483/.complete",
+      "complete_sha256": "f26d58995a8f9ff3e387fb6e940e13521bc4ad82455bd51f548faa610e94338b",
+      "pointer_path": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft_pointer.json",
+      "pointer_sha256": "d2b439945df143bff0873705b7f1aac37bf35e47b098eaaf3e1a6a408c2e1add",
+      "provider_manifest_sha256": "86b023ba9be98bb8e5e003424b660da9bcf8cd085e7a33bb93942ce60a8cca02",
+      "file_count": 6,
+      "total_bytes": 3607606957,
+      "safetensors_tensor_count": 62,
+      "fallback_used": false,
+      "loaded_by_d3_and_d4c_tp8": true
+    }
+  },
+  "dataset_identity": {
+    "repo_id": "openai/gsm8k",
+    "config": "main",
+    "split": "test",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "seed": 980406,
+    "row_count": 1319,
+    "datasets_fingerprint": "59ec1b7f9357c7a2",
+    "content_sha256": "32f83c6becb3ba208d16bff80901547266e937b3f77c56d3ebe6a9bc3a9b41c4",
+    "shared_manifest_sha256": "34db2fc76099b2725f51dfd6ceeb1410802ad54c9008b2ab3cc1b8927f02be90",
+    "selection_manifest_sha256": "488b970074a3dee403640b113dceed242ff3675473808c963313db8afd013610",
+    "shuffled_indices_sha256": "04e54897dab635651e7cbc9e140a5f0473fe72b272b0e355301e08dc8a701f69",
+    "calibration_count": 32,
+    "formal_count": 500,
+    "warmup_count": 10,
+    "cohorts_disjoint": true,
+    "request_contract": {
+      "system_prompt": null,
+      "enable_thinking": false,
+      "temperature": 0,
+      "top_p": 1,
+      "max_tokens": 512,
+      "max_concurrency": 1,
+      "output_token_ids_path": "choices[0].meta_info.output_token_ids"
+    }
+  },
+  "d4c_short_infrastructure_smoke": {
+    "status": "PASS",
+    "scope": "one short non-GSM8K prompt; not the 32-example protocol B0 arm",
+    "attempt_id": "dflash-d4-b0-20260729T045317Z-a01",
+    "hdfs_run": "/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d4-b0-20260729T045317Z-a01",
+    "completion_marker_name": ".complete.json",
+    "completion_marker_sha256": "5aaa803ac9bd54bdd7800e964361d15fc0de5d3d4d46085b3455b6aa401cc095",
+    "manifest_sha256": "eae4f4b21dd89c55a39133ecd5acd29f3ad356e5587304887bbd9732cdee43d6",
+    "manifest_records": 39,
+    "manifest_verification": "PASS_39_OF_39",
+    "source_commit": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+    "tp_size": 8,
+    "dflash_block_size": 8,
+    "proposal_width": 7,
+    "hedge_config": {
+      "B": 0,
+      "g": 1000000,
+      "m": 1,
+      "value_scheme": "normalized_suffix",
+      "block_size": 7
+    },
+    "api": {
+      "http_status": 200,
+      "content": "4",
+      "output_token_ids": [
+        22,
+        1
+      ],
+      "d3_token_id_match": true,
+      "completion_tokens": 2,
+      "elapsed_seconds": 0.3771624469663948
+    },
+    "acceptance": {
+      "proposals": 8,
+      "verifiable_draft_tokens": 56,
+      "strict_accepted_draft_tokens": 0,
+      "hedge_accepted_draft_tokens": 0,
+      "relaxed_mismatches": 0,
+      "regret_charged": 0,
+      "accept_length_histogram": [
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "active_request_states": 0,
+      "state_leaks": 0
+    },
+    "gpu_evidence": {
+      "target_tp_ranks_loaded": 8,
+      "draft_tp_ranks_loaded": 8,
+      "ready_memory_mib": [
+        93037,
+        93083,
+        93083,
+        93083,
+        93083,
+        93083,
+        93083,
+        92843
+      ],
+      "immediate_post_response_utilization_percent": [
+        65,
+        58,
+        49,
+        4,
+        49,
+        31,
+        65,
+        67
+      ],
+      "request_phase_sampler_rows": 0,
+      "sampling_limitation": "The 0.377 second request was shorter than the one-second lifecycle sampler interval; TP0-7 load, eight-card memory, and the immediate post-response snapshot jointly support participation."
+    },
+    "cleanup": {
+      "registered_shutdown": "PASS",
+      "contexts_clear": true,
+      "unhandled_cuda_nccl_or_worker_crash": false,
+      "keepalive_resume_gate": "PASS"
+    },
+    "protocol_b0_interpretation": "NOT_RUN"
+  },
+  "d5_early_stop": {
+    "attempt_id": "dflash-d5-native-20260729T053735Z-a01",
+    "original_wrapper_returncode_recoverable": false,
+    "orchestrator_visible_result": "PREFLIGHT_PASS_NOT_SURFACED_TO_ORCHESTRATOR",
+    "corrected_preflight": {
+      "status": "PASS",
+      "captured_at_utc": "2026-07-29T05:40:13.212797Z",
+      "sha256": "85ccb9e35709caca858822da04a7214c0cd9e12efeb05e14e7ef00bab8a58f0b",
+      "source_sha": "9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1",
+      "worker_id": "4099543",
+      "gpu_count": 8,
+      "keepalive_pid": 123914,
+      "port_free": true
+    },
+    "scratch_files": [
+      {
+        "name": "calibration_indices.json",
+        "bytes": 594,
+        "mtime_utc": "2026-07-29T05:40:13.581845Z",
+        "sha256": "099469c1d129da730e6876d7cf49aa744e2cc0a7b6ac25d6cc28950941bf8da9"
+      },
+      {
+        "name": "checkpoint_identity.json",
+        "bytes": 1631,
+        "mtime_utc": "2026-07-29T05:40:00.494664Z",
+        "sha256": "c2084b1b3d4e468ff67b1a1eccbc530a2e4ffed482023b30ad4456db560c81d8"
+      },
+      {
+        "name": "command.txt",
+        "bytes": 766,
+        "mtime_utc": "2026-07-29T05:40:13.524845Z",
+        "sha256": "79db83d3fac72432533900bd3d2d87d5fbe7b56ffb27ffb860771b16ca60c98e"
+      },
+      {
+        "name": "cuda_view_ensure.json",
+        "bytes": 338,
+        "mtime_utc": "2026-07-29T05:37:40.512723Z",
+        "sha256": "6bde0f72b6f823ecefc9bca5d9271a86e6dba2049e81f4a2b726cf0ea39d1578"
+      },
+      {
+        "name": "cuda_view_verify.json",
+        "bytes": 338,
+        "mtime_utc": "2026-07-29T05:37:40.552724Z",
+        "sha256": "24b8c68a608e7c475965efa6086cf3b9ec1157c0f7feec85fcfe508274d21a69"
+      },
+      {
+        "name": "dataset_identity.json",
+        "bytes": 1856,
+        "mtime_utc": "2026-07-29T05:40:13.555845Z",
+        "sha256": "029245cbfd1f6b0a20c7aa16e16f45b4deb996cf6a0411e001e00b0e12a782c9"
+      },
+      {
+        "name": "environment.json",
+        "bytes": 5601,
+        "mtime_utc": "2026-07-29T05:40:13.524845Z",
+        "sha256": "067236f988b7f82de2d7fc65c1aaa02dbb734d8d51c607f25ac928a782f5b02c"
+      },
+      {
+        "name": "hedge_counters.json",
+        "bytes": 123,
+        "mtime_utc": "2026-07-29T05:40:13.524845Z",
+        "sha256": "81950bc675a695d40a82ef153922f9fa48b726be9e6259ee12515d381041d942"
+      },
+      {
+        "name": "keepalive_before.txt",
+        "bytes": 385,
+        "mtime_utc": "2026-07-29T05:40:12.803834Z",
+        "sha256": "2e7b019ac9e8f8e7ee8bc0b2ee4e57e4e0817eebada10fbb69e8227a67b37b64"
+      },
+      {
+        "name": "keepalive_identity_before.json",
+        "bytes": 1568,
+        "mtime_utc": "2026-07-29T05:40:12.864836Z",
+        "sha256": "86c0dc3c74555e525aa93264c196767f7dd0a3f8aa643155fe1a76404adfc028"
+      },
+      {
+        "name": "preflight.json",
+        "bytes": 319,
+        "mtime_utc": "2026-07-29T05:40:13.524845Z",
+        "sha256": "85ccb9e35709caca858822da04a7214c0cd9e12efeb05e14e7ef00bab8a58f0b"
+      },
+      {
+        "name": "requests.jsonl",
+        "bytes": 0,
+        "mtime_utc": "2026-07-29T05:40:13.524845Z",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "resolved_config.json",
+        "bytes": 2988,
+        "mtime_utc": "2026-07-29T05:40:13.524845Z",
+        "sha256": "1c21e3dba742ca392c8883320fff5478562541958f9bbe7c437dac953053ded7"
+      },
+      {
+        "name": "source_identity.json",
+        "bytes": 397,
+        "mtime_utc": "2026-07-29T05:40:13.524845Z",
+        "sha256": "0835047ded05e6fd49155c638140ddb7b006e3b9c908e4dbdfd551ff0ebdac57"
+      }
+    ],
+    "scratch_file_count": 14,
+    "requests_bytes": 0,
+    "requests_count": 0,
+    "hedge_counters_status": "NOT_RUN",
+    "keepalive_pause_reached": false,
+    "server_launch_reached": false,
+    "api_reached": false,
+    "hdfs_run_published": false,
+    "zero_gpu_side_effects": true,
+    "decision": "The preflight PASS was not surfaced through the mlx PTY wrapper in time. With less than the safe remaining T+9 window for the measured cold start, 32 sequential requests, cleanup, and seal, no model launch was attempted."
+  },
+  "evidence_discrepancies": [
+    {
+      "artifact": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d5/dflash_d5_preflight_blocker.json",
+      "artifact_status": "SUPERSEDED_IN_PART_BY_D7_AUDIT",
+      "superseded_fields": {
+        "preflight.result": "BLOCKED_BEFORE_PASS",
+        "preflight.scratch_files": [
+          "cuda_view_ensure.json",
+          "cuda_view_verify.json"
+        ]
+      },
+      "corrected_facts": "The retained worker scratch has 14 preflight-only files with mtimes no later than 05:40:13.581845Z, and preflight.json records PASS at 05:40:13.212797Z. The wrapper return code/stdout remained unavailable to the orchestrator.",
+      "still_valid": [
+        "No keepalive pause was reached.",
+        "No model server or API request was started.",
+        "No D5 HDFS run was published.",
+        "Native calibration, q25, protocol B0, B+, and formal arms remain NOT_RUN.",
+        "The early-stop decision and zero-GPU-side-effect conclusion remain valid."
+      ]
+    }
+  ],
+  "formal_artifact_inventory": {
+    "hdfs_dflash_run_directories": [
+      "dflash-d3-native-20260729T004350Z-a02",
+      "dflash-d3-native-20260729T010505Z-a03",
+      "dflash-d3-native-20260729T025617Z-a04",
+      "dflash-d3-native-20260729T033321Z-a05",
+      "dflash-d4-b0-20260729T045317Z-a01"
+    ],
+    "d5_run_present": false,
+    "d6_native_formal_run_present": false,
+    "d6_b_plus_formal_run_present": false,
+    "formal_artifact": "NONE"
+  },
+  "final_operational_state": {
+    "worker_list_observed_at_utc": "2026-07-29T05:50:51Z",
+    "worker_id": "4099543",
+    "hostname": "g340-cd51-4b00-4d69-9088-7ae6-6253",
+    "gpu_count": 8,
+    "gpu_model": "NVIDIA H20",
+    "gpu_uuids": [
+      "GPU-0d0883e5-c11e-1017-a7a4-b0041d34e659",
+      "GPU-bef18fe2-5b0e-dfa9-d0df-4bdc845813a8",
+      "GPU-04a2d19d-0850-4a7a-7d0a-f76bedbba0c6",
+      "GPU-2fe9a932-da80-a85e-05ed-7e7a4298ac9f",
+      "GPU-1937f10f-d9a7-54d0-bf1f-c11c5e99252a",
+      "GPU-5ad3743c-377e-722b-21ea-807cde0ab2e6",
+      "GPU-0c263468-925e-2a59-de84-795c577bb97e",
+      "GPU-5d6fc8af-a3f9-2e26-5b6c-c2c673a667dc"
+    ],
+    "cuda_visible_devices": "0,1,2,3,4,5,6,7",
+    "tp_size": 8,
+    "remote_audit_observed_at_utc": "2026-07-29T06:07:18.536174Z",
+    "keepalive": {
+      "pid": 123914,
+      "pgid": 123914,
+      "sid": 123914,
+      "argv_verified": true,
+      "gpu_uuid_mapping_verified": true,
+      "paused_marker_exists": false,
+      "gate_mtime_utc": "2026-07-29T06:07:03.615716Z",
+      "samples_per_gpu": 10,
+      "per_gpu_mean_utilization_percent": {
+        "0": 100,
+        "1": 100,
+        "2": 100,
+        "3": 100,
+        "4": 100,
+        "5": 100,
+        "6": 100,
+        "7": 100
+      },
+      "healthy": true,
+      "compute_contexts": "exactly one low-memory operational keepalive context per expected GPU UUID",
+      "pid_namespace_limitation": "nvidia-smi host-namespace child PIDs appear as [Not Found] inside the worker container; UUID coverage, approximately 804 MiB per GPU, exact supervisor identity, and the sustained gate identify them as keepalive contexts."
+    },
+    "port_31457_free": true,
+    "owned_model_processes": [],
+    "model_server_running": false,
+    "model_cuda_contexts": 0,
+    "signals_sent_by_d7": 0,
+    "model_launches_by_d7": 0
+  },
+  "cpu_validation": {
+    "environment": {
+      "python": "/home/tiger/venvs/deepspec-hedge-dflash/bin/python",
+      "CUDA_VISIBLE_DEVICES": "999",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONHASHSEED": "0",
+      "PYTHONNOUSERSITE": "1"
+    },
+    "canonical_core": {
+      "passed": 33,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "dflash_hedge_integration": {
+      "passed": 9,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "d4c_tooling": {
+      "passed": 3,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "d4_source_capture_tooling": {
+      "passed": 1,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "d5_tooling": {
+      "passed": 4,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "dflash_primary_regression": {
+      "passed": 10,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "dflash_overlap_regression": {
+      "passed": 6,
+      "skipped_cuda_only": 1,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "total": {
+      "test_cases": 67,
+      "passed": 66,
+      "skipped": 1,
+      "failed": 0,
+      "status": "PASS"
+    },
+    "core_injection_check": "PASS",
+    "shell_syntax": "PASS",
+    "python_syntax": "PASS",
+    "json_parse": "PASS",
+    "repository_diff_check": "PASS",
+    "sglang_diff_check": "PASS"
+  },
+  "final_checklist": {
+    "lane_worker_tp_identity": "PASS",
+    "owned_keepalive_pause_resume_and_final_gate": "PASS",
+    "target_identity_and_read_only_consumption": "PASS",
+    "primary_draft_identity_and_publication": "PASS",
+    "source_core_and_integration_identity": "PASS",
+    "dflash_layout_and_candidate_contract": "PASS",
+    "dataset_and_request_contract": "PASS",
+    "q25_and_frozen_positive_budget": "NOT_RUN",
+    "protocol_b0_full_token_id_comparison": "NOT_RUN",
+    "native_and_b_plus_formal_arms": "NOT_RUN",
+    "short_live_tp8_gpu_api_crash_evidence": "PASS_WITH_DOCUMENTED_SUBSECOND_SAMPLER_LIMITATION",
+    "progress_and_key_commits_through_d5_pushed": "PASS",
+    "d7_final_commit_and_push": "PENDING_MAIN_AGENT",
+    "timebox_stop_and_final_owned_context_cleanup": "PASS",
+    "canonical_experiment_consistency": "PASS"
+  },
+  "artifacts": {
+    "repo_root": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/",
+    "d4c_authoritative_audit": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4c_success_audit.json",
+    "d5_original_blocker": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d5/dflash_d5_preflight_blocker.json",
+    "d7_final_audit": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/final_audit.json",
+    "d7_manifest": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/artifact_manifest.sha256",
+    "d7_reproduction_commands": "docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d7/reproduction_commands.txt",
+    "d7_remote_auditor": "scripts/dflash_d7_remote_audit.sh",
+    "d7_handoff": "docs/plan/handoffs/dflash-phase-d7-handoff.md",
+    "canonical_experiment": "docs/experiment/hedge-deepseek-v4-flash-dflash.md"
+  },
+  "limitations": [
+    "D4-C is one short infrastructure prompt, not the planned 32-example protocol B0.",
+    "No native calibration trace or positive first-rejection ratio distribution exists.",
+    "q25, B, and g were never calibrated or frozen.",
+    "No protocol B0 full-output token-ID comparison exists; its status is NOT_RUN, not FAIL.",
+    "Neither the native 500-example formal arm nor the B+ 500-example formal arm was run, so there is no throughput, acceptance, answer-match, retry, or route-local delta result.",
+    "The D4-C request was shorter than the one-second GPU sampler interval; participation relies on TP0-7 load, eight-card memory, and the immediate post-response snapshot.",
+    "The D5 mlx wrapper did not surface its recoverable return code/stdout. D7 corrects the retained scratch inventory and preflight status but does not reinterpret metadata generation as calibration.",
+    "The final D7 commit and push remain the main agent's responsibility."
+  ],
+  "next_action": "Do not start D6 in this timebox. The main agent must review this audit, seal the D7 manifest, explicitly stage only DFlash D7 files, commit, push, and leave worker 4099543 under the healthy owned keepalive."
+}

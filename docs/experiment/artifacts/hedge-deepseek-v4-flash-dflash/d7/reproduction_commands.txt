@@ -1,0 +1,40 @@
+# DFlash D7 read-only audit and CPU validation
+# Run from /mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash.
+# These commands do not launch a model or send a signal.
+
+git status --short --branch
+git rev-parse HEAD HEAD^{tree} origin/exp/hedge-v4-dflash
+git rev-list --left-right --count HEAD...origin/exp/hedge-v4-dflash
+git merge-base --is-ancestor 86231e536573ccc43cda732b4eca920d5ce0a28a HEAD
+
+git -C /home/tiger/src/deepspec-sglang-hedge-dflash status --short --branch
+git -C /home/tiger/src/deepspec-sglang-hedge-dflash rev-parse HEAD HEAD^{tree} HEAD^
+git -C /home/tiger/src/deepspec-sglang-hedge-dflash merge-base --is-ancestor fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1 HEAD
+git -C /home/tiger/src/deepspec-sglang-hedge-dflash diff --check
+
+sha256sum docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/d4/dflash_d4_sglang_integration.patch
+env CUDA_VISIBLE_DEVICES=999 PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 PYTHONNOUSERSITE=1 /home/tiger/venvs/deepspec-hedge-dflash/bin/python scripts/dflash_d4_inject_core.py --sglang-root /home/tiger/src/deepspec-sglang-hedge-dflash --check
+
+sha256sum /mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/target-deepseek-v4-flash-60d8d70770c6776ff598c94bb586a859a38244f1.complete.json
+sha256sum /mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260728T211500Z-phase-01a-acquisition-01/target_manifest.jsonl
+sha256sum /mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft_pointer.json
+sha256sum /mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/draft/RedHatAI--DeepSeek-V4-Flash-speculator.dflash/e44fc94ceb1e7ed45550d15e782aeadd08050483/.complete
+
+(cd /mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d4-b0-20260729T045317Z-a01 && sha256sum -c artifact_manifest.sha256)
+test ! -e /mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d5-native-20260729T053735Z-a01
+find /mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
+
+mlx worker list
+mlx worker login 4099543 -- bash /mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/dflash_keepalive.sh status 4099543
+mlx worker login 4099543 -- bash /mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dflash/scripts/dflash_d7_remote_audit.sh 4099543
+
+env CUDA_VISIBLE_DEVICES=999 PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 PYTHONNOUSERSITE=1 /home/tiger/venvs/deepspec-hedge-dflash/bin/python -m unittest discover -s tests/hedge_spec -v
+env CUDA_VISIBLE_DEVICES=999 PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 PYTHONNOUSERSITE=1 /home/tiger/venvs/deepspec-hedge-dflash/bin/python -m unittest tests.hedge_dflash_integration.test_dflash_hedge_integration tests.hedge_dflash_integration.test_dflash_d4c_tooling tests.hedge_dflash_integration.test_dflash_d4_source_capture tests.hedge_dflash_integration.test_dflash_d5_tooling -v
+
+(cd /home/tiger/src/deepspec-sglang-hedge-dflash && env CUDA_VISIBLE_DEVICES=999 PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 PYTHONNOUSERSITE=1 /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_deepseek_v4_primary.py -v)
+(cd /home/tiger/src/deepspec-sglang-hedge-dflash && env CUDA_VISIBLE_DEVICES=999 PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 PYTHONNOUSERSITE=1 /home/tiger/venvs/deepspec-hedge-dflash/bin/python test/registered/unit/spec/test_dflash_overlap_hostsync.py -v)
+
+bash -n scripts/dflash_d4_b0_attempt.sh
+bash -n scripts/dflash_d5_attempt.sh
+bash -n scripts/dflash_d7_remote_audit.sh
+git diff --check
