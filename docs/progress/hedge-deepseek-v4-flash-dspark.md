@@ -3,7 +3,7 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T09:08:30Z`（09:10:25Z checkpoint 前心跳）
+- 快照时间：`2026-07-29T09:36:48Z`（09:38:30Z checkpoint 前心跳）
 - 自主窗口：始于 `2026-07-28T20:54:41Z`；用户于
   `2026-07-29T07:47:18Z` 明确解除原 `2026-07-29T08:54:41Z` 截止
 - elapsed / deadline：持续执行 / `NONE`
@@ -45,9 +45,9 @@
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`；P07 tooling `3253062`
 - 首要事项：持续监控唯一 HEDGE B>0 formal 500；不得改参数、并发、拼接或重启
-- 下一检查点：`2026-07-29T09:38:30Z`
-- 下一 30 分钟动作：按约每 100 条记录 formal 进度与错误状态；若 500 条达到
-  终态，立即执行 validator、定向 cleanup、contexts-none、keepalive 与 archive
+- 下一检查点：`2026-07-29T10:06:48Z`
+- 下一 30 分钟动作：完成剩余 91 条；500 条终态后立即执行 validator、定向
+  cleanup、contexts-none、8×10 keepalive 恢复与 immutable archive
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -799,3 +799,13 @@
   `/set_internal_state` clear 完成并进入唯一 formal 500。心跳时 25/500
   已顺序终态、无 request error，也无 traceback/CUDA/NCCL/worker crash。
   keepalive 保持暂停，仅登记模型 contexts active，尚未 cleanup/archive。
+
+### 2026-07-29T09:36:48Z — P07 formal 400 条心跳
+
+- 唯一 formal 仍为同一 launcher/attempt，没有 resume、stitch、restart 或配置
+  变化。09:36:48Z 只读精确计数为 409/500；从 09:06:31Z formal start 起
+  持续单请求顺序执行。
+- 截至本心跳未见 request error、retry、traceback、CUDA/NCCL 或 worker crash。
+  keepalive 仍按协议暂停，登记的 TP8 server/model contexts 保持 active。
+- 尚未运行终态 validator、cleanup 或 HDFS 发布；剩余 91 条完成后由同一
+  launcher 原子执行这些阶段。
