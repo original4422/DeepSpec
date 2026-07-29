@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_04_RECOVERY_TDD`
+> 当前状态：`PHASE_04_RECOVERY_FROZEN_AWAITING_NATIVE_RETRY_03`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
@@ -33,6 +33,7 @@
 | 2026-07-29T03:45:00Z | 6h48m33s | 2h11m27s | 5h11m27s | Phase 04 / `eagle3_phase04` | 03:39Z owner `315671` exact-eight 状态 PASS；8×10 每卡 min/mean/max=100%、815 MiB。native attempt 已原子暂停 keepalive，等待 TP=8 ready | DeepSpec/SGLang clean，final SHA `90c8558…`、reviewed patch `13fb7c…`、固定 dataset SHA `5d4654…`；三臂服务命令逐字相同且仅 HEDGE mode/config 差异，Phase 03 trace/config 回归 15/15 PASS；无 blocker | `.../20260729T034000Z-phase-04-native-calibration-01`；完成 32 条终态和 proposal identity 后定向清理、恢复 8×10，再启动独立 B0 服务 |
 | 2026-07-29T03:55:00Z | 6h58m33s | 2h01m27s | 5h01m27s | Phase 04 native attempt 01 invalid / `eagle3_phase04` | TP0–7、八卡 context、HTTP ready 后登记 SIGTERM；0 context PASS；keepalive 新 owner `321562`，8×10 每卡 100% | `INVALID_ORCHESTRATION_MUTATION`：执行中的 repo attempt script 被 apply_patch 改写，Bash 从旧文件 offset 继续读取新 inode 内容并把 `$'}\n)'` 解析为命令；runner 未执行、0 outputs，不是 SGLang/CUDA/NCCL crash。单一根因已固定 | `.../20260729T034000Z-phase-04-native-calibration-01/{orchestration_failure,attempt_status}.json`；冻结/hash 全部执行脚本并完成离线回归，retry 02 全程禁止修改执行脚本 |
 | 2026-07-29T04:14:00Z | 7h17m33s | 1h42m27s | 4h42m27s | Phase 04 native retry 02 fail closed / `eagle3_phase04` | TP0–7、精确八 context、HTTP ready；登记 SIGTERM、无 KILL fallback；0 context 后 keepalive owner `328407` 恢复，8×10 每卡 100% | tooling freeze 校验 PASS；32/32 terminal 均为 pre-generation trace-clear failure，0 generation。resolved `enable_multi_layer_eagle=false` 选择 `EAGLEWorkerV2`，但 Phase 03 只给 `MultiLayerEagleWorkerV2` 接了 HEDGE hooks；blocker 已缩到 concrete worker seam | `.../20260729T040000Z-phase-04-native-calibration-02`；保持 Phase 03 frozen authority 不变，最小 TDD recovery 后生成独立 patch/manifest，主 Agent审核前不启 GPU |
+| 2026-07-29T04:36:24Z | 7h39m57s | 1h20m03s | 4h20m03s | Phase 04 recovery frozen / `eagle3_phase04` | worker 未启机；keepalive 沿用 owner `328407`，最近 8×10 每卡 100%；SGLang source clean | 四个 concrete-worker seam RED→GREEN；主 Agent审计后本地提交 SGLang `2600c7b16c648d281be060b33ffadc7ae320f7e3`（未 push）。Phase04 canonical manifest/14-file patch 为 `96f7a392…8cae` / `73de4048…32cf`；source identity `043100`、17-file freeze02 `043500`（manifest `6470fa21…01ce`）自校验 PASS。executor DeepSpec 19/19、source 11+25；主 Agent独立复核 source/patch/freeze、DeepSpec 19/19、bash/pycompile 全 PASS | `.../20260729T042500Z-phase-04-eagle-worker-recovery-01`、`.../20260729T043100Z-phase-04-source-identity-01`、`.../20260729T043500Z-phase-04-tooling-freeze-02`；下一步仅 native retry03，等待主 Agent放行 |
 
 ## 当前依赖
 

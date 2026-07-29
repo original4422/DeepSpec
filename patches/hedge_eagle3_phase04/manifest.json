@@ -1,0 +1,58 @@
+{
+  "created_at": "2026-07-29T04:30:57.040999Z",
+  "phase03_authority_before": {
+    "hdfs_manifest": {
+      "bytes": 3903,
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T030500Z-phase-03-hedge-adapter-01/manifest.json",
+      "sha256": "346283134636a2903435524051632faa3e7804e3b685b5a3ca7b0b6f6223c177"
+    },
+    "hdfs_patch": {
+      "bytes": 125075,
+      "path": "/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T030500Z-phase-03-hedge-adapter-01/sglang-final-candidate.patch",
+      "sha256": "13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945"
+    },
+    "local_patch": {
+      "bytes": 125075,
+      "path": "/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-v4-eagle3/patches/hedge_eagle3_phase03/sglang-final-candidate.patch",
+      "sha256": "13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945"
+    }
+  },
+  "phase03_authority_immutability": "MUST_REMAIN_UNCHANGED",
+  "recovery": {
+    "clean_replay_log_sha256": "5ed7bda02445eedb237e32818f6d3d13f0003817bb28cf742e0257c0f338eebb",
+    "clean_replay_status": "PASS",
+    "delta_sha256": "e08b3ab919cc6f9088b5b578765c6af547ef12c40f1da4ce99c55d405ff4b668",
+    "full_patch_sha256": "73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf",
+    "manifest": "/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T042500Z-phase-04-eagle-worker-recovery-01/manifest.json",
+    "manifest_sha256": "a48ea1fcd3156e37cd48248c326fffb9724a586234f8ba3c7de0c42cc043723a",
+    "root": "/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T042500Z-phase-04-eagle-worker-recovery-01"
+  },
+  "schema_version": 1,
+  "sglang": {
+    "base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "changed_file_count": 14,
+    "changed_files": [
+      "python/sglang/srt/arg_groups/deepseek_v4_hook.py",
+      "python/sglang/srt/managers/scheduler.py",
+      "python/sglang/srt/models/deepseek_v4.py",
+      "python/sglang/srt/speculative/eagle3_hedge.py",
+      "python/sglang/srt/speculative/eagle_utils.py",
+      "python/sglang/srt/speculative/eagle_worker_common.py",
+      "python/sglang/srt/speculative/eagle_worker_v2.py",
+      "python/sglang/srt/speculative/hedge_spec/__init__.py",
+      "python/sglang/srt/speculative/hedge_spec/budget.py",
+      "python/sglang/srt/speculative/hedge_spec/config.py",
+      "python/sglang/srt/speculative/hedge_spec/torch_rule.py",
+      "python/sglang/srt/speculative/multi_layer_eagle_worker_v2.py",
+      "test/registered/unit/models/test_deepseek_v4_eagle3_aux.py",
+      "test/registered/unit/speculative/test_eagle3_hedge.py"
+    ],
+    "final_sha": "2600c7b16c648d281be060b33ffadc7ae320f7e3",
+    "patch": "sglang-final-candidate.patch",
+    "patch_bytes": 134818,
+    "patch_sha256": "73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf",
+    "phase03_parent_sha": "90c8558721de37ed0dc12802f29253ba52b873bc",
+    "worktree_clean": true
+  },
+  "status": "FINAL_SOURCE_IDENTITY_PASS"
+}

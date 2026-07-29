@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_04_RECOVERY_TDD`。**
+> **状态：`PHASE_04_RECOVERY_FROZEN_AWAITING_NATIVE_RETRY_03`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -27,8 +27,14 @@
 > `enable_multi_layer_eagle=false` 选择 `EAGLEWorkerV2`，而 Phase 03 HEDGE
 > lifecycle/observability 只接入了 `MultiLayerEagleWorkerV2`。服务已登记
 > SIGTERM、无 KILL fallback，0 context 后 keepalive owner `328407` 恢复，
-> 8×10 样本逐卡 100%。Phase 03 frozen authority 保持不变；Phase 04 recovery
-> source SHA 仍 pending 主 Agent 审核与提交。
+> 8×10 样本逐卡 100%。Phase 03 frozen authority 保持不变。最小 recovery 已由
+> 主 Agent 独立审计并在 SGLang 本地提交为
+> `2600c7b16c648d281be060b33ffadc7ae320f7e3`（未 push）；14-file fixed-base
+> patch SHA-256 为
+> `73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf`。
+> post-commit source identity 与 17-file live-tool freeze 02 均已封存、自校验
+> PASS；主 Agent再次复跑 DeepSpec 19/19、bash/pycompile 并确认 source clean。
+> 下一步仅为 native retry 03，尚未启动。
 > `B=0`、`g/B` 与正式 500 条仍 pending。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
@@ -54,6 +60,15 @@
 >
 > **权威 Phase 03 handoff artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T030500Z-phase-03-hedge-adapter-01`
+>
+> **权威 Phase 04 recovery artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T042500Z-phase-04-eagle-worker-recovery-01`
+>
+> **权威 Phase 04 post-commit source identity：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T043100Z-phase-04-source-identity-01`
+>
+> **权威 Phase 04 live-tool freeze 02：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T043500Z-phase-04-tooling-freeze-02`
 
 ## 快速结果
 
@@ -77,7 +92,7 @@
 | Dataset seed | 980406 |
 | Formal samples | 500 |
 | DeepSpec source | branch `exp/hedge-v4-eagle3`; Phase 00 base `cac6c78d88df97d395406fe831f573df3016e7f7` |
-| SGLang source | `/home/tiger/src/sglang-hedge-v4-eagle3`; fixed base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; Phase 03 frozen patch SHA-256 `13fb7cedb5f87c8e912c77501139f7c9092b039294cd0213b0be340272d73945`; Phase 03 final commit `90c8558721de37ed0dc12802f29253ba52b873bc`; Phase 04 recovery final SHA pending |
+| SGLang source | `/home/tiger/src/sglang-hedge-v4-eagle3`; fixed base `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`; Phase 03 frozen patch/SHA 保持 `13fb7ced…3945` / `90c8558721de37ed0dc12802f29253ba52b873bc`; Phase 04 recovery local commit `2600c7b16c648d281be060b33ffadc7ae320f7e3`（未 push），14-file canonical patch `73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf`，canonical manifest `96f7a392eb3d9d01ae9070d1e45d5968cf97aad7fee10f0f6e30cef943cb8cae` |
 | Target | `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1`; 73 regular files，`159630041626` bytes，manifest `af6f274af9b0b257a6b910ae9b8ac4d0e1dd0a0bbcd96898fc6772c7e158facd`，published |
 | Draft | `SyzygyResearch/DeepSeek-V4-Flash-EAGLE3.1@4c68aa4689d59cb1064f20abec7708174ee4613d`; 7 regular files，`1858538499` bytes，manifest `dfa6b2de48c46f4fda0cf7070466d35e6bd3df44b84ba0363616cc0f1f6020a0`，published |
 | HEDGE core | source `9fb903d676254ea5f5d171051fb15c54f331111c`；DSpark publisher `4d96f44065c07030ede67484a262006ec149626a`；Eagle3 import `4cefd0a36ea254e4c14a83f35dc8db15b37a3384`；10-file byte identity 与 33 tests PASS |
@@ -337,10 +352,30 @@ HEDGE adapter 的 bind/verify/finish/dump/clear public lifecycle 接入
 authority。新 source patch、测试和 identity 作为独立 Phase 04 recovery artifact
 交主 Agent审核；审核/提交前不再启动 GPU attempt。
 
+recovery 采用四个 bounded RED→GREEN seam：registry-selected worker lifecycle、
+仅 Eagle3 构造 adapter、prefill target forward 前 `bind_batch`、shared verifier
+传入同一 adapter；disabled native delegation 和单层 worker 原有
+`finalize_tree_path=true` 均保持。主 Agent审计后把两文件 recovery 本地提交为
+`2600c7b16c648d281be060b33ffadc7ae320f7e3`，SGLang worktree clean。新的
+`patches/hedge_eagle3_phase04/` authority 固定 14-file patch
+`73de40486eae43901c84d60a9baa2c89026a416359dce89761b8ff9e7fc432cf`
+与 manifest
+`96f7a392eb3d9d01ae9070d1e45d5968cf97aad7fee10f0f6e30cef943cb8cae`；
+Phase 03 local/HDFS patch 仍为 `13fb7ced…3945`，未被改写。
+
+post-commit source identity 位于
+`20260729T043100Z-phase-04-source-identity-01`，自包含 patch hash 与 canonical
+一致。live-tool freeze 02 位于
+`20260729T043500Z-phase-04-tooling-freeze-02`，manifest SHA-256
+`6470fa217af2f9a0cb3d3e899f629ecbe56d8ecb582ed2dde63312057e7e01ce`；
+17 个文件 self-verify `file_differences=[]`，三 arm server command 逐字一致。
+executor 回归为 DeepSpec Phase 03+04 19/19、source aux 11/11、HEDGE 25/25；
+主 Agent另行复核 source SHA/patch、freeze self-check、DeepSpec 19/19 与
+bash/pycompile 全部 PASS。
+
 ## 下一步
 
-按 `EAGLEWorkerV2` concrete worker public lifecycle 做最小 RED→GREEN，生成独立
-Phase 04 recovery patch/manifest 并交主 Agent 审核、提交和封存新 source identity。
-审核完成后在同一 recovery source 上完成 native 32，定向清理并恢复 keepalive，再从新服务运行
-B0 32、执行可重算 token-ID diff，以固定 NumPy linear q25 冻结 `g=B`、`m=1`，
-最后只做少量 B+ calibration smoke。Phase 04 不进入正式 500。
+等待主 Agent放行后，只使用 freeze 02 与 Phase 04 canonical source 启动 native
+retry 03，完成 32 条后定向清理并恢复 keepalive；再从新服务运行 B0 32、执行可重算
+token-ID diff，以固定 NumPy linear q25 冻结 `g=B`、`m=1`，最后只做少量 B+
+calibration smoke。Phase 04 不进入正式 500。

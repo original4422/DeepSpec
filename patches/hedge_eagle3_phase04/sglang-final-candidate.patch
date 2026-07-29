@@ -1,0 +1,3539 @@
+diff --git a/python/sglang/srt/arg_groups/deepseek_v4_hook.py b/python/sglang/srt/arg_groups/deepseek_v4_hook.py
+index 0ede772fbc3ee14d16ad86f44bf6fdc46f526c50..12b4942f01c88b510ff441fdcd34924fc8101562 100644
+--- a/python/sglang/srt/arg_groups/deepseek_v4_hook.py
++++ b/python/sglang/srt/arg_groups/deepseek_v4_hook.py
+@@ -11,6 +11,28 @@ if TYPE_CHECKING:
+ logger = logging.getLogger(__name__)
+ 
+ 
++def validate_deepseek_v4_speculative_algorithm(
++    server_args: ServerArgs,
++    model_arch: str,
++) -> None:
++    """Validate the speculative capabilities exposed by DeepSeek-V4."""
++    if server_args.speculative_algorithm is None:
++        return
++    assert server_args.speculative_algorithm in (
++        "EAGLE",
++        "EAGLE3",
++        "DSPARK",
++    ), (
++        "Only EAGLE, EAGLE3 and DSPARK speculative algorithms are "
++        f"supported for {model_arch}"
++    )
++    if server_args.speculative_algorithm in ("EAGLE", "EAGLE3"):
++        assert server_args.speculative_eagle_topk == 1, (
++            "Only EAGLE/EAGLE3 speculative decoding with topk == 1 is "
++            f"supported for {model_arch}"
++        )
++
++
+ def apply_deepseek_v4_defaults(server_args: ServerArgs, model_arch: str) -> None:
+     """Residual imperative arm of the DeepSeek V4 defaults.
+ 
+@@ -52,15 +74,7 @@ def apply_deepseek_v4_defaults(server_args: ServerArgs, model_arch: str) -> None
+             f"Setting max_running_requests to {server_args.max_running_requests} for {model_arch}."
+         )
+ 
+-    if server_args.speculative_algorithm is not None:
+-        assert server_args.speculative_algorithm in (
+-            "EAGLE",
+-            "DSPARK",
+-        ), f"Only EAGLE and DSPARK speculative algorithms are supported for {model_arch}"
+-        if server_args.speculative_algorithm == "EAGLE":
+-            assert (
+-                server_args.speculative_eagle_topk == 1
+-            ), f"Only EAGLE speculative algorithm with topk == 1 is supported for {model_arch}"
++    validate_deepseek_v4_speculative_algorithm(server_args, model_arch)
+ 
+ 
+ def validate_deepseek_v4_cp(server_args: ServerArgs) -> None:
+diff --git a/python/sglang/srt/managers/scheduler.py b/python/sglang/srt/managers/scheduler.py
+index c46a8c59681222ede0e8314a3589276ab76d2428..2297a32241d2fb65db97df0ffbcc5570fa2ff8b2 100644
+--- a/python/sglang/srt/managers/scheduler.py
++++ b/python/sglang/srt/managers/scheduler.py
+@@ -3911,6 +3911,14 @@ class Scheduler(
+             info_record = self.draft_worker.dump_info_records()
+             if info_record is not None:
+                 ret["dspark_info_record"] = info_record
++        elif (
++            self.spec_algorithm.is_eagle3()
++            and self.draft_worker is not None
++            and hasattr(self.draft_worker, "dump_info_records")
++        ):
++            info_record = self.draft_worker.dump_info_records()
++            if info_record is not None:
++                ret["eagle3_hedge_info_record"] = info_record
+ 
+         # These fields are not msgpack-serializable (a config object and a bound
+         # signal handler); no reader consumes them.
+@@ -3928,6 +3936,7 @@ class Scheduler(
+                 "speculative_accept_threshold_acc",
+                 "dspark_force_budget_frac",
+                 "dspark_clear_info_records",
++                "eagle3_hedge_clear_info_records",
+             ]
+         )
+ 
+@@ -3969,6 +3978,16 @@ class Scheduler(
+                     )
+                     if_success = False
+                     break
++            elif k == "eagle3_hedge_clear_info_records":
++                if not self.spec_algorithm.is_eagle3() or not hasattr(
++                    self.draft_worker, "clear_info_records"
++                ):
++                    logging.warning(
++                        "eagle3_hedge_clear_info_records requires an "
++                        "Eagle3 draft worker."
++                    )
++                    if_success = False
++                    break
+ 
+         if if_success:
+             if (
+@@ -3993,6 +4012,8 @@ class Scheduler(
+                 )
+             if remaining.pop("dspark_clear_info_records", None):
+                 self.draft_worker.clear_info_records()
++            if remaining.pop("eagle3_hedge_clear_info_records", None):
++                self.draft_worker.clear_info_records()
+             if remaining:
+                 get_server_args().override(source="update_server_args", **remaining)
+             logger.info(f"Global server args updated! {get_server_args()=}")
+diff --git a/python/sglang/srt/models/deepseek_v4.py b/python/sglang/srt/models/deepseek_v4.py
+index 26480612393358533137ac54c81577c96fe732be..c210fdab9f30f9cd0514ba1390fda32329f7e8f9 100644
+--- a/python/sglang/srt/models/deepseek_v4.py
++++ b/python/sglang/srt/models/deepseek_v4.py
+@@ -196,6 +196,205 @@ logger = logging.getLogger(__name__)
+ _FP8_WO_A_GEMM = envs.SGLANG_OPT_FP8_WO_A_GEMM.get()
+ _MHC_POST_MULT_VALUE = 2.0
+ 
++
++def reduce_eagle3_mhc_hidden_state(
++    raw_hidden_state: torch.Tensor,
++    *,
++    hc_mult: int,
++    hidden_size: int,
++) -> torch.Tensor:
++    """Reduce one completed DeepSeek-V4 mHC state for EAGLE3."""
++    if (
++        raw_hidden_state.ndim != 3
++        or raw_hidden_state.shape[1] != hc_mult
++        or raw_hidden_state.shape[2] != hidden_size
++    ):
++        raise ValueError(
++            "expected raw EAGLE3 mHC shape "
++            f"[N,{hc_mult},{hidden_size}], got "
++            f"{list(raw_hidden_state.shape)}"
++        )
++    if raw_hidden_state.dtype != torch.bfloat16:
++        raise ValueError(
++            "expected raw EAGLE3 mHC dtype torch.bfloat16, got "
++            f"{raw_hidden_state.dtype}"
++        )
++    return raw_hidden_state.mean(dim=1)
++
++
++def capture_eagle3_completed_hidden_state(
++    executed_layer_id: int,
++    completed_hidden_state: torch.Tensor,
++    *,
++    logical_layer_ids: List[int],
++    hook_layer_ids: List[int],
++    captured_by_logical_id: dict[int, torch.Tensor],
++    hc_mult: int,
++    hidden_size: int,
++) -> None:
++    """Capture one completed mHC state at an EAGLE3 boundary hook."""
++    if len(logical_layer_ids) != len(hook_layer_ids):
++        raise ValueError(
++            "EAGLE3 logical and hook layer mappings must have equal length."
++        )
++    hook_layer_id = executed_layer_id + 1
++    if hook_layer_id not in hook_layer_ids:
++        return
++    logical_layer_id = logical_layer_ids[hook_layer_ids.index(hook_layer_id)]
++    if logical_layer_id in captured_by_logical_id:
++        raise ValueError(
++            f"duplicate EAGLE3 aux tap at logical layer {logical_layer_id}"
++        )
++    captured_by_logical_id[logical_layer_id] = (
++        reduce_eagle3_mhc_hidden_state(
++            completed_hidden_state,
++            hc_mult=hc_mult,
++            hidden_size=hidden_size,
++        )
++    )
++
++
++def assemble_eagle3_aux_hidden_states(
++    logical_layer_ids: List[int],
++    captured_by_logical_id: dict[int, torch.Tensor],
++    *,
++    hidden_size: int,
++) -> tuple[List[torch.Tensor], torch.Tensor]:
++    """Order reduced EAGLE3 states and expose their structured layout."""
++    if len(logical_layer_ids) != 3:
++        raise ValueError(
++            "DeepSeek-V4 EAGLE3 requires exactly three aux hidden states."
++        )
++    missing = [
++        layer_id
++        for layer_id in logical_layer_ids
++        if layer_id not in captured_by_logical_id
++    ]
++    if missing:
++        raise ValueError(f"missing EAGLE3 aux taps: {missing}")
++    ordered = [
++        captured_by_logical_id[layer_id]
++        for layer_id in logical_layer_ids
++    ]
++    batch_size = ordered[0].shape[0] if ordered[0].ndim > 0 else None
++    expected_shape = [batch_size, hidden_size]
++    for layer_id, hidden_state in zip(logical_layer_ids, ordered):
++        if (
++            hidden_state.ndim != 2
++            or list(hidden_state.shape) != expected_shape
++        ):
++            raise ValueError(
++                "expected reduced EAGLE3 aux shape "
++                f"{expected_shape} at logical layer {layer_id}, got "
++                f"{list(hidden_state.shape)}"
++            )
++        if hidden_state.dtype != torch.bfloat16:
++            raise ValueError(
++                "expected reduced EAGLE3 aux dtype torch.bfloat16 at "
++                f"logical layer {layer_id}, got {hidden_state.dtype}"
++            )
++    devices = {hidden_state.device for hidden_state in ordered}
++    if len(devices) != 1:
++        raise ValueError(
++            f"EAGLE3 aux taps must share one local device, got {devices}"
++        )
++    return ordered, torch.stack(ordered, dim=1)
++
++
++def build_eagle3_aux_trace(
++    *,
++    logical_layer_ids: List[int],
++    hook_layer_ids: List[int],
++    raw_shapes_by_logical_id: dict[int, List[int]],
++    structured_hidden_states: torch.Tensor,
++    runner_hidden_states: torch.Tensor,
++    hc_mult: int,
++    hidden_size: int,
++    tp_rank: int,
++    tp_world_size: int,
++    expected_local_device: torch.device,
++) -> dict[str, Any]:
++    """Validate and describe one TP rank's EAGLE3 aux handoff."""
++    if len(logical_layer_ids) != 3 or len(hook_layer_ids) != 3:
++        raise ValueError("EAGLE3 trace requires exactly three layer mappings.")
++    if hook_layer_ids != [layer_id + 1 for layer_id in logical_layer_ids]:
++        raise ValueError(
++            "EAGLE3 hook IDs must be the after-layer boundaries for the "
++            "logical layer IDs."
++        )
++    if tp_world_size <= 0 or tp_rank < 0 or tp_rank >= tp_world_size:
++        raise ValueError(
++            f"invalid EAGLE3 TP rank {tp_rank}/{tp_world_size}"
++        )
++    raw_shapes = [
++        raw_shapes_by_logical_id.get(layer_id)
++        for layer_id in logical_layer_ids
++    ]
++    expected_raw_shape = [
++        structured_hidden_states.shape[0],
++        hc_mult,
++        hidden_size,
++    ]
++    if any(shape != expected_raw_shape for shape in raw_shapes):
++        raise ValueError(
++            "unexpected EAGLE3 raw aux shapes: "
++            f"expected {expected_raw_shape}, got {raw_shapes}"
++        )
++    expected_structured_shape = [
++        structured_hidden_states.shape[0],
++        3,
++        hidden_size,
++    ]
++    if list(structured_hidden_states.shape) != expected_structured_shape:
++        raise ValueError(
++            "unexpected EAGLE3 structured aux shape: "
++            f"expected {expected_structured_shape}, got "
++            f"{list(structured_hidden_states.shape)}"
++        )
++    expected_runner_shape = [
++        structured_hidden_states.shape[0],
++        3 * hidden_size,
++    ]
++    if list(runner_hidden_states.shape) != expected_runner_shape:
++        raise ValueError(
++            "unexpected EAGLE3 runner aux shape: "
++            f"expected {expected_runner_shape}, got "
++            f"{list(runner_hidden_states.shape)}"
++        )
++    if (
++        structured_hidden_states.dtype != torch.bfloat16
++        or runner_hidden_states.dtype != torch.bfloat16
++    ):
++        raise ValueError(
++            "EAGLE3 aux trace requires BF16 structured and runner tensors."
++        )
++    expected_local_device = torch.device(expected_local_device)
++    if (
++        structured_hidden_states.device != expected_local_device
++        or runner_hidden_states.device != expected_local_device
++    ):
++        raise ValueError(
++            "EAGLE3 aux tensors are not on the current TP rank's local "
++            f"device {expected_local_device}: structured="
++            f"{structured_hidden_states.device}, runner="
++            f"{runner_hidden_states.device}"
++        )
++    return {
++        "tp_rank": tp_rank,
++        "tp_world_size": tp_world_size,
++        "logical_layer_ids": list(logical_layer_ids),
++        "hook_layer_ids": list(hook_layer_ids),
++        "raw_shapes": raw_shapes,
++        "structured_shape": list(structured_hidden_states.shape),
++        "runner_shape": list(runner_hidden_states.shape),
++        "dtype": str(structured_hidden_states.dtype),
++        "device": str(structured_hidden_states.device),
++        "runner_checksum": float(
++            runner_hidden_states.float().sum().item()
++        ),
++    }
++
++
+ DEEPSEEK_V4_STACKED_PARAMS_MAPPING: List[Tuple[str, str, int]] = [
+     ("gate_up_proj", "gate_proj", 0),
+     ("gate_up_proj", "up_proj", 1),
+@@ -2104,6 +2303,9 @@ class DeepseekV4Model(nn.Module):
+             self.cp_size = get_parallel().attn_cp_size
+ 
+         self.dspark_layers_to_capture: Optional[List[int]] = None
++        self.eagle3_logical_layers_to_capture: Optional[List[int]] = None
++        self.eagle3_hook_layers_to_capture: Optional[List[int]] = None
++        self._eagle3_aux_trace_emitted = False
+ 
+     def get_input_embeddings(self) -> nn.Module:
+         return self.embed_tokens
+@@ -2293,17 +2495,33 @@ class DeepseekV4Model(nn.Module):
+                 delattr(forward_batch, _attr)
+ 
+         capture_dspark = self.dspark_layers_to_capture is not None
+-        if capture_dspark and dsa_use_prefill_cp(forward_batch):
++        capture_eagle3 = self.eagle3_hook_layers_to_capture is not None
++        if (
++            capture_eagle3
++            and self.eagle3_logical_layers_to_capture is None
++        ):
++            raise RuntimeError(
++                "EAGLE3 hook layers are configured without logical layers."
++            )
++        if capture_dspark and capture_eagle3:
++            raise RuntimeError(
++                "DeepSeek-V4 DSpark and EAGLE3 aux capture cannot be active "
++                "in the same forward pass."
++            )
++        capture_aux = capture_dspark or capture_eagle3
++        if capture_aux and dsa_use_prefill_cp(forward_batch):
+             raise NotImplementedError(
+-                "DSpark aux hidden-state capture is not supported together with "
+-                "DeepSeek-V4 prefill context parallelism (attn_cp_size > 1). Disable one "
+-                "of them: DSpark static-verify is CP-off for v1."
++                "DeepSeek-V4 speculative aux hidden-state capture is not "
++                "supported together with prefill context parallelism "
++                "(attn_cp_size > 1)."
+             )
+         dspark_aux_hidden_states: List[torch.Tensor] = []
+-        # DSpark aux capture needs the per-layer eager loop (TBO's overlapped
+-        # execution cannot expose per-layer completed hidden states), so skip
++        eagle3_captured_by_logical_id: dict[int, torch.Tensor] = {}
++        eagle3_raw_shapes_by_logical_id: dict[int, List[int]] = {}
++        # Speculative aux capture needs the per-layer eager loop (TBO's
++        # overlapped execution cannot expose completed layer states), so skip
+         # TBO when capturing -- a perf-only downgrade, not a correctness one.
+-        if self._can_run_tbo(forward_batch) and not capture_dspark:
++        if self._can_run_tbo(forward_batch) and not capture_aux:
+             # Two-batch-overlap prefill (EP / mori). Cross-layer mHC fusion is
+             # disabled here (each layer self-contained), so no trailing hc_post.
+             hidden_states = self._forward_layers_tbo(
+@@ -2334,14 +2552,45 @@ class DeepseekV4Model(nn.Module):
+                         prev_post=prev_post,
+                         prev_comb=prev_comb,
+                     )
+-                if capture_dspark and i in self.dspark_layers_to_capture:
++                capture_eagle3_layer = (
++                    capture_eagle3
++                    and i + 1 in self.eagle3_hook_layers_to_capture
++                )
++                if (
++                    capture_dspark
++                    and i in self.dspark_layers_to_capture
++                ) or capture_eagle3_layer:
+                     if use_fused:
+                         completed = layer.hc_post(
+                             hidden_states, prev_residual, prev_post, prev_comb
+                         )
+                     else:
+                         completed = hidden_states
+-                    dspark_aux_hidden_states.append(completed.mean(dim=1))
++                    if capture_dspark:
++                        dspark_aux_hidden_states.append(completed.mean(dim=1))
++                    else:
++                        hook_index = (
++                            self.eagle3_hook_layers_to_capture.index(i + 1)
++                        )
++                        logical_layer_id = (
++                            self.eagle3_logical_layers_to_capture[hook_index]
++                        )
++                        eagle3_raw_shapes_by_logical_id[logical_layer_id] = (
++                            list(completed.shape)
++                        )
++                        capture_eagle3_completed_hidden_state(
++                            i,
++                            completed,
++                            logical_layer_ids=(
++                                self.eagle3_logical_layers_to_capture
++                            ),
++                            hook_layer_ids=self.eagle3_hook_layers_to_capture,
++                            captured_by_logical_id=(
++                                eagle3_captured_by_logical_id
++                            ),
++                            hc_mult=self.hc_mult,
++                            hidden_size=self.hidden_size,
++                        )
+             if use_fused and last_layer is not None:
+                 hidden_states = last_layer.hc_post(
+                     hidden_states, prev_residual, prev_post, prev_comb
+@@ -2369,6 +2618,49 @@ class DeepseekV4Model(nn.Module):
+ 
+         if capture_dspark:
+             return (hidden_states, pre_hc_head), dspark_aux_hidden_states
++        if capture_eagle3:
++            (
++                eagle3_aux_hidden_states,
++                eagle3_structured_hidden_states,
++            ) = assemble_eagle3_aux_hidden_states(
++                self.eagle3_logical_layers_to_capture,
++                eagle3_captured_by_logical_id,
++                hidden_size=self.hidden_size,
++            )
++            if (
++                get_bool_env_var("SGLANG_EAGLE3_V4_AUX_TRACE")
++                and not self._eagle3_aux_trace_emitted
++            ):
++                eagle3_runner_hidden_states = torch.cat(
++                    eagle3_aux_hidden_states, dim=-1
++                )
++                tp_group = get_tp_group()
++                expected_local_device = (
++                    torch.device("cuda", torch.cuda.current_device())
++                    if eagle3_structured_hidden_states.device.type == "cuda"
++                    else eagle3_structured_hidden_states.device
++                )
++                trace = build_eagle3_aux_trace(
++                    logical_layer_ids=(
++                        self.eagle3_logical_layers_to_capture
++                    ),
++                    hook_layer_ids=self.eagle3_hook_layers_to_capture,
++                    raw_shapes_by_logical_id=(
++                        eagle3_raw_shapes_by_logical_id
++                    ),
++                    structured_hidden_states=(
++                        eagle3_structured_hidden_states
++                    ),
++                    runner_hidden_states=eagle3_runner_hidden_states,
++                    hc_mult=self.hc_mult,
++                    hidden_size=self.hidden_size,
++                    tp_rank=tp_group.rank_in_group,
++                    tp_world_size=tp_group.world_size,
++                    expected_local_device=expected_local_device,
++                )
++                logger.info("EAGLE3_V4_AUX_TRACE %s", trace)
++                self._eagle3_aux_trace_emitted = True
++            return (hidden_states, pre_hc_head), eagle3_aux_hidden_states
+ 
+         return hidden_states, pre_hc_head
+ 
+@@ -2456,6 +2748,53 @@ class DeepseekV4ForCausalLM(nn.Module):
+         self.capture_aux_hidden_states = True
+         self.model.dspark_layers_to_capture = list(layer_ids)
+ 
++    def set_eagle3_layers_to_capture(
++        self, logical_layer_ids: Optional[List[int]]
++    ) -> None:
++        if not self.pp_group.is_last_rank:
++            return
++        if logical_layer_ids is None or len(logical_layer_ids) == 0:
++            raise ValueError(
++                "EAGLE3 requires explicit logical layer IDs for aux capture."
++            )
++        logical_layer_ids = list(logical_layer_ids)
++        if len(logical_layer_ids) != 3:
++            raise ValueError(
++                "DeepSeek-V4 EAGLE3 requires exactly three logical layer IDs."
++            )
++        if any(
++            current >= following
++            for current, following in zip(
++                logical_layer_ids, logical_layer_ids[1:]
++            )
++        ):
++            raise ValueError(
++                "EAGLE3 logical layer IDs must be strictly increasing."
++            )
++        num_layers = int(self.config.num_hidden_layers)
++        if any(
++            not isinstance(layer_id, int)
++            or layer_id < 0
++            or layer_id >= num_layers
++            for layer_id in logical_layer_ids
++        ):
++            raise ValueError(
++                "EAGLE3 logical layer ID is outside target layer range "
++                f"[0, {num_layers}): {logical_layer_ids}."
++            )
++        self.capture_aux_hidden_states = True
++        self.model.eagle3_logical_layers_to_capture = logical_layer_ids
++        self.model.eagle3_hook_layers_to_capture = [
++            layer_id + 1 for layer_id in logical_layer_ids
++        ]
++        log_info_on_rank0(
++            logger,
++            "DeepSeek-V4 EAGLE3 aux capture configured: "
++            f"logical_layers={logical_layer_ids}, "
++            "hook_layers="
++            f"{self.model.eagle3_hook_layers_to_capture}",
++        )
++
+     def determine_num_fused_shared_experts(self):
+         self.num_fused_shared_experts = 0
+         if get_server_args().disable_shared_experts_fusion:
+diff --git a/python/sglang/srt/speculative/eagle3_hedge.py b/python/sglang/srt/speculative/eagle3_hedge.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..35de1e6389469e52b60649d32d36860d4499e11e
+--- /dev/null
++++ b/python/sglang/srt/speculative/eagle3_hedge.py
+@@ -0,0 +1,819 @@
++"""HEDGE adapter for the fixed greedy Eagle3 top-k-one verify seam."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass, replace
++import json
++import math
++import os
++from typing import Callable, Mapping, Optional
++
++import torch
++
++from sglang.srt.speculative.hedge_spec.config import HedgeConfig
++from sglang.srt.speculative.hedge_spec.torch_rule import choose_prefix_batch
++
++
++HEDGE_MODE_DISABLED = "disabled"
++HEDGE_MODE_B0 = "b0"
++HEDGE_MODE_ENABLED = "enabled"
++_HEDGE_MODES = {
++    HEDGE_MODE_DISABLED,
++    HEDGE_MODE_B0,
++    HEDGE_MODE_ENABLED,
++}
++_MODE_ENV = "SGLANG_EAGLE3_HEDGE_MODE"
++_CONFIG_ENV = "SGLANG_EAGLE3_HEDGE_CONFIG_JSON"
++_TRACE_CAPACITY_ENV = "SGLANG_EAGLE3_HEDGE_TRACE_CAPACITY"
++
++
++@dataclass(frozen=True, slots=True)
++class Eagle3HedgeSettings:
++    mode: str = HEDGE_MODE_DISABLED
++    config: Optional[HedgeConfig] = None
++    trace_capacity: int = 4096
++
++    def __post_init__(self) -> None:
++        if self.mode not in _HEDGE_MODES:
++            raise ValueError(
++                f"Eagle3 HEDGE mode must be one of {sorted(_HEDGE_MODES)}"
++            )
++        if self.mode == HEDGE_MODE_DISABLED and self.config is not None:
++            raise ValueError("disabled Eagle3 HEDGE mode cannot carry config")
++        if self.mode != HEDGE_MODE_DISABLED and self.config is None:
++            raise ValueError("active Eagle3 HEDGE mode requires config")
++        if self.mode == HEDGE_MODE_B0 and self.config.B != 0.0:
++            raise ValueError("Eagle3 B0 mode requires B=0")
++        if self.mode == HEDGE_MODE_ENABLED and self.config.B <= 0.0:
++            raise ValueError("enabled Eagle3 HEDGE mode requires B>0")
++        if self.config is not None and self.config.m != 1:
++            raise ValueError("Eagle3 HEDGE experiment requires m=1")
++        if (
++            isinstance(self.trace_capacity, bool)
++            or not isinstance(self.trace_capacity, int)
++            or self.trace_capacity < 0
++        ):
++            raise ValueError("Eagle3 HEDGE trace_capacity must be non-negative")
++
++    @property
++    def active(self) -> bool:
++        return self.mode != HEDGE_MODE_DISABLED
++
++    @classmethod
++    def from_environ(
++        cls, environ: Optional[Mapping[str, str]] = None
++    ) -> "Eagle3HedgeSettings":
++        values = os.environ if environ is None else environ
++        mode = values.get(_MODE_ENV, HEDGE_MODE_DISABLED).strip().lower()
++        raw_config = values.get(_CONFIG_ENV)
++        try:
++            trace_capacity = int(values.get(_TRACE_CAPACITY_ENV, "0"))
++        except ValueError as error:
++            raise ValueError(
++                f"{_TRACE_CAPACITY_ENV} must be an integer"
++            ) from error
++        if mode == HEDGE_MODE_DISABLED:
++            if raw_config not in (None, ""):
++                raise ValueError(
++                    f"{_CONFIG_ENV} is invalid in disabled mode"
++                )
++            return cls(mode=mode, trace_capacity=trace_capacity)
++        if raw_config in (None, ""):
++            raise ValueError(f"{mode} mode requires {_CONFIG_ENV}")
++        try:
++            payload = json.loads(raw_config)
++        except json.JSONDecodeError as error:
++            raise ValueError(
++                f"{_CONFIG_ENV} must be valid JSON"
++            ) from error
++        if not isinstance(payload, dict):
++            raise ValueError(f"{_CONFIG_ENV} must be a JSON object")
++        return cls(
++            mode=mode,
++            config=HedgeConfig.from_mapping(payload),
++            trace_capacity=trace_capacity,
++        )
++
++
++def build_eagle3_hedge_adapter(
++    *,
++    server_args,
++    tp_rank: int,
++    device: torch.device | str,
++    environ: Optional[Mapping[str, str]] = None,
++) -> Optional["Eagle3HedgeAdapter"]:
++    """Build the experiment adapter while preserving generic Eagle3 defaults."""
++
++    settings = Eagle3HedgeSettings.from_environ(environ)
++    if not settings.active and settings.trace_capacity == 0:
++        return None
++    required = (
++        ("speculative_num_steps", 3, "num_steps=3"),
++        ("speculative_eagle_topk", 1, "topk=1"),
++        ("speculative_num_draft_tokens", 4, "verify_width=4"),
++        ("disable_cuda_graph", True, "disable_cuda_graph=True"),
++        (
++            "disable_overlap_schedule",
++            True,
++            "disable_overlap_schedule=True",
++        ),
++        ("max_running_requests", 1, "max_running_requests=1"),
++    )
++    for field, expected, contract in required:
++        actual = getattr(server_args, field, None)
++        if actual != expected:
++            raise ValueError(
++                "Eagle3 HEDGE experiment requires "
++                f"{contract}, got {field}={actual!r}"
++            )
++    if tp_rank != 0 and settings.trace_capacity:
++        settings = replace(settings, trace_capacity=0)
++    return Eagle3HedgeAdapter(
++        settings=settings,
++        proposal_width=3,
++        verify_width=4,
++        device=device,
++    )
++
++
++class Eagle3HedgeAdapter:
++    """Own request budgets and produce the accepted top-k-one chain."""
++
++    _TI_VALID = 0
++    _TI_ORDINAL = 1
++    _TI_SLOT = 2
++    _TI_SERIAL = 3
++    _TI_STRICT = 4
++    _TI_ACCEPTED = 5
++    _TI_COMMIT = 6
++    _TI_BARRIER = 7
++    _TI_RELAXED = 8
++    _TI_DRAFT = 9
++    _TI_TOP_ID = 12
++    _TRACE_INT_FIELDS = 15
++
++    _TF_TOP_LOGIT = 0
++    _TF_DRAFT_LOGIT = 3
++    _TF_REGRET = 6
++    _TF_VALUE = 9
++    _TF_SPENT = 12
++    _TF_REMAINING_BEFORE = 13
++    _TF_REMAINING_AFTER = 14
++    _TF_BARRIER_REGRET = 15
++    _TF_BARRIER_VALUE = 16
++    _TF_BARRIER_RATIO = 17
++    _TRACE_FLOAT_FIELDS = 18
++
++    @property
++    def active(self) -> bool:
++        return self.settings.active
++
++    def __init__(
++        self,
++        *,
++        settings: Eagle3HedgeSettings,
++        proposal_width: int,
++        verify_width: int,
++        device: torch.device | str,
++    ) -> None:
++        self.settings = settings
++        self.proposal_width = int(proposal_width)
++        self.verify_width = int(verify_width)
++        self.device = torch.device(device)
++        if self.proposal_width != 3 or self.verify_width != 4:
++            raise ValueError(
++                "Eagle3 HEDGE requires proposal_width=3 and verify_width=4"
++            )
++        if self.settings.config is not None:
++            self.settings.config.validate_block_size(self.proposal_width)
++        self._remaining_budget: Optional[torch.Tensor] = None
++        self._active_slots: Optional[torch.Tensor] = None
++        self._request_serial_by_slot: Optional[torch.Tensor] = None
++        self._rid_to_slot: dict[str, int] = {}
++        self._slot_to_rid: dict[int, str] = {}
++        self._serial_to_rid: dict[int, str] = {}
++        self._next_request_serial = 1
++        self._requests_finished = 0
++        self._requests_non_natural = 0
++        self._slot_reuse_resets = 0
++        self._budget_exhaustion_events = torch.zeros(
++            (), dtype=torch.int64, device=self.device
++        )
++        trace_rows = self.settings.trace_capacity + 1
++        self._trace_cursor = torch.zeros(
++            (), dtype=torch.int64, device=self.device
++        )
++        self._trace_dropped = torch.zeros(
++            (), dtype=torch.int64, device=self.device
++        )
++        self._trace_int = torch.zeros(
++            (trace_rows, self._TRACE_INT_FIELDS),
++            dtype=torch.int64,
++            device=self.device,
++        )
++        self._trace_float = torch.full(
++            (trace_rows, self._TRACE_FLOAT_FIELDS),
++            float("nan"),
++            dtype=torch.float64,
++            device=self.device,
++        )
++
++    def bind_request_batch(
++        self,
++        *,
++        rids: list[str],
++        slots: list[int],
++        pool_capacity: int,
++    ) -> None:
++        if len(rids) != len(slots):
++            raise ValueError("request and slot counts differ")
++        if self._active_slots is None:
++            self._active_slots = torch.zeros(
++                (pool_capacity,), dtype=torch.bool, device=self.device
++            )
++            self._request_serial_by_slot = torch.full(
++                (pool_capacity,), -1, dtype=torch.int64, device=self.device
++            )
++            if self.settings.active:
++                self._remaining_budget = torch.zeros(
++                    (pool_capacity,),
++                    dtype=torch.float64,
++                    device=self.device,
++                )
++        elif self._active_slots.shape[0] != pool_capacity:
++            raise RuntimeError("request-pool capacity changed")
++        for rid, slot in zip(rids, slots):
++            old_rid = self._slot_to_rid.get(slot)
++            if old_rid == rid:
++                continue
++            if old_rid is not None:
++                self._rid_to_slot.pop(old_rid, None)
++                self._clear_slot(slot)
++                self._slot_reuse_resets += 1
++            old_slot = self._rid_to_slot.get(rid)
++            if old_slot is not None and old_slot != slot:
++                self._clear_slot(old_slot)
++                self._slot_to_rid.pop(old_slot, None)
++            self._rid_to_slot[rid] = slot
++            self._slot_to_rid[slot] = rid
++            serial = self._next_request_serial
++            self._next_request_serial += 1
++            self._serial_to_rid[serial] = rid
++            slot_index = torch.tensor(
++                [slot], dtype=torch.int64, device=self.device
++            )
++            self._active_slots.index_fill_(0, slot_index, True)
++            self._request_serial_by_slot.index_fill_(0, slot_index, serial)
++            if self._remaining_budget is not None:
++                self._remaining_budget.index_fill_(
++                    0, slot_index, self.settings.config.B
++                )
++
++    def bind_batch(self, batch) -> None:
++        """Bind a ScheduleBatch at the low-frequency prefill lifecycle seam."""
++
++        if not batch.reqs:
++            return
++        mirror = getattr(batch, "req_pool_indices_cpu", None)
++        if mirror is not None:
++            slots = [int(value) for value in mirror]
++        else:
++            slots = [req.req_pool_idx for req in batch.reqs]
++            if any(slot is None for slot in slots):
++                raise RuntimeError(
++                    "Eagle3 HEDGE prefill saw an unallocated request"
++                )
++            slots = [int(slot) for slot in slots]
++        pool = batch.req_to_token_pool
++        capacity = (
++            int(pool._alloc_size)
++            if hasattr(pool, "_alloc_size")
++            else int(pool.size) + 1
++        )
++        self.bind_request_batch(
++            rids=[str(req.rid) for req in batch.reqs],
++            slots=slots,
++            pool_capacity=capacity,
++        )
++
++    def _clear_slot(self, slot: int) -> None:
++        if self._active_slots is None:
++            return
++        slot_index = torch.tensor(
++            [slot], dtype=torch.int64, device=self.device
++        )
++        if self._remaining_budget is not None:
++            self._remaining_budget.index_fill_(0, slot_index, 0.0)
++        self._active_slots.index_fill_(0, slot_index, False)
++        self._request_serial_by_slot.index_fill_(0, slot_index, -1)
++
++    def note_request_finished(self, *, rid: str, natural_stop: bool) -> None:
++        """Clear request-owned state on natural finish, cancellation, or abort."""
++
++        slot = self._rid_to_slot.pop(rid, None)
++        if slot is None:
++            return
++        self._slot_to_rid.pop(slot, None)
++        self._clear_slot(slot)
++        self._requests_finished += 1
++        if not natural_stop:
++            self._requests_non_natural += 1
++
++    def _compact_scores(
++        self,
++        *,
++        candidates: torch.Tensor,
++        target_logits: torch.Tensor,
++    ) -> tuple[
++        torch.Tensor,
++        torch.Tensor,
++        torch.Tensor,
++        torch.Tensor,
++        torch.Tensor,
++    ]:
++        if tuple(candidates.shape[1:]) != (self.verify_width,):
++            raise ValueError("Eagle3 candidates must be [batch, 4]")
++        batch = candidates.shape[0]
++        if (
++            target_logits.ndim != 2
++            or target_logits.shape[0] != batch * self.verify_width
++        ):
++            raise ValueError(
++                "Eagle3 target logits must be [batch*4, vocab]"
++            )
++        logits = target_logits.view(batch, self.verify_width, -1)
++        top_logits, top_token_ids = logits.max(dim=-1)
++        draft_token_ids = candidates[:, 1:]
++        draft_logits = logits[:, : self.proposal_width].gather(
++            -1, draft_token_ids.unsqueeze(-1)
++        )
++        return (
++            draft_token_ids,
++            top_logits[:, : self.proposal_width],
++            top_token_ids[:, : self.proposal_width],
++            draft_logits.squeeze(-1),
++            top_token_ids,
++        )
++
++    def _assert_chain(
++        self,
++        *,
++        retrieve_index: torch.Tensor,
++        retrieve_next_token: torch.Tensor,
++        retrieve_next_sibling: torch.Tensor,
++    ) -> None:
++        batch = retrieve_index.shape[0]
++        expected_index = torch.arange(
++            batch * self.verify_width,
++            dtype=retrieve_index.dtype,
++            device=retrieve_index.device,
++        ).view(batch, self.verify_width)
++        expected_next = torch.tensor(
++            [1, 2, 3, -1],
++            dtype=retrieve_next_token.dtype,
++            device=retrieve_next_token.device,
++        ).expand(batch, -1)
++        torch._assert_async(
++            (retrieve_index == expected_index).all(),
++            "Eagle3 HEDGE requires contiguous top-k-one nodes",
++        )
++        torch._assert_async(
++            (retrieve_next_token == expected_next).all(),
++            "Eagle3 HEDGE requires a linear top-k-one chain",
++        )
++        torch._assert_async(
++            (retrieve_next_sibling == -1).all(),
++            "Eagle3 HEDGE does not support sibling branches",
++        )
++
++    def _record_trace(
++        self,
++        *,
++        slots: torch.Tensor,
++        draft_token_ids: torch.Tensor,
++        top_logits: torch.Tensor,
++        top_token_ids: torch.Tensor,
++        draft_logits: torch.Tensor,
++        regrets: torch.Tensor,
++        values: torch.Tensor,
++        strict: torch.Tensor,
++        accepted: torch.Tensor,
++        relaxed: torch.Tensor,
++        spent: Optional[torch.Tensor],
++        remaining_before: Optional[torch.Tensor],
++        remaining_after: Optional[torch.Tensor],
++    ) -> None:
++        if self.settings.trace_capacity == 0:
++            return
++        batch = draft_token_ids.shape[0]
++        ordinal = self._trace_cursor + torch.arange(
++            batch, dtype=torch.int64, device=draft_token_ids.device
++        )
++        in_capacity = ordinal < self.settings.trace_capacity
++        safe_ordinal = ordinal.clamp(max=self.settings.trace_capacity)
++        if self._request_serial_by_slot is None:
++            serial = torch.full_like(slots, -1, dtype=torch.int64)
++        else:
++            serial = self._request_serial_by_slot.index_select(
++                0, slots.to(torch.int64)
++            )
++        barrier = strict.to(torch.int64)
++        safe_barrier = barrier.clamp(max=self.proposal_width - 1)
++        row = torch.arange(
++            batch, dtype=torch.int64, device=draft_token_ids.device
++        )
++        barrier_regret = regrets[row, safe_barrier]
++        barrier_value = values[row, safe_barrier]
++        barrier_ratio = barrier_regret / barrier_value
++        no_risk = torch.full_like(barrier_regret, torch.nan)
++        spent_field = no_risk if spent is None else spent.to(torch.float64)
++        before_field = (
++            no_risk
++            if remaining_before is None
++            else remaining_before.to(torch.float64)
++        )
++        after_field = (
++            no_risk
++            if remaining_after is None
++            else remaining_after.to(torch.float64)
++        )
++
++        trace_int = self._trace_int
++        trace_int[safe_ordinal, self._TI_VALID] = in_capacity.to(torch.int64)
++        trace_int[safe_ordinal, self._TI_ORDINAL] = ordinal
++        trace_int[safe_ordinal, self._TI_SLOT] = slots
++        trace_int[safe_ordinal, self._TI_SERIAL] = serial
++        trace_int[safe_ordinal, self._TI_STRICT] = strict.to(torch.int64)
++        trace_int[safe_ordinal, self._TI_ACCEPTED] = accepted.to(torch.int64)
++        trace_int[safe_ordinal, self._TI_COMMIT] = (
++            accepted.to(torch.int64) + 1
++        )
++        trace_int[safe_ordinal, self._TI_BARRIER] = torch.where(
++            barrier < self.proposal_width,
++            barrier,
++            torch.full_like(barrier, -1),
++        )
++        trace_int[safe_ordinal, self._TI_RELAXED] = relaxed.to(torch.int64)
++        trace_int[
++            safe_ordinal,
++            self._TI_DRAFT : self._TI_DRAFT + self.proposal_width,
++        ] = draft_token_ids.to(torch.int64)
++        trace_int[
++            safe_ordinal,
++            self._TI_TOP_ID : self._TI_TOP_ID + self.proposal_width,
++        ] = top_token_ids.to(torch.int64)
++
++        trace_float = self._trace_float
++        trace_float[
++            safe_ordinal,
++            self._TF_TOP_LOGIT : self._TF_TOP_LOGIT + self.proposal_width,
++        ] = top_logits.to(torch.float64)
++        trace_float[
++            safe_ordinal,
++            self._TF_DRAFT_LOGIT : self._TF_DRAFT_LOGIT
++            + self.proposal_width,
++        ] = draft_logits.to(torch.float64)
++        trace_float[
++            safe_ordinal,
++            self._TF_REGRET : self._TF_REGRET + self.proposal_width,
++        ] = regrets.to(torch.float64)
++        trace_float[
++            safe_ordinal,
++            self._TF_VALUE : self._TF_VALUE + self.proposal_width,
++        ] = values.to(torch.float64)
++        trace_float[safe_ordinal, self._TF_SPENT] = spent_field
++        trace_float[
++            safe_ordinal, self._TF_REMAINING_BEFORE
++        ] = before_field
++        trace_float[safe_ordinal, self._TF_REMAINING_AFTER] = after_field
++        trace_float[
++            safe_ordinal, self._TF_BARRIER_REGRET
++        ] = barrier_regret
++        trace_float[safe_ordinal, self._TF_BARRIER_VALUE] = barrier_value
++        trace_float[safe_ordinal, self._TF_BARRIER_RATIO] = barrier_ratio
++        self._trace_cursor.add_(batch)
++        self._trace_dropped.add_((~in_capacity).to(torch.int64).sum())
++
++    def accept_or_native(
++        self,
++        *,
++        candidates: torch.Tensor,
++        target_logits: torch.Tensor,
++        req_pool_indices: torch.Tensor,
++        retrieve_index: torch.Tensor,
++        retrieve_next_token: torch.Tensor,
++        retrieve_next_sibling: torch.Tensor,
++        native_accept: Callable[
++            [], tuple[torch.Tensor, torch.Tensor, torch.Tensor]
++        ],
++    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++        if not self.settings.active:
++            native_result = native_accept()
++            if self.settings.trace_capacity == 0:
++                return native_result
++            self._assert_chain(
++                retrieve_index=retrieve_index,
++                retrieve_next_token=retrieve_next_token,
++                retrieve_next_sibling=retrieve_next_sibling,
++            )
++            (
++                draft_token_ids,
++                top_logits,
++                top_token_ids,
++                draft_logits,
++                _full_top_token_ids,
++            ) = self._compact_scores(
++                candidates=candidates,
++                target_logits=target_logits,
++            )
++            strict = (
++                (draft_token_ids == top_token_ids)
++                .to(torch.int32)
++                .cumprod(dim=1)
++                .sum(dim=1)
++            )
++            native_accepted = native_result[1].to(torch.int32)
++            regrets = (
++                top_logits.to(torch.float64)
++                - draft_logits.to(torch.float64)
++            ).clamp_min(0.0)
++            values = (
++                torch.arange(
++                    self.proposal_width,
++                    0,
++                    -1,
++                    device=target_logits.device,
++                    dtype=torch.float64,
++                )
++                / self.proposal_width
++            ).expand(candidates.shape[0], -1)
++            self._record_trace(
++                slots=req_pool_indices.to(
++                    device=self.device, dtype=torch.int64
++                ),
++                draft_token_ids=draft_token_ids,
++                top_logits=top_logits,
++                top_token_ids=top_token_ids,
++                draft_logits=draft_logits,
++                regrets=regrets,
++                values=values,
++                strict=strict,
++                accepted=native_accepted,
++                relaxed=torch.zeros_like(native_accepted),
++                spent=None,
++                remaining_before=None,
++                remaining_after=None,
++            )
++            return native_result
++        if self._remaining_budget is None or self._active_slots is None:
++            raise RuntimeError("Eagle3 HEDGE decode preceded request binding")
++        slots = req_pool_indices.to(device=self.device, dtype=torch.int64)
++        torch._assert_async(
++            self._active_slots.index_select(0, slots).all(),
++            "Eagle3 HEDGE saw an inactive request slot",
++        )
++        self._assert_chain(
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next_token,
++            retrieve_next_sibling=retrieve_next_sibling,
++        )
++        (
++            draft_token_ids,
++            top_logits,
++            top_token_ids,
++            draft_logits,
++            full_top_token_ids,
++        ) = self._compact_scores(
++            candidates=candidates,
++            target_logits=target_logits,
++        )
++        remaining_before = self._remaining_budget.index_select(0, slots)
++        decision = choose_prefix_batch(
++            draft_token_ids=draft_token_ids,
++            top_logits=top_logits,
++            top_token_ids=top_token_ids,
++            draft_logits=draft_logits,
++            remaining_budget=remaining_before,
++            config=self.settings.config,
++        )
++        accepted = decision.accepted.to(torch.int32)
++        remaining_after = (
++            remaining_before.to(torch.float64) - decision.spent
++        ).clamp_min(0.0)
++        self._remaining_budget.index_copy_(0, slots, remaining_after)
++        self._budget_exhaustion_events.add_(
++            (
++                (remaining_before > 0.0)
++                & (remaining_after <= 0.0)
++                & (decision.spent > 0.0)
++            )
++            .to(torch.int64)
++            .sum()
++        )
++
++        batch = candidates.shape[0]
++        row = torch.arange(batch, device=candidates.device)
++        positions = torch.arange(
++            self.verify_width,
++            device=candidates.device,
++            dtype=torch.int32,
++        ).expand(batch, -1)
++        accept_index = torch.where(
++            positions <= accepted.unsqueeze(1),
++            retrieve_index.to(torch.int32),
++            torch.full_like(retrieve_index, -1, dtype=torch.int32),
++        )
++        predict = torch.zeros(
++            (batch * self.verify_width,),
++            dtype=torch.int32,
++            device=candidates.device,
++        )
++        edge_positions = torch.arange(
++            self.proposal_width, device=candidates.device
++        )
++        edge_source = retrieve_index[:, : self.proposal_width]
++        edge_accepted = edge_positions.unsqueeze(0) < accepted.unsqueeze(1)
++        predict[edge_source[edge_accepted].to(torch.int64)] = (
++            draft_token_ids[edge_accepted].to(torch.int32)
++        )
++        barrier_index = accepted.to(torch.int64)
++        barrier_source = retrieve_index[row, barrier_index].to(torch.int64)
++        barrier_token = full_top_token_ids[row, barrier_index].to(torch.int32)
++        predict[barrier_source] = barrier_token
++
++        strict = (
++            (draft_token_ids == top_token_ids)
++            .to(torch.int32)
++            .cumprod(dim=1)
++            .sum(dim=1)
++        )
++        positions = torch.arange(
++            self.proposal_width,
++            device=candidates.device,
++            dtype=torch.int64,
++        ).unsqueeze(0)
++        relaxed = (
++            decision.mismatched
++            & (positions < accepted.to(torch.int64).unsqueeze(1))
++        ).to(torch.int64).sum(dim=1)
++        self._record_trace(
++            slots=slots,
++            draft_token_ids=draft_token_ids,
++            top_logits=top_logits,
++            top_token_ids=top_token_ids,
++            draft_logits=draft_logits,
++            regrets=decision.regrets,
++            values=decision.values,
++            strict=strict,
++            accepted=accepted,
++            relaxed=relaxed,
++            spent=decision.spent,
++            remaining_before=remaining_before,
++            remaining_after=remaining_after,
++        )
++        return predict, accepted, accept_index
++
++    def snapshot(self) -> dict:
++        remaining = []
++        if self._remaining_budget is not None:
++            for rid, slot in sorted(self._rid_to_slot.items()):
++                remaining.append(
++                    {
++                        "rid": rid,
++                        "request_pool_slot": slot,
++                        "remaining_budget": float(
++                            self._remaining_budget[slot]
++                        ),
++                    }
++                )
++        seen = int(self._trace_cursor.detach().cpu().item())
++        stored = min(seen, self.settings.trace_capacity)
++        int_rows = self._trace_int[:stored].detach().cpu().tolist()
++        float_rows = self._trace_float[:stored].detach().cpu().tolist()
++        trace = []
++        for ints, floats in zip(int_rows, float_rows):
++            if not ints[self._TI_VALID]:
++                continue
++            serial = int(ints[self._TI_SERIAL])
++            barrier_position = int(ints[self._TI_BARRIER])
++            first_barrier = (
++                None
++                if barrier_position < 0
++                else {
++                    "position": barrier_position,
++                    "regret": float(
++                        floats[self._TF_BARRIER_REGRET]
++                    ),
++                    "value": float(floats[self._TF_BARRIER_VALUE]),
++                    "regret_over_value": float(
++                        floats[self._TF_BARRIER_RATIO]
++                    ),
++                }
++            )
++            spent = float(floats[self._TF_SPENT])
++            before = float(floats[self._TF_REMAINING_BEFORE])
++            after = float(floats[self._TF_REMAINING_AFTER])
++            trace.append(
++                {
++                    "schema_version": 1,
++                    "mode": self.settings.mode,
++                    "proposal_id": int(ints[self._TI_ORDINAL]),
++                    "sample_id": self._serial_to_rid.get(serial),
++                    "request_serial": serial,
++                    "request_pool_slot": int(ints[self._TI_SLOT]),
++                    "draft_token_ids": [
++                        int(value)
++                        for value in ints[
++                            self._TI_DRAFT : self._TI_DRAFT
++                            + self.proposal_width
++                        ]
++                    ],
++                    "target_top_token_ids": [
++                        int(value)
++                        for value in ints[
++                            self._TI_TOP_ID : self._TI_TOP_ID
++                            + self.proposal_width
++                        ]
++                    ],
++                    "target_top_logits": [
++                        float(value)
++                        for value in floats[
++                            self._TF_TOP_LOGIT : self._TF_TOP_LOGIT
++                            + self.proposal_width
++                        ]
++                    ],
++                    "target_draft_token_logits": [
++                        float(value)
++                        for value in floats[
++                            self._TF_DRAFT_LOGIT : self._TF_DRAFT_LOGIT
++                            + self.proposal_width
++                        ]
++                    ],
++                    "regrets": [
++                        float(value)
++                        for value in floats[
++                            self._TF_REGRET : self._TF_REGRET
++                            + self.proposal_width
++                        ]
++                    ],
++                    "values": [
++                        float(value)
++                        for value in floats[
++                            self._TF_VALUE : self._TF_VALUE
++                            + self.proposal_width
++                        ]
++                    ],
++                    "strict_accepted_drafts": int(
++                        ints[self._TI_STRICT]
++                    ),
++                    "hedge_accepted_drafts": int(
++                        ints[self._TI_ACCEPTED]
++                    ),
++                    "commit_length": int(ints[self._TI_COMMIT]),
++                    "relaxed_mismatches": int(
++                        ints[self._TI_RELAXED]
++                    ),
++                    "first_strict_rejection": first_barrier,
++                    "spent": None if math.isnan(spent) else spent,
++                    "remaining_before": (
++                        None if math.isnan(before) else before
++                    ),
++                    "remaining_after": (
++                        None if math.isnan(after) else after
++                    ),
++                }
++            )
++        return {
++            "schema_version": 1,
++            "mode": self.settings.mode,
++            "proposal_width": self.proposal_width,
++            "verify_width": self.verify_width,
++            "active_request_states": len(self._rid_to_slot),
++            "remaining_budget_by_request": remaining,
++            "requests_finished": self._requests_finished,
++            "requests_non_natural": self._requests_non_natural,
++            "slot_reuse_resets": self._slot_reuse_resets,
++            "budget_exhaustion_events": int(
++                self._budget_exhaustion_events.detach().cpu().item()
++            ),
++            "trace_rows_seen": seen,
++            "trace_rows_dropped": int(
++                self._trace_dropped.detach().cpu().item()
++            ),
++            "trace": trace,
++        }
++
++    def clear_metrics(self) -> None:
++        """Clear arm trace/counters without changing live request budgets."""
++
++        self._budget_exhaustion_events.zero_()
++        self._trace_cursor.zero_()
++        self._trace_dropped.zero_()
++        self._trace_int.zero_()
++        self._trace_float.fill_(torch.nan)
++        active_rids = set(self._rid_to_slot)
++        self._serial_to_rid = {
++            serial: rid
++            for serial, rid in self._serial_to_rid.items()
++            if rid in active_rids
++        }
+diff --git a/python/sglang/srt/speculative/eagle_utils.py b/python/sglang/srt/speculative/eagle_utils.py
+index c0366048b35d9672a33a0ce307638451b0543401..e53277b64dfcf891c1cf16674925c69e6bf756cb 100644
+--- a/python/sglang/srt/speculative/eagle_utils.py
++++ b/python/sglang/srt/speculative/eagle_utils.py
+@@ -571,6 +571,7 @@ def eagle_sample(
+     batch: ScheduleBatch,
+     logits_output: LogitsProcessorOutput,
+     vocab_mask: torch.Tensor = None,
++    hedge_adapter=None,
+ ):
+     """
+     Verify and find accepted tokens based on logits output and batch
+@@ -650,18 +651,54 @@ def eagle_sample(
+     if sampling_info.is_all_greedy or _is_cpu or _is_npu or _is_hip or _is_xpu:
+         target_predict = torch.argmax(next_token_logits, dim=-1)
+         target_predict = target_predict.reshape(bs, verify_input.draft_token_num)
+-        predict, accept_index, num_correct_drafts = verify_tree_greedy_func(
+-            predicts=predict,  # mutable
+-            accept_index=accept_index,  # mutable
+-            accept_token_num=num_correct_drafts,  # mutable
+-            candidates=candidates,
+-            retrieve_index=verify_input.retrieve_index,
+-            retrieve_next_token=verify_input.retrieve_next_token,
+-            retrieve_next_sibling=verify_input.retrieve_next_sibling,
+-            target_predict=target_predict,
+-            topk=verify_input.tree_topk,
+-        )
++
++        def native_greedy_accept():
++            (
++                native_predict,
++                native_accept_index,
++                native_num_correct_drafts,
++            ) = verify_tree_greedy_func(
++                predicts=predict,  # mutable
++                accept_index=accept_index,  # mutable
++                accept_token_num=num_correct_drafts,  # mutable
++                candidates=candidates,
++                retrieve_index=verify_input.retrieve_index,
++                retrieve_next_token=verify_input.retrieve_next_token,
++                retrieve_next_sibling=verify_input.retrieve_next_sibling,
++                target_predict=target_predict,
++                topk=verify_input.tree_topk,
++            )
++            return (
++                native_predict,
++                native_num_correct_drafts,
++                native_accept_index,
++            )
++
++        if hedge_adapter is None:
++            (
++                predict,
++                num_correct_drafts,
++                accept_index,
++            ) = native_greedy_accept()
++        else:
++            (
++                predict,
++                num_correct_drafts,
++                accept_index,
++            ) = hedge_adapter.accept_or_native(
++                candidates=candidates,
++                target_logits=next_token_logits,
++                req_pool_indices=batch.req_pool_indices,
++                retrieve_index=verify_input.retrieve_index,
++                retrieve_next_token=verify_input.retrieve_next_token,
++                retrieve_next_sibling=verify_input.retrieve_next_sibling,
++                native_accept=native_greedy_accept,
++            )
+     else:
++        if hedge_adapter is not None and hedge_adapter.active:
++            raise ValueError(
++                "active Eagle3 HEDGE supports only greedy verification"
++            )
+         from sgl_kernel import (
+             top_k_renorm_prob,
+             top_p_renorm_prob,
+diff --git a/python/sglang/srt/speculative/eagle_worker_common.py b/python/sglang/srt/speculative/eagle_worker_common.py
+index 9f1303464454a31845e2883f0904399380cd226b..1347d4ea943a3275d9ec490992e9ef0f307982c6 100644
+--- a/python/sglang/srt/speculative/eagle_worker_common.py
++++ b/python/sglang/srt/speculative/eagle_worker_common.py
+@@ -467,6 +467,7 @@ def run_eagle_verify(
+     device: str,
+     metadata_ready_pre_pad: bool,
+     finalize_tree_path: bool,
++    hedge_adapter=None,
+ ) -> GenerationBatchResult:
+     """Shared verify step: target-verify forward, sampling, acceptance bookkeeping.
+ 
+@@ -585,7 +586,13 @@ def run_eagle_verify(
+         predict,
+         accept_lens,
+         accept_index,
+-    ) = eagle_sample(verify_input, batch, logits_output, vocab_mask)
++    ) = eagle_sample(
++        verify_input,
++        batch,
++        logits_output,
++        vocab_mask,
++        hedge_adapter=hedge_adapter,
++    )
+     new_seq_lens = batch.seq_lens + accept_lens
+     clear_unaccepted_c128 = getattr(
+         token_to_kv_pool_allocator.get_kvcache(),
+diff --git a/python/sglang/srt/speculative/eagle_worker_v2.py b/python/sglang/srt/speculative/eagle_worker_v2.py
+index e8493012cbc0632dfc85d0489f185bf4a356a6a2..7b7e9aa0d6eb0fad0898023cba0d0304f18e52c0 100644
+--- a/python/sglang/srt/speculative/eagle_worker_v2.py
++++ b/python/sglang/srt/speculative/eagle_worker_v2.py
+@@ -62,6 +62,7 @@ from sglang.srt.speculative.eagle_info import (
+     EagleDraftInput,
+     EagleVerifyInput,
+ )
++from sglang.srt.speculative.eagle3_hedge import build_eagle3_hedge_adapter
+ from sglang.srt.speculative.eagle_utils import (
+     _eagle_prefill_tail_tokens,
+     default_tree_mask_mode,
+@@ -1040,6 +1041,24 @@ class EAGLEWorkerV2(BaseSpecWorker):
+         self.speculative_algorithm = SpeculativeAlgorithm.from_string(
+             server_args.speculative_algorithm
+         )
++        self._hedge_adapter = (
++            build_eagle3_hedge_adapter(
++                server_args=server_args,
++                tp_rank=ps.tp_rank,
++                device=self.device,
++            )
++            if self.speculative_algorithm.is_eagle3()
++            else None
++        )
++        if ps.tp_rank == 0 and self._hedge_adapter is not None:
++            logger.info(
++                "Eagle3 HEDGE adapter initialized: mode=%s, "
++                "proposal_width=%s, verify_width=%s, trace_capacity=%s",
++                self._hedge_adapter.settings.mode,
++                self._hedge_adapter.proposal_width,
++                self._hedge_adapter.verify_width,
++                self._hedge_adapter.settings.trace_capacity,
++            )
+ 
+         # Override the context length of the draft model to be the same as the target model.
+         server_args.override(
+@@ -1121,6 +1140,8 @@ class EAGLEWorkerV2(BaseSpecWorker):
+ 
+     def forward_batch_generation(self, batch: ScheduleBatch, on_publish=None):
+         if batch.forward_mode.is_extend() or batch.is_extend_in_batch:
++            if self._hedge_adapter is not None:
++                self._hedge_adapter.bind_batch(batch)
+             # Target prefill
+             target_capture_mode = (
+                 CaptureHiddenMode.NULL
+@@ -1509,8 +1530,25 @@ class EAGLEWorkerV2(BaseSpecWorker):
+             device=self.device,
+             metadata_ready_pre_pad=False,
+             finalize_tree_path=True,
++            hedge_adapter=self._hedge_adapter,
+         )
+ 
++    def dump_info_records(self):
++        if self._hedge_adapter is None:
++            return None
++        return self._hedge_adapter.snapshot()
++
++    def clear_info_records(self) -> None:
++        if self._hedge_adapter is not None:
++            self._hedge_adapter.clear_metrics()
++
++    def note_request_finished(self, *, rid: str, natural_stop: bool) -> None:
++        if self._hedge_adapter is not None:
++            self._hedge_adapter.note_request_finished(
++                rid=rid,
++                natural_stop=natural_stop,
++            )
++
+     def update_weights_from_tensor(self, recv_req: UpdateWeightsFromTensorReqInput):
+         monkey_patch_torch_reductions()
+         named_tensors = MultiprocessingSerializer.deserialize(
+diff --git a/python/sglang/srt/speculative/hedge_spec/__init__.py b/python/sglang/srt/speculative/hedge_spec/__init__.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..f82ab8b8f021c393fba1082bded9dc3ff7cd7cb8
+--- /dev/null
++++ b/python/sglang/srt/speculative/hedge_spec/__init__.py
+@@ -0,0 +1,20 @@
++"""Engine-neutral HEDGE risk-budget decision rule."""
++
++from .budget import (
++    PrefixDecision,
++    RequestRiskState,
++    TokenScores,
++    choose_prefix,
++    normalized_suffix_values,
++)
++from .config import NORMALIZED_SUFFIX, HedgeConfig
++
++__all__ = [
++    "HedgeConfig",
++    "NORMALIZED_SUFFIX",
++    "PrefixDecision",
++    "RequestRiskState",
++    "TokenScores",
++    "choose_prefix",
++    "normalized_suffix_values",
++]
+diff --git a/python/sglang/srt/speculative/hedge_spec/budget.py b/python/sglang/srt/speculative/hedge_spec/budget.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..7473c394e13bad0f46dce5ff2d3327e131bba7ee
+--- /dev/null
++++ b/python/sglang/srt/speculative/hedge_spec/budget.py
+@@ -0,0 +1,199 @@
++"""Readable pure-Python reference rule for HEDGE prefix selection."""
++
++from __future__ import annotations
++
++import math
++from dataclasses import dataclass
++from typing import Sequence
++
++from .config import HedgeConfig
++
++
++def _finite_non_negative(value: float, *, name: str) -> float:
++    if isinstance(value, bool):
++        raise TypeError(f"{name} must be a real number, not bool")
++    normalized = float(value)
++    if not math.isfinite(normalized) or normalized < 0.0:
++        raise ValueError(f"{name} must be finite and non-negative")
++    return 0.0 if normalized == 0.0 else normalized
++
++
++@dataclass(frozen=True, slots=True)
++class TokenScores:
++    """Compact target scores for one draft block.
++
++    All three fields cover draft positions only and must have equal length.
++    Candidate/logit alignment is an engine-adapter responsibility tested in
++    P03, not guessed by this engine-neutral module.
++    """
++
++    top_logits: tuple[float, ...]
++    top_token_ids: tuple[int, ...]
++    draft_logits: tuple[float, ...]
++
++    def __post_init__(self) -> None:
++        object.__setattr__(
++            self,
++            "top_logits",
++            tuple(float(value) for value in self.top_logits),
++        )
++        object.__setattr__(
++            self,
++            "top_token_ids",
++            tuple(int(value) for value in self.top_token_ids),
++        )
++        object.__setattr__(
++            self,
++            "draft_logits",
++            tuple(float(value) for value in self.draft_logits),
++        )
++        lengths = {
++            len(self.top_logits),
++            len(self.top_token_ids),
++            len(self.draft_logits),
++        }
++        if len(lengths) != 1:
++            raise ValueError("all compact score fields must have equal length")
++
++
++@dataclass(slots=True)
++class RequestRiskState:
++    """Reference request state whose budget persists across draft blocks."""
++
++    total_budget: float
++    spent: float = 0.0
++
++    def __post_init__(self) -> None:
++        self.total_budget = _finite_non_negative(
++            self.total_budget,
++            name="total_budget",
++        )
++        self.spent = _finite_non_negative(self.spent, name="spent")
++        if self.spent > self.total_budget:
++            raise ValueError("spent must not exceed total_budget")
++
++    @property
++    def remaining(self) -> float:
++        return self.total_budget - self.spent
++
++    def reset(self, *, total_budget: float | None = None) -> None:
++        """Initialize this state for a new request without leaking old spend."""
++
++        if total_budget is not None:
++            self.total_budget = _finite_non_negative(
++                total_budget,
++                name="total_budget",
++            )
++        self.spent = 0.0
++
++    def _charge(self, regret: float) -> None:
++        charge = _finite_non_negative(regret, name="regret")
++        if charge > self.remaining:
++            raise ValueError("regret charge exceeds the remaining request budget")
++        self.spent += charge
++
++
++@dataclass(frozen=True, slots=True)
++class PrefixDecision:
++    """Observable result of applying HEDGE to one block."""
++
++    accepted_tokens: int
++    exact_tokens: int
++    relaxed_mismatches: int
++    risk_spent: float
++    stopped_on_position: int | None
++    token_regrets: tuple[float, ...]
++    token_values: tuple[float, ...]
++    mismatched: tuple[bool, ...]
++
++
++def normalized_suffix_values(length: int) -> tuple[float, ...]:
++    """Return ``((L-i)/L)`` for every position in a positive-length block."""
++
++    if isinstance(length, bool) or not isinstance(length, int):
++        raise TypeError("length must be an integer")
++    if length <= 0:
++        raise ValueError("length must be positive")
++    return tuple((length - index) / length for index in range(length))
++
++
++def choose_prefix(
++    *,
++    draft_token_ids: Sequence[int],
++    scores: TokenScores,
++    state: RequestRiskState,
++    config: HedgeConfig,
++) -> PrefixDecision:
++    """Return the longest contiguous prefix satisfying all three HEDGE gates.
++
++    Exact matches are free.  A mismatch is accepted only when its
++    ``regret/value`` is at most ``g``, the cumulative charge fits within the
++    request's remaining ``B``, and the block has accepted no more than ``m``
++    mismatches.  Only accepted mismatches mutate ``state``.
++    """
++
++    draft = tuple(int(value) for value in draft_token_ids)
++    block = len(draft)
++    if block != len(scores.top_logits):
++        raise ValueError("draft length must match target score length")
++    config.validate_block_size(block)
++    if state.total_budget != config.risk_budget:
++        raise ValueError(
++            f"state total_budget={state.total_budget} does not match "
++            f"config B={config.risk_budget}"
++        )
++
++    regrets = tuple(
++        max(0.0, top_logit - draft_logit)
++        for top_logit, draft_logit in zip(
++            scores.top_logits,
++            scores.draft_logits,
++        )
++    )
++    mismatched = tuple(
++        draft_token_id != top_token_id
++        for draft_token_id, top_token_id in zip(
++            draft,
++            scores.top_token_ids,
++        )
++    )
++    values = normalized_suffix_values(block)
++
++    remaining_before_block = state.remaining
++    cumulative_risk = 0.0
++    cumulative_relaxed = 0
++    accepted = 0
++
++    for index, (mismatch, regret, value) in enumerate(
++        zip(mismatched, regrets, values)
++    ):
++        if mismatch:
++            risk_before_token = cumulative_risk
++            cumulative_risk += regret
++            cumulative_relaxed += 1
++            worthwhile = regret / value <= config.g
++            affordable = (
++                risk_before_token < remaining_before_block
++                and cumulative_risk <= remaining_before_block
++            )
++            within_cap = cumulative_relaxed <= config.m
++            if not (worthwhile and affordable and within_cap):
++                break
++        accepted = index + 1
++
++    spent_before = state.spent
++    for index in range(accepted):
++        if mismatched[index]:
++            state._charge(regrets[index])
++
++    exact_tokens = sum(not mismatch for mismatch in mismatched[:accepted])
++    return PrefixDecision(
++        accepted_tokens=accepted,
++        exact_tokens=exact_tokens,
++        relaxed_mismatches=accepted - exact_tokens,
++        risk_spent=state.spent - spent_before,
++        stopped_on_position=accepted if accepted < block else None,
++        token_regrets=regrets,
++        token_values=values,
++        mismatched=mismatched,
++    )
+diff --git a/python/sglang/srt/speculative/hedge_spec/config.py b/python/sglang/srt/speculative/hedge_spec/config.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..c8a14acc3556e26b4e3b9940e36e54736f626ea9
+--- /dev/null
++++ b/python/sglang/srt/speculative/hedge_spec/config.py
+@@ -0,0 +1,167 @@
++"""Minimal, engine-neutral configuration for the HEDGE decision rule."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++from dataclasses import dataclass
++from typing import Any, Final, Mapping
++
++
++NORMALIZED_SUFFIX: Final = "normalized_suffix"
++
++_MAPPING_KEYS: Final = frozenset({"B", "g", "m", "value_scheme", "block_size"})
++
++
++def _finite_non_negative(value: float, *, name: str) -> float:
++    if isinstance(value, bool):
++        raise TypeError(f"{name} must be a real number, not bool")
++    normalized = float(value)
++    if not math.isfinite(normalized) or normalized < 0.0:
++        raise ValueError(f"{name} must be finite and non-negative")
++    # Keep semantically identical +0.0 and -0.0 fingerprints identical.
++    return 0.0 if normalized == 0.0 else normalized
++
++
++def _non_negative_integer(value: int, *, name: str) -> int:
++    if isinstance(value, bool) or not isinstance(value, int):
++        raise TypeError(f"{name} must be an integer, not {type(value).__name__}")
++    if value < 0:
++        raise ValueError(f"{name} must be non-negative")
++    return value
++
++
++@dataclass(frozen=True, slots=True)
++class HedgeConfig:
++    """All and only the fields that affect a HEDGE prefix decision.
++
++    The long Python field names keep the interface readable.  The serialized
++    mapping uses the experiment-contract names ``B``, ``g`` and ``m``:
++
++    - ``risk_budget`` / ``B`` is the request-wide regret budget.
++    - ``max_regret_per_value`` / ``g`` is the per-mismatch ratio gate.
++    - ``max_relaxed_mismatches_per_block`` / ``m`` is the per-block cap.
++
++    This pure core intentionally implements only ``normalized_suffix``.  The
++    source repository's alternative value schemes are outside the frozen V4
++    experiment contract.
++    """
++
++    risk_budget: float
++    max_regret_per_value: float
++    max_relaxed_mismatches_per_block: int
++    block_size: int
++    value_scheme: str = NORMALIZED_SUFFIX
++
++    def __post_init__(self) -> None:
++        object.__setattr__(
++            self,
++            "risk_budget",
++            _finite_non_negative(self.risk_budget, name="risk_budget (B)"),
++        )
++        object.__setattr__(
++            self,
++            "max_regret_per_value",
++            _finite_non_negative(
++                self.max_regret_per_value,
++                name="max_regret_per_value (g)",
++            ),
++        )
++        object.__setattr__(
++            self,
++            "max_relaxed_mismatches_per_block",
++            _non_negative_integer(
++                self.max_relaxed_mismatches_per_block,
++                name="max_relaxed_mismatches_per_block (m)",
++            ),
++        )
++        block_size = _non_negative_integer(self.block_size, name="block_size")
++        if block_size == 0:
++            raise ValueError("block_size must be positive")
++        object.__setattr__(self, "block_size", block_size)
++        if self.value_scheme != NORMALIZED_SUFFIX:
++            raise ValueError(
++                "value_scheme must be exactly "
++                f"{NORMALIZED_SUFFIX!r}, got {self.value_scheme!r}"
++            )
++
++    @property
++    def B(self) -> float:
++        """Canonical experiment name for the request-wide risk budget."""
++
++        return self.risk_budget
++
++    @property
++    def g(self) -> float:
++        """Canonical experiment name for the regret/value gate."""
++
++        return self.max_regret_per_value
++
++    @property
++    def m(self) -> int:
++        """Canonical experiment name for the per-block mismatch cap."""
++
++        return self.max_relaxed_mismatches_per_block
++
++    def to_mapping(self) -> dict[str, float | int | str]:
++        """Return the canonical decode-affecting mapping."""
++
++        return {
++            "B": self.B,
++            "g": self.g,
++            "m": self.m,
++            "value_scheme": self.value_scheme,
++            "block_size": self.block_size,
++        }
++
++    @classmethod
++    def from_mapping(cls, value: Mapping[str, Any]) -> "HedgeConfig":
++        """Build a config from the strict canonical mapping.
++
++        Unknown and missing fields fail loudly.  Reporting metadata and legacy
++        success criteria therefore cannot silently enter the decode identity.
++        """
++
++        keys = frozenset(value)
++        unknown = sorted(keys - _MAPPING_KEYS)
++        missing = sorted(_MAPPING_KEYS - keys)
++        if unknown or missing:
++            details = []
++            if unknown:
++                details.append("unknown keys: " + ", ".join(unknown))
++            if missing:
++                details.append("missing keys: " + ", ".join(missing))
++            raise ValueError("; ".join(details))
++        return cls(
++            risk_budget=value["B"],
++            max_regret_per_value=value["g"],
++            max_relaxed_mismatches_per_block=value["m"],
++            value_scheme=value["value_scheme"],
++            block_size=value["block_size"],
++        )
++
++    def fingerprint(self) -> str:
++        """Return a stable SHA-256 over every decode-affecting field."""
++
++        payload = json.dumps(
++            self.to_mapping(),
++            allow_nan=False,
++            ensure_ascii=True,
++            separators=(",", ":"),
++            sort_keys=True,
++        ).encode("ascii")
++        return hashlib.sha256(payload).hexdigest()
++
++    def validate_block_size(self, observed: int) -> None:
++        """Fail loudly if the running drafter width differs from the config."""
++
++        observed_block_size = _non_negative_integer(
++            observed,
++            name="observed block_size",
++        )
++        if observed_block_size != self.block_size:
++            raise ValueError(
++                f"config block_size={self.block_size} but observed "
++                f"block_size={observed_block_size}"
++            )
+diff --git a/python/sglang/srt/speculative/hedge_spec/torch_rule.py b/python/sglang/srt/speculative/hedge_spec/torch_rule.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..be9a43a83ef6b19f79e0434232d94aab48eb1477
+--- /dev/null
++++ b/python/sglang/srt/speculative/hedge_spec/torch_rule.py
+@@ -0,0 +1,162 @@
++"""Device-resident tensor implementation of the HEDGE prefix rule."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++
++import torch
++
++from .config import HedgeConfig
++
++
++@dataclass(frozen=True, slots=True)
++class BatchPrefixDecision:
++    """Per-row decision tensors for one batch of draft blocks."""
++
++    accepted: torch.Tensor
++    relaxed_mismatches: torch.Tensor
++    spent: torch.Tensor
++    regrets: torch.Tensor
++    values: torch.Tensor
++    mismatched: torch.Tensor
++
++
++def _validate_integer_tensor(tensor: torch.Tensor, *, name: str) -> None:
++    if tensor.dtype not in {
++        torch.int8,
++        torch.int16,
++        torch.int32,
++        torch.int64,
++        torch.uint8,
++    }:
++        raise TypeError(f"{name} must have an integer dtype, got {tensor.dtype}")
++
++
++def choose_prefix_batch(
++    *,
++    draft_token_ids: torch.Tensor,
++    top_logits: torch.Tensor,
++    top_token_ids: torch.Tensor,
++    draft_logits: torch.Tensor,
++    remaining_budget: torch.Tensor,
++    config: HedgeConfig,
++) -> BatchPrefixDecision:
++    """Apply HEDGE to compact target scores without host synchronization.
++
++    Inputs cover draft positions only:
++
++    - token and compact-score tensors are ``[batch, block]``;
++    - ``remaining_budget`` is ``[batch]`` and persists across blocks in the
++      calling engine adapter;
++    - the returned ``spent`` is subtracted on device by that adapter.
++
++    This function neither calls ``.item()`` nor mutates request lifecycle
++    state.  Stable request/slot identity, reset, reorder and cleanup belong to
++    the P03 engine adapter.
++    """
++
++    if draft_token_ids.ndim != 2:
++        raise ValueError(
++            f"draft_token_ids must be [batch, block], got "
++            f"ndim={draft_token_ids.ndim}"
++        )
++    batch, block = draft_token_ids.shape
++    config.validate_block_size(block)
++
++    for name, tensor in (
++        ("top_logits", top_logits),
++        ("top_token_ids", top_token_ids),
++        ("draft_logits", draft_logits),
++    ):
++        if tuple(tensor.shape) != (batch, block):
++            raise ValueError(
++                f"{name} must have shape {(batch, block)}, "
++                f"got {tuple(tensor.shape)}"
++            )
++    if tuple(remaining_budget.shape) != (batch,):
++        raise ValueError(
++            f"remaining_budget must have shape {(batch,)}, "
++            f"got {tuple(remaining_budget.shape)}"
++        )
++
++    device = top_logits.device
++    for name, tensor in (
++        ("draft_token_ids", draft_token_ids),
++        ("top_token_ids", top_token_ids),
++        ("draft_logits", draft_logits),
++        ("remaining_budget", remaining_budget),
++    ):
++        if tensor.device != device:
++            raise ValueError(
++                f"{name} is on {tensor.device}, expected the compact-score "
++                f"device {device}"
++            )
++
++    _validate_integer_tensor(draft_token_ids, name="draft_token_ids")
++    _validate_integer_tensor(top_token_ids, name="top_token_ids")
++    if not top_logits.is_floating_point():
++        raise TypeError(f"top_logits must be floating point, got {top_logits.dtype}")
++    if not draft_logits.is_floating_point():
++        raise TypeError(
++            f"draft_logits must be floating point, got {draft_logits.dtype}"
++        )
++    if not remaining_budget.is_floating_point():
++        raise TypeError(
++            "remaining_budget must be floating point, "
++            f"got {remaining_budget.dtype}"
++        )
++
++    # Preserve the fixed source's float64 reference parity.  Every operation
++    # remains on ``device``; the width-five tensors are tiny next to the target
++    # forward pass that produced the compact scores.
++    dtype = torch.float64
++    top = top_logits.to(dtype)
++    drafted = draft_logits.to(dtype)
++    regrets = (top - drafted).clamp_min(0.0)
++    mismatched = draft_token_ids != top_token_ids
++
++    values = (
++        torch.arange(
++            block,
++            0,
++            -1,
++            device=device,
++            dtype=dtype,
++        )
++        / float(block)
++    ).expand(batch, block)
++    budget = remaining_budget.to(dtype)
++
++    charged = torch.where(mismatched, regrets, torch.zeros_like(regrets))
++    cumulative_risk = charged.cumsum(dim=1)
++    risk_before_token = cumulative_risk - charged
++    cumulative_relaxed = mismatched.to(torch.int64).cumsum(dim=1)
++
++    worthwhile = (~mismatched) | (regrets / values <= config.g)
++    # A mismatch needs positive budget *before* that token.  This rejects
++    # zero-regret ties at B=0 and after an earlier token exactly exhausts B.
++    affordable = (~mismatched) | (
++        (risk_before_token < budget.unsqueeze(1))
++        & (cumulative_risk <= budget.unsqueeze(1))
++    )
++    within_cap = cumulative_relaxed <= config.m
++
++    admissible = worthwhile & affordable & within_cap
++    prefix_mask = admissible.to(torch.int64).cumprod(dim=1)
++    accepted = prefix_mask.sum(dim=1)
++    committed = prefix_mask.to(torch.bool)
++    relaxed = (mismatched & committed).sum(dim=1)
++    spent = torch.where(
++        mismatched & committed,
++        regrets,
++        torch.zeros_like(regrets),
++    ).sum(dim=1)
++
++    return BatchPrefixDecision(
++        accepted=accepted,
++        relaxed_mismatches=relaxed,
++        spent=spent,
++        regrets=regrets,
++        values=values,
++        mismatched=mismatched,
++    )
+diff --git a/python/sglang/srt/speculative/multi_layer_eagle_worker_v2.py b/python/sglang/srt/speculative/multi_layer_eagle_worker_v2.py
+index 4f3720776161de480c99d34808f9c5b3dd94eb3b..295cd4097a3b1fa8dfd47594b40c1e96c73df279 100644
+--- a/python/sglang/srt/speculative/multi_layer_eagle_worker_v2.py
++++ b/python/sglang/srt/speculative/multi_layer_eagle_worker_v2.py
+@@ -47,6 +47,7 @@ from sglang.srt.speculative.eagle_info import (
+     EagleDraftInput,
+     EagleVerifyInput,
+ )
++from sglang.srt.speculative.eagle3_hedge import build_eagle3_hedge_adapter
+ from sglang.srt.speculative.eagle_utils import (
+     default_tree_mask_mode,
+     get_draft_recurrent_hidden_state_spec,
+@@ -895,6 +896,24 @@ class MultiLayerEagleWorkerV2(BaseSpecWorker):
+         self.speculative_algorithm = SpeculativeAlgorithm.from_string(
+             server_args.speculative_algorithm
+         )
++        self._hedge_adapter = (
++            build_eagle3_hedge_adapter(
++                server_args=server_args,
++                tp_rank=ps.tp_rank,
++                device=self.device,
++            )
++            if self.speculative_algorithm.is_eagle3()
++            else None
++        )
++        if ps.tp_rank == 0 and self._hedge_adapter is not None:
++            logger.info(
++                "Eagle3 HEDGE adapter initialized: mode=%s, "
++                "proposal_width=%s, verify_width=%s, trace_capacity=%s",
++                self._hedge_adapter.settings.mode,
++                self._hedge_adapter.proposal_width,
++                self._hedge_adapter.verify_width,
++                self._hedge_adapter.settings.trace_capacity,
++            )
+ 
+         # Override the context length of the draft model to be the same as the target model.
+         server_args.override(
+@@ -933,6 +952,8 @@ class MultiLayerEagleWorkerV2(BaseSpecWorker):
+ 
+     def forward_batch_generation(self, batch: ScheduleBatch, on_publish=None):
+         if batch.forward_mode.is_extend() or batch.is_extend_in_batch:
++            if self._hedge_adapter is not None:
++                self._hedge_adapter.bind_batch(batch)
+             # Target prefill
+             target_capture_mode = (
+                 CaptureHiddenMode.NULL
+@@ -999,4 +1020,21 @@ class MultiLayerEagleWorkerV2(BaseSpecWorker):
+             device=self.device,
+             metadata_ready_pre_pad=False,
+             finalize_tree_path=False,
++            hedge_adapter=self._hedge_adapter,
+         )
++
++    def dump_info_records(self):
++        if self._hedge_adapter is None:
++            return None
++        return self._hedge_adapter.snapshot()
++
++    def clear_info_records(self) -> None:
++        if self._hedge_adapter is not None:
++            self._hedge_adapter.clear_metrics()
++
++    def note_request_finished(self, *, rid: str, natural_stop: bool) -> None:
++        if self._hedge_adapter is not None:
++            self._hedge_adapter.note_request_finished(
++                rid=rid,
++                natural_stop=natural_stop,
++            )
+diff --git a/test/registered/unit/models/test_deepseek_v4_eagle3_aux.py b/test/registered/unit/models/test_deepseek_v4_eagle3_aux.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc5db9fefea6b68c4abe822da24f44c17eaa3b4c
+--- /dev/null
++++ b/test/registered/unit/models/test_deepseek_v4_eagle3_aux.py
+@@ -0,0 +1,281 @@
++import unittest
++from types import SimpleNamespace
++
++import torch
++
++from sglang.srt.arg_groups.deepseek_v4_hook import (
++    validate_deepseek_v4_speculative_algorithm,
++)
++from sglang.srt.models.deepseek_v4 import (
++    DeepseekV4ForCausalLM,
++    assemble_eagle3_aux_hidden_states,
++    build_eagle3_aux_trace,
++    capture_eagle3_completed_hidden_state,
++    reduce_eagle3_mhc_hidden_state,
++)
++from sglang.test.ci.ci_register import register_cpu_ci
++
++
++register_cpu_ci(est_time=2, suite="base-a-test-cpu")
++
++
++class TestDeepseekV4Eagle3Guard(unittest.TestCase):
++    @staticmethod
++    def _args(algorithm):
++        return SimpleNamespace(
++            speculative_algorithm=algorithm,
++            speculative_eagle_topk=1,
++        )
++
++    def test_eagle3_is_an_explicit_deepseek_v4_capability(self):
++        validate_deepseek_v4_speculative_algorithm(
++            self._args("EAGLE3"),
++            "DeepseekV4ForCausalLM",
++        )
++
++    def test_unknown_speculative_algorithm_remains_rejected(self):
++        with self.assertRaisesRegex(
++            AssertionError,
++            "Only EAGLE, EAGLE3 and DSPARK",
++        ):
++            validate_deepseek_v4_speculative_algorithm(
++                self._args("UNKNOWN"),
++                "DeepseekV4ForCausalLM",
++            )
++
++
++class TestDeepseekV4Eagle3CaptureConfiguration(unittest.TestCase):
++    @staticmethod
++    def _target():
++        target = DeepseekV4ForCausalLM.__new__(DeepseekV4ForCausalLM)
++        target.pp_group = SimpleNamespace(is_last_rank=True)
++        target.config = SimpleNamespace(num_hidden_layers=43)
++        target.capture_aux_hidden_states = False
++        target.model = SimpleNamespace(
++            dspark_layers_to_capture=["dspark-sentinel"],
++            eagle3_logical_layers_to_capture=None,
++            eagle3_hook_layers_to_capture=None,
++        )
++        return target
++
++    def test_setter_maps_logical_layers_to_independent_hooks(self):
++        target = self._target()
++
++        target.set_eagle3_layers_to_capture([1, 21, 40])
++
++        self.assertTrue(target.capture_aux_hidden_states)
++        self.assertEqual(
++            target.model.eagle3_logical_layers_to_capture,
++            [1, 21, 40],
++        )
++        self.assertEqual(
++            target.model.eagle3_hook_layers_to_capture,
++            [2, 22, 41],
++        )
++        self.assertEqual(
++            target.model.dspark_layers_to_capture,
++            ["dspark-sentinel"],
++        )
++
++    def test_setter_rejects_missing_non_increasing_or_out_of_range_ids(self):
++        cases = (
++            (None, "explicit logical"),
++            ([1, 21], "exactly three"),
++            ([1, 10, 21, 40], "exactly three"),
++            ([1, 1, 40], "strictly increasing"),
++            ([21, 1, 40], "strictly increasing"),
++            ([-1, 21, 40], "outside target layer range"),
++            ([1, 21, 43], "outside target layer range"),
++        )
++        for logical_ids, message in cases:
++            with self.subTest(logical_ids=logical_ids):
++                with self.assertRaisesRegex(ValueError, message):
++                    self._target().set_eagle3_layers_to_capture(logical_ids)
++
++
++class TestDeepseekV4Eagle3AuxTensorContract(unittest.TestCase):
++    def test_four_mhc_streams_reduce_to_one_bf16_hidden_state(self):
++        raw = torch.stack(
++            [
++                torch.full((2, 4096), value, dtype=torch.bfloat16)
++                for value in (0, 2, 4, 6)
++            ],
++            dim=1,
++        )
++
++        reduced = reduce_eagle3_mhc_hidden_state(
++            raw,
++            hc_mult=4,
++            hidden_size=4096,
++        )
++
++        self.assertEqual(reduced.shape, (2, 4096))
++        self.assertEqual(reduced.dtype, torch.bfloat16)
++        torch.testing.assert_close(
++            reduced,
++            torch.full((2, 4096), 3, dtype=torch.bfloat16),
++        )
++
++    def test_reduction_rejects_wrong_shape_or_dtype(self):
++        cases = (
++            (
++                torch.zeros((2, 3, 4096), dtype=torch.bfloat16),
++                "expected raw EAGLE3 mHC shape",
++            ),
++            (
++                torch.zeros((2, 4, 2048), dtype=torch.bfloat16),
++                "expected raw EAGLE3 mHC shape",
++            ),
++            (
++                torch.zeros((2, 4096), dtype=torch.bfloat16),
++                "expected raw EAGLE3 mHC shape",
++            ),
++            (
++                torch.zeros((2, 4, 4096), dtype=torch.float32),
++                "expected raw EAGLE3 mHC dtype torch.bfloat16",
++            ),
++        )
++        for raw, message in cases:
++            with self.subTest(shape=raw.shape, dtype=raw.dtype):
++                with self.assertRaisesRegex(ValueError, message):
++                    reduce_eagle3_mhc_hidden_state(
++                        raw,
++                        hc_mult=4,
++                        hidden_size=4096,
++                    )
++
++    def test_aux_states_are_ordered_and_expose_structured_layout(self):
++        captured = {
++            40: torch.full((2, 4096), 40, dtype=torch.bfloat16),
++            1: torch.full((2, 4096), 1, dtype=torch.bfloat16),
++            21: torch.full((2, 4096), 21, dtype=torch.bfloat16),
++        }
++
++        ordered, structured = assemble_eagle3_aux_hidden_states(
++            [1, 21, 40],
++            captured,
++            hidden_size=4096,
++        )
++
++        self.assertEqual(structured.shape, (2, 3, 4096))
++        self.assertEqual(structured.dtype, torch.bfloat16)
++        self.assertEqual(
++            [float(hidden[0, 0]) for hidden in ordered],
++            [1.0, 21.0, 40.0],
++        )
++        runner_hidden = torch.cat(ordered, dim=-1)
++        self.assertEqual(runner_hidden.shape, (2, 12288))
++        self.assertTrue(torch.equal(runner_hidden[:, :4096], captured[1]))
++        self.assertTrue(
++            torch.equal(runner_hidden[:, 4096:8192], captured[21])
++        )
++        self.assertTrue(torch.equal(runner_hidden[:, 8192:], captured[40]))
++
++    def test_aux_assembly_rejects_missing_or_malformed_taps(self):
++        valid = {
++            layer_id: torch.zeros((2, 4096), dtype=torch.bfloat16)
++            for layer_id in (1, 21, 40)
++        }
++        with self.assertRaisesRegex(ValueError, "missing EAGLE3 aux taps"):
++            assemble_eagle3_aux_hidden_states(
++                [1, 21, 40],
++                {1: valid[1], 40: valid[40]},
++                hidden_size=4096,
++            )
++
++        malformed = dict(valid)
++        malformed[21] = torch.zeros((2, 2048), dtype=torch.bfloat16)
++        with self.assertRaisesRegex(
++            ValueError,
++            "expected reduced EAGLE3 aux shape",
++        ):
++            assemble_eagle3_aux_hidden_states(
++                [1, 21, 40],
++                malformed,
++                hidden_size=4096,
++            )
++
++        wrong_dtype = dict(valid)
++        wrong_dtype[21] = torch.zeros((2, 4096), dtype=torch.float32)
++        with self.assertRaisesRegex(
++            ValueError,
++            "expected reduced EAGLE3 aux dtype torch.bfloat16",
++        ):
++            assemble_eagle3_aux_hidden_states(
++                [1, 21, 40],
++                wrong_dtype,
++                hidden_size=4096,
++            )
++
++    def test_aux_assembly_requires_exactly_three_states(self):
++        captured = {
++            layer_id: torch.zeros((2, 4096), dtype=torch.bfloat16)
++            for layer_id in (1, 21)
++        }
++        with self.assertRaisesRegex(ValueError, "exactly three"):
++            assemble_eagle3_aux_hidden_states(
++                [1, 21],
++                captured,
++                hidden_size=4096,
++            )
++
++    def test_runtime_trace_binds_layout_to_one_tp_rank_and_device(self):
++        ordered = [
++            torch.full((2, 8), value, dtype=torch.bfloat16)
++            for value in (1, 21, 40)
++        ]
++        structured = torch.stack(ordered, dim=1)
++        runner_hidden = torch.cat(ordered, dim=-1)
++
++        trace = build_eagle3_aux_trace(
++            logical_layer_ids=[1, 21, 40],
++            hook_layer_ids=[2, 22, 41],
++            raw_shapes_by_logical_id={
++                layer_id: [2, 4, 8] for layer_id in (1, 21, 40)
++            },
++            structured_hidden_states=structured,
++            runner_hidden_states=runner_hidden,
++            hc_mult=4,
++            hidden_size=8,
++            tp_rank=3,
++            tp_world_size=8,
++            expected_local_device=torch.device("cpu"),
++        )
++
++        self.assertEqual(trace["tp_rank"], 3)
++        self.assertEqual(trace["tp_world_size"], 8)
++        self.assertEqual(trace["logical_layer_ids"], [1, 21, 40])
++        self.assertEqual(trace["hook_layer_ids"], [2, 22, 41])
++        self.assertEqual(trace["raw_shapes"], [[2, 4, 8]] * 3)
++        self.assertEqual(trace["structured_shape"], [2, 3, 8])
++        self.assertEqual(trace["runner_shape"], [2, 24])
++        self.assertEqual(trace["dtype"], "torch.bfloat16")
++        self.assertEqual(trace["device"], "cpu")
++
++    def test_after_layer_hooks_select_exact_logical_outputs(self):
++        captured = {}
++        for executed_layer_id in range(43):
++            completed = torch.full(
++                (1, 4, 8),
++                executed_layer_id,
++                dtype=torch.bfloat16,
++            )
++            capture_eagle3_completed_hidden_state(
++                executed_layer_id,
++                completed,
++                logical_layer_ids=[1, 21, 40],
++                hook_layer_ids=[2, 22, 41],
++                captured_by_logical_id=captured,
++                hc_mult=4,
++                hidden_size=8,
++            )
++
++        self.assertEqual(list(captured), [1, 21, 40])
++        self.assertEqual(
++            [float(captured[layer_id][0, 0]) for layer_id in captured],
++            [1.0, 21.0, 40.0],
++        )
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/test/registered/unit/speculative/test_eagle3_hedge.py b/test/registered/unit/speculative/test_eagle3_hedge.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..61bd53a6cfb37c3c0f0fd56b89887cf61fc277a1
+--- /dev/null
++++ b/test/registered/unit/speculative/test_eagle3_hedge.py
+@@ -0,0 +1,1088 @@
++import contextlib
++import unittest
++import json
++import inspect
++from types import SimpleNamespace
++from unittest.mock import MagicMock, patch
++
++import torch
++
++from sglang.srt.speculative.eagle3_hedge import (
++    HEDGE_MODE_B0,
++    HEDGE_MODE_DISABLED,
++    HEDGE_MODE_ENABLED,
++    Eagle3HedgeAdapter,
++    Eagle3HedgeSettings,
++    build_eagle3_hedge_adapter,
++)
++from sglang.srt.speculative.hedge_spec.config import HedgeConfig
++from sglang.srt.speculative.eagle_utils import eagle_sample
++
++
++class TestEagle3HedgeAcceptance(unittest.TestCase):
++    @staticmethod
++    def _chain_tensors(batch: int = 1):
++        offsets = torch.arange(batch, dtype=torch.int64).unsqueeze(1) * 4
++        return (
++            torch.arange(4, dtype=torch.int64).expand(batch, -1) + offsets,
++            torch.tensor([[1, 2, 3, -1]], dtype=torch.int64).expand(
++                batch, -1
++            ),
++            torch.full((batch, 4), -1, dtype=torch.int64),
++        )
++
++    def test_disabled_delegates_without_allocating_or_mutating_risk(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(mode=HEDGE_MODE_DISABLED),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        sentinel = (
++            torch.tensor([10, 35, 0, 0], dtype=torch.int32),
++            torch.tensor([1], dtype=torch.int32),
++            torch.tensor([[0, 1, -1, -1]], dtype=torch.int32),
++        )
++        calls = 0
++
++        def native_accept():
++            nonlocal calls
++            calls += 1
++            return sentinel
++
++        logits = torch.full((4, 64), -100.0)
++        logits[0, 10] = 8.0
++        logits[1, 35] = 7.0
++        logits[1, 20] = 6.5
++        logits[2, 30] = 9.0
++        logits[3, 40] = 9.0
++        result = adapter.accept_or_native(
++            candidates=torch.tensor([[50, 10, 20, 30]]),
++            target_logits=logits,
++            req_pool_indices=torch.tensor([4]),
++            retrieve_index=torch.tensor([[0, 1, 2, 3]]),
++            retrieve_next_token=torch.tensor([[1, 2, 3, -1]]),
++            retrieve_next_sibling=torch.full((1, 4), -1),
++            native_accept=native_accept,
++        )
++
++        self.assertIs(result, sentinel)
++        self.assertEqual(calls, 1)
++        self.assertIsNone(adapter._remaining_budget)
++        trace = adapter.snapshot()["trace"]
++        self.assertEqual(len(trace), 1)
++        self.assertEqual(trace[0]["mode"], "disabled")
++        self.assertEqual(trace[0]["strict_accepted_drafts"], 1)
++        self.assertEqual(trace[0]["hedge_accepted_drafts"], 1)
++        self.assertIsNone(trace[0]["spent"])
++
++    def test_b0_reproduces_native_topk1_prefix_and_alignment(self):
++        settings = Eagle3HedgeSettings(
++            mode=HEDGE_MODE_B0,
++            config=HedgeConfig(
++                risk_budget=0.0,
++                max_regret_per_value=1.0,
++                max_relaxed_mismatches_per_block=1,
++                block_size=3,
++            ),
++        )
++        adapter = Eagle3HedgeAdapter(
++            settings=settings,
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        adapter.bind_request_batch(
++            rids=["req-0"],
++            slots=[2],
++            pool_capacity=8,
++        )
++        candidates = torch.tensor([[50, 10, 20, 30]], dtype=torch.int64)
++        logits = torch.full((4, 64), -100.0)
++        logits[0, 10] = 8.0
++        logits[1, 99 % 64] = 7.0
++        logits[1, 20] = 6.5
++        logits[2, 30] = 9.0
++        logits[3, 40] = 9.0
++        retrieve_index = torch.tensor([[0, 1, 2, 3]], dtype=torch.int64)
++        retrieve_next_token = torch.tensor(
++            [[1, 2, 3, -1]], dtype=torch.int64
++        )
++        retrieve_next_sibling = torch.full((1, 4), -1, dtype=torch.int64)
++
++        predict, accept_lens, accept_index = adapter.accept_or_native(
++            candidates=candidates,
++            target_logits=logits,
++            req_pool_indices=torch.tensor([2], dtype=torch.int64),
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next_token,
++            retrieve_next_sibling=retrieve_next_sibling,
++            native_accept=lambda: self.fail(
++                "active B0 must use the HEDGE decision seam"
++            ),
++        )
++
++        self.assertEqual(predict.tolist(), [10, 35, 0, 0])
++        self.assertEqual(accept_lens.tolist(), [1])
++        self.assertEqual(accept_index.tolist(), [[0, 1, -1, -1]])
++        snapshot = adapter.snapshot()
++        self.assertEqual(snapshot["trace"][0]["draft_token_ids"], [10, 20, 30])
++        self.assertEqual(snapshot["trace"][0]["target_top_token_ids"], [10, 35, 30])
++        self.assertEqual(snapshot["trace"][0]["strict_accepted_drafts"], 1)
++        self.assertEqual(snapshot["trace"][0]["hedge_accepted_drafts"], 1)
++
++    def test_positive_budget_persists_and_m_one_stops_second_mismatch(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(
++                mode=HEDGE_MODE_ENABLED,
++                config=HedgeConfig(
++                    risk_budget=1.0,
++                    max_regret_per_value=1.5,
++                    max_relaxed_mismatches_per_block=1,
++                    block_size=3,
++                ),
++            ),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        adapter.bind_request_batch(
++            rids=["req-0"],
++            slots=[2],
++            pool_capacity=8,
++        )
++        candidates = torch.tensor([[50, 10, 20, 30]], dtype=torch.int64)
++        logits = torch.full((4, 64), -100.0)
++        logits[0, 11], logits[0, 10] = 5.0, 4.6
++        logits[1, 20] = 7.0
++        logits[2, 31], logits[2, 30] = 8.0, 7.9
++        logits[3, 40] = 9.0
++        retrieve_index, retrieve_next, retrieve_sibling = (
++            self._chain_tensors()
++        )
++
++        predict, accept_lens, accept_index = adapter.accept_or_native(
++            candidates=candidates,
++            target_logits=logits,
++            req_pool_indices=torch.tensor([2]),
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next,
++            retrieve_next_sibling=retrieve_sibling,
++            native_accept=lambda: self.fail("enabled path delegated"),
++        )
++
++        self.assertEqual(predict.tolist(), [10, 20, 31, 0])
++        self.assertEqual(accept_lens.tolist(), [2])
++        self.assertEqual(accept_index.tolist(), [[0, 1, 2, -1]])
++        trace = adapter.snapshot()["trace"][0]
++        self.assertAlmostEqual(trace["spent"], 0.4, places=6)
++        self.assertAlmostEqual(trace["remaining_after"], 0.6, places=6)
++        self.assertEqual(
++            trace["first_strict_rejection"],
++            {
++                "position": 0,
++                "regret": 0.40000009536743164,
++                "value": 1.0,
++                "regret_over_value": 0.40000009536743164,
++            },
++        )
++
++    def test_b0_accept_index_and_bonus_cover_zero_and_all_drafts(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(
++                mode=HEDGE_MODE_B0,
++                config=HedgeConfig(
++                    risk_budget=0.0,
++                    max_regret_per_value=1.0,
++                    max_relaxed_mismatches_per_block=1,
++                    block_size=3,
++                ),
++            ),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        adapter.bind_request_batch(
++            rids=["zero", "all"],
++            slots=[2, 5],
++            pool_capacity=8,
++        )
++        candidates = torch.tensor(
++            [[50, 10, 20, 30], [60, 40, 50, 60]], dtype=torch.int64
++        )
++        logits = torch.full((8, 80), -100.0)
++        for row, token in enumerate((11, 20, 30, 31, 40, 50, 60, 70)):
++            logits[row, token] = 10.0
++        retrieve_index, retrieve_next, retrieve_sibling = (
++            self._chain_tensors(batch=2)
++        )
++
++        predict, accept_lens, accept_index = adapter.accept_or_native(
++            candidates=candidates,
++            target_logits=logits,
++            req_pool_indices=torch.tensor([2, 5]),
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next,
++            retrieve_next_sibling=retrieve_sibling,
++            native_accept=lambda: self.fail("active B0 delegated"),
++        )
++
++        self.assertEqual(
++            predict.tolist(),
++            [11, 0, 0, 0, 40, 50, 60, 70],
++        )
++        self.assertEqual(accept_lens.tolist(), [0, 3])
++        self.assertEqual(
++            accept_index.tolist(),
++            [[0, -1, -1, -1], [4, 5, 6, 7]],
++        )
++
++    def test_request_state_follows_slot_reorder_reuse_and_cleanup(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(
++                mode=HEDGE_MODE_ENABLED,
++                config=HedgeConfig(
++                    risk_budget=1.0,
++                    max_regret_per_value=1.0,
++                    max_relaxed_mismatches_per_block=1,
++                    block_size=3,
++                ),
++            ),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        adapter.bind_request_batch(
++            rids=["req-a", "req-b"],
++            slots=[2, 5],
++            pool_capacity=8,
++        )
++        candidates = torch.tensor(
++            [[60, 40, 50, 60], [50, 10, 20, 30]], dtype=torch.int64
++        )
++        logits = torch.full((8, 80), -100.0)
++        for offset, draft_token in ((0, 40), (4, 10)):
++            logits[offset, draft_token + 1] = 5.0
++            logits[offset, draft_token] = 4.75
++            logits[offset + 1, 70] = 5.0
++            logits[offset + 1, candidates[offset // 4, 2]] = 4.0
++            logits[offset + 2, 71] = 5.0
++            logits[offset + 3, 72] = 5.0
++        retrieve_index, retrieve_next, retrieve_sibling = (
++            self._chain_tensors(batch=2)
++        )
++        adapter.accept_or_native(
++            candidates=candidates,
++            target_logits=logits,
++            req_pool_indices=torch.tensor([5, 2]),
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next,
++            retrieve_next_sibling=retrieve_sibling,
++            native_accept=lambda: self.fail("enabled path delegated"),
++        )
++
++        budgets = {
++            item["rid"]: item["remaining_budget"]
++            for item in adapter.snapshot()["remaining_budget_by_request"]
++        }
++        self.assertEqual(budgets, {"req-a": 0.75, "req-b": 0.75})
++
++        adapter.bind_request_batch(
++            rids=["req-c"],
++            slots=[2],
++            pool_capacity=8,
++        )
++        budgets = {
++            item["rid"]: item["remaining_budget"]
++            for item in adapter.snapshot()["remaining_budget_by_request"]
++        }
++        self.assertEqual(budgets, {"req-b": 0.75, "req-c": 1.0})
++
++        adapter.note_request_finished(rid="req-b", natural_stop=True)
++        adapter.note_request_finished(rid="req-c", natural_stop=False)
++        snapshot = adapter.snapshot()
++        self.assertEqual(snapshot["remaining_budget_by_request"], [])
++        self.assertEqual(snapshot["active_request_states"], 0)
++        self.assertEqual(snapshot["requests_finished"], 2)
++
++    def test_request_serials_are_contiguous_and_drain_prunes_old_mappings(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(
++                mode=HEDGE_MODE_DISABLED,
++                trace_capacity=8,
++            ),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        adapter.bind_request_batch(
++            rids=["req-a"],
++            slots=[2],
++            pool_capacity=8,
++        )
++        adapter.bind_request_batch(
++            rids=["req-a"],
++            slots=[2],
++            pool_capacity=8,
++        )
++        self.assertEqual(adapter._next_request_serial, 2)
++        self.assertEqual(adapter._serial_to_rid, {1: "req-a"})
++
++        adapter.note_request_finished(rid="req-a", natural_stop=True)
++        adapter.bind_request_batch(
++            rids=["req-b"],
++            slots=[5],
++            pool_capacity=8,
++        )
++        self.assertEqual(adapter._next_request_serial, 3)
++        self.assertEqual(
++            adapter._serial_to_rid,
++            {1: "req-a", 2: "req-b"},
++        )
++
++        adapter.clear_metrics()
++
++        self.assertEqual(adapter._serial_to_rid, {2: "req-b"})
++        adapter.note_request_finished(rid="req-b", natural_stop=False)
++        adapter.clear_metrics()
++        self.assertEqual(adapter._serial_to_rid, {})
++
++    def test_schedule_batch_prefill_fixture_binds_real_request_fields(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(
++                mode=HEDGE_MODE_ENABLED,
++                config=HedgeConfig(
++                    risk_budget=0.5,
++                    max_regret_per_value=0.5,
++                    max_relaxed_mismatches_per_block=1,
++                    block_size=3,
++                ),
++            ),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        batch = SimpleNamespace(
++            reqs=[
++                SimpleNamespace(rid="req-a", req_pool_idx=7),
++                SimpleNamespace(rid="req-b", req_pool_idx=3),
++            ],
++            req_pool_indices_cpu=torch.tensor([7, 3], dtype=torch.int64),
++            req_to_token_pool=SimpleNamespace(_alloc_size=16),
++        )
++
++        adapter.bind_batch(batch)
++
++        self.assertEqual(
++            {
++                item["rid"]: item["request_pool_slot"]
++                for item in adapter.snapshot()[
++                    "remaining_budget_by_request"
++                ]
++            },
++            {"req-a": 7, "req-b": 3},
++        )
++
++    def test_zero_capacity_rank_skips_trace_storage_and_drop_accounting(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(
++                mode=HEDGE_MODE_B0,
++                config=HedgeConfig(
++                    risk_budget=0.0,
++                    max_regret_per_value=0.0,
++                    max_relaxed_mismatches_per_block=1,
++                    block_size=3,
++                ),
++                trace_capacity=0,
++            ),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        adapter.bind_request_batch(
++            rids=["req-0"],
++            slots=[2],
++            pool_capacity=8,
++        )
++        candidates = torch.tensor([[50, 10, 20, 30]])
++        logits = torch.full((4, 64), -100.0)
++        for row, token in enumerate((10, 21, 30, 40)):
++            logits[row, token] = 10.0
++        retrieve_index, retrieve_next, retrieve_sibling = self._chain_tensors()
++
++        adapter.accept_or_native(
++            candidates=candidates,
++            target_logits=logits,
++            req_pool_indices=torch.tensor([2]),
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next,
++            retrieve_next_sibling=retrieve_sibling,
++            native_accept=lambda: self.fail("active B0 delegated"),
++        )
++
++        snapshot = adapter.snapshot()
++        self.assertEqual(snapshot["trace_rows_seen"], 0)
++        self.assertEqual(snapshot["trace_rows_dropped"], 0)
++        self.assertEqual(snapshot["trace"], [])
++
++    def test_exact_budget_exhaustion_persists_into_the_next_block(self):
++        adapter = Eagle3HedgeAdapter(
++            settings=Eagle3HedgeSettings(
++                mode=HEDGE_MODE_ENABLED,
++                config=HedgeConfig(
++                    risk_budget=0.5,
++                    max_regret_per_value=1.0,
++                    max_relaxed_mismatches_per_block=1,
++                    block_size=3,
++                ),
++            ),
++            proposal_width=3,
++            verify_width=4,
++            device="cpu",
++        )
++        adapter.bind_request_batch(
++            rids=["req-0"], slots=[2], pool_capacity=8
++        )
++        candidates = torch.tensor([[50, 10, 20, 30]])
++        retrieve_index, retrieve_next, retrieve_sibling = (
++            self._chain_tensors()
++        )
++
++        first = torch.full((4, 64), -100.0)
++        first[0, 11], first[0, 10] = 5.0, 4.5
++        first[1, 21], first[1, 20] = 5.0, 4.0
++        first[2, 31], first[2, 30] = 5.0, 4.0
++        first[3, 40] = 5.0
++        _, first_lens, _ = adapter.accept_or_native(
++            candidates=candidates,
++            target_logits=first,
++            req_pool_indices=torch.tensor([2]),
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next,
++            retrieve_next_sibling=retrieve_sibling,
++            native_accept=lambda: self.fail("enabled path delegated"),
++        )
++        self.assertEqual(first_lens.tolist(), [1])
++
++        second = torch.full((4, 64), -100.0)
++        second[0, 9] = second[0, 10] = 5.0
++        second[1, 20] = 5.0
++        second[2, 30] = 5.0
++        second[3, 40] = 5.0
++        _, second_lens, _ = adapter.accept_or_native(
++            candidates=candidates,
++            target_logits=second,
++            req_pool_indices=torch.tensor([2]),
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next,
++            retrieve_next_sibling=retrieve_sibling,
++            native_accept=lambda: self.fail("enabled path delegated"),
++        )
++
++        self.assertEqual(second_lens.tolist(), [0])
++        snapshot = adapter.snapshot()
++        self.assertEqual(snapshot["budget_exhaustion_events"], 1)
++        self.assertEqual(
++            snapshot["remaining_budget_by_request"][0][
++                "remaining_budget"
++            ],
++            0.0,
++        )
++
++
++class TestEagle3HedgeConfiguration(unittest.TestCase):
++    def test_verify_hot_path_has_no_per_proposal_host_conversion(self):
++        source = inspect.getsource(Eagle3HedgeAdapter.accept_or_native)
++        for forbidden in (
++            ".tolist(",
++            ".item(",
++            "bool(",
++            "int(",
++            "float(",
++        ):
++            with self.subTest(forbidden=forbidden):
++                self.assertNotIn(forbidden, source)
++
++    def test_environment_selects_only_disabled_b0_or_positive_budget(self):
++        disabled = Eagle3HedgeSettings.from_environ({})
++        self.assertEqual(disabled.mode, HEDGE_MODE_DISABLED)
++        self.assertIsNone(disabled.config)
++
++        b0_mapping = {
++            "B": 0.0,
++            "g": 0.0,
++            "m": 1,
++            "value_scheme": "normalized_suffix",
++            "block_size": 3,
++        }
++        b0 = Eagle3HedgeSettings.from_environ(
++            {
++                "SGLANG_EAGLE3_HEDGE_MODE": "b0",
++                "SGLANG_EAGLE3_HEDGE_CONFIG_JSON": json.dumps(b0_mapping),
++            }
++        )
++        self.assertEqual(b0.mode, HEDGE_MODE_B0)
++        self.assertEqual(b0.config.to_mapping(), b0_mapping)
++
++        positive_mapping = {**b0_mapping, "B": 0.4, "g": 0.4}
++        positive = Eagle3HedgeSettings.from_environ(
++            {
++                "SGLANG_EAGLE3_HEDGE_MODE": "enabled",
++                "SGLANG_EAGLE3_HEDGE_CONFIG_JSON": json.dumps(
++                    positive_mapping
++                ),
++            }
++        )
++        self.assertEqual(positive.mode, HEDGE_MODE_ENABLED)
++        self.assertEqual(positive.config.to_mapping(), positive_mapping)
++
++        with self.assertRaisesRegex(ValueError, "requires B=0"):
++            Eagle3HedgeSettings.from_environ(
++                {
++                    "SGLANG_EAGLE3_HEDGE_MODE": "b0",
++                    "SGLANG_EAGLE3_HEDGE_CONFIG_JSON": json.dumps(
++                        positive_mapping
++                    ),
++                }
++            )
++
++    def test_runtime_builder_owns_trace_only_on_tp_rank_zero(self):
++        server_args = SimpleNamespace(
++            speculative_num_steps=3,
++            speculative_eagle_topk=1,
++            speculative_num_draft_tokens=4,
++            disable_cuda_graph=True,
++            disable_overlap_schedule=True,
++            max_running_requests=1,
++        )
++        environ = {
++            "SGLANG_EAGLE3_HEDGE_MODE": "disabled",
++            "SGLANG_EAGLE3_HEDGE_TRACE_CAPACITY": "16",
++        }
++
++        rank_zero = build_eagle3_hedge_adapter(
++            server_args=server_args,
++            tp_rank=0,
++            device="cpu",
++            environ=environ,
++        )
++        rank_one = build_eagle3_hedge_adapter(
++            server_args=server_args,
++            tp_rank=1,
++            device="cpu",
++            environ=environ,
++        )
++
++        self.assertEqual(rank_zero.settings.trace_capacity, 16)
++        self.assertEqual(rank_one.settings.trace_capacity, 0)
++        bad = SimpleNamespace(**vars(server_args))
++        bad.speculative_num_steps = 2
++        with self.assertRaisesRegex(ValueError, "num_steps=3"):
++            build_eagle3_hedge_adapter(
++                server_args=bad,
++                tp_rank=0,
++                device="cpu",
++                environ=environ,
++            )
++
++
++class TestEagleSampleIntegration(unittest.TestCase):
++    @staticmethod
++    def _fixture():
++        candidates = torch.tensor([[50, 10, 20, 30]], dtype=torch.int64)
++        retrieve_index = torch.tensor([[0, 1, 2, 3]], dtype=torch.int64)
++        retrieve_next = torch.tensor([[1, 2, 3, -1]], dtype=torch.int64)
++        retrieve_sibling = torch.full((1, 4), -1, dtype=torch.int64)
++        verify_input = SimpleNamespace(
++            draft_token=candidates.flatten(),
++            draft_token_num=4,
++            max_tree_depth=4,
++            tree_topk=1,
++            retrieve_index=retrieve_index,
++            retrieve_next_token=retrieve_next,
++            retrieve_next_sibling=retrieve_sibling,
++        )
++        batch = SimpleNamespace(
++            device="cpu",
++            forward_mode=SimpleNamespace(is_idle=lambda: False),
++            seq_lens=torch.tensor([10]),
++            req_pool_indices=torch.tensor([2]),
++            sampling_info=SimpleNamespace(
++                is_all_greedy=True,
++                acc_additive_penalties=None,
++                acc_scaling_penalties=None,
++                logit_bias=None,
++            ),
++        )
++        logits = torch.zeros((4, 64))
++        output = SimpleNamespace(next_token_logits=logits)
++        return verify_input, batch, output
++
++    def test_eagle_sample_routes_active_adapter_at_the_native_kernel_seam(self):
++        verify_input, batch, output = self._fixture()
++        sentinel = (
++            torch.tensor([10, 35, 0, 0], dtype=torch.int32),
++            torch.tensor([2], dtype=torch.int32),
++            torch.tensor([[0, 1, -1, -1]], dtype=torch.int32),
++        )
++
++        class Adapter:
++            def accept_or_native(inner_self, **kwargs):
++                self.assertIs(kwargs["target_logits"], output.next_token_logits)
++                self.assertTrue(
++                    torch.equal(
++                        kwargs["candidates"],
++                        verify_input.draft_token.reshape(1, 4),
++                    )
++                )
++                self.assertEqual(
++                    kwargs["req_pool_indices"].tolist(), [2]
++                )
++                return sentinel
++
++        with patch(
++            "sglang.srt.speculative.eagle_utils.verify_tree_greedy_func",
++            side_effect=AssertionError("native kernel must not run directly"),
++        ):
++            result = eagle_sample(
++                verify_input,
++                batch,
++                output,
++                hedge_adapter=Adapter(),
++            )
++
++        self.assertIs(result[0], sentinel[0])
++        self.assertEqual(result[1].tolist(), [3])
++        self.assertIs(result[2], sentinel[2])
++
++    def test_eagle_sample_applies_one_bonus_after_zero_middle_or_all_drafts(self):
++        cases = (
++            ("zero", (11, 20, 30, 40), 0, [11]),
++            ("middle", (10, 21, 30, 40), 1, [10, 21]),
++            ("all", (10, 20, 30, 40), 3, [10, 20, 30, 40]),
++        )
++        for rid, target_ids, accepted_drafts, expected_tokens in cases:
++            with self.subTest(rid=rid):
++                verify_input, batch, output = self._fixture()
++                output.next_token_logits.fill_(-100.0)
++                for row, target_id in enumerate(target_ids):
++                    output.next_token_logits[row, target_id] = 10.0
++                adapter = Eagle3HedgeAdapter(
++                    settings=Eagle3HedgeSettings(
++                        mode=HEDGE_MODE_B0,
++                        config=HedgeConfig(
++                            risk_budget=0.0,
++                            max_regret_per_value=0.0,
++                            max_relaxed_mismatches_per_block=1,
++                            block_size=3,
++                        ),
++                    ),
++                    proposal_width=3,
++                    verify_width=4,
++                    device="cpu",
++                )
++                adapter.bind_request_batch(
++                    rids=[rid],
++                    slots=[2],
++                    pool_capacity=8,
++                )
++
++                predict, commit_lens, accept_index = eagle_sample(
++                    verify_input,
++                    batch,
++                    output,
++                    hedge_adapter=adapter,
++                )
++
++                self.assertEqual(commit_lens.tolist(), [accepted_drafts + 1])
++                self.assertEqual(
++                    predict[accept_index[0, : accepted_drafts + 1]].tolist(),
++                    expected_tokens,
++                )
++                trace = adapter.snapshot()["trace"]
++                self.assertEqual(trace[0]["hedge_accepted_drafts"], accepted_drafts)
++                self.assertEqual(trace[0]["commit_length"], accepted_drafts + 1)
++
++    def test_eagle_sample_without_adapter_preserves_native_kernel_tuple(self):
++        verify_input, batch, output = self._fixture()
++        native_predict = torch.tensor([10, 35, 0, 0], dtype=torch.int32)
++        native_index = torch.tensor(
++            [[0, 1, -1, -1]], dtype=torch.int32
++        )
++        native_drafts = torch.tensor([1], dtype=torch.int32)
++        with patch(
++            "sglang.srt.speculative.eagle_utils.verify_tree_greedy_func",
++            return_value=(native_predict, native_index, native_drafts),
++        ) as native:
++            result = eagle_sample(verify_input, batch, output)
++
++        native.assert_called_once()
++        self.assertIs(result[0], native_predict)
++        self.assertEqual(result[1].tolist(), [2])
++        self.assertIs(result[2], native_index)
++
++
++class TestMultiLayerEagleWorkerIntegration(unittest.TestCase):
++    @staticmethod
++    def _worker():
++        from sglang.srt.speculative.multi_layer_eagle_worker_v2 import (
++            MultiLayerEagleWorkerV2,
++        )
++
++        worker = MultiLayerEagleWorkerV2.__new__(MultiLayerEagleWorkerV2)
++        worker._hedge_adapter = MagicMock()
++        worker._target_worker = SimpleNamespace()
++        worker.req_to_token_pool = object()
++        worker.token_to_kv_pool_allocator = object()
++        worker.plan_stream = object()
++        worker.plan_stream_ctx = object()
++        worker.topk = 1
++        worker.speculative_num_steps = 3
++        worker.speculative_num_draft_tokens = 4
++        worker.device = "cpu"
++        return worker
++
++    def test_verify_passes_adapter_to_the_shared_verifier(self):
++        worker = self._worker()
++        sentinel = object()
++        with patch(
++            "sglang.srt.speculative.multi_layer_eagle_worker_v2.run_eagle_verify",
++            return_value=sentinel,
++        ) as run_verify:
++            result = worker.verify(SimpleNamespace())
++
++        self.assertIs(result, sentinel)
++        self.assertIs(
++            run_verify.call_args.kwargs["hedge_adapter"],
++            worker._hedge_adapter,
++        )
++
++    def test_prefill_binds_request_state_before_target_forward(self):
++        worker = self._worker()
++        events = []
++        worker._hedge_adapter.bind_batch.side_effect = lambda batch: events.append(
++            "bind"
++        )
++        worker.speculative_algorithm = SimpleNamespace(
++            is_standalone=lambda: False
++        )
++        worker._target_worker = SimpleNamespace(
++            forward_batch_generation=lambda *args, **kwargs: (
++                events.append("target")
++                or SimpleNamespace(
++                    logits_output=SimpleNamespace(hidden_states="hidden"),
++                    next_token_ids="next",
++                )
++            )
++        )
++        worker._draft_worker = SimpleNamespace(
++            _draft_extend_for_prefill=lambda *args, **kwargs: (
++                events.append("draft") or "draft-input"
++            )
++        )
++        batch = SimpleNamespace(
++            forward_mode=SimpleNamespace(is_extend=lambda: True),
++            is_extend_in_batch=False,
++            seq_lens=torch.tensor([4]),
++        )
++
++        output = worker.forward_batch_generation(batch)
++
++        self.assertEqual(events, ["bind", "target", "draft"])
++        self.assertEqual(output.next_draft_input, "draft-input")
++
++    def test_lifecycle_and_observability_delegate_to_adapter(self):
++        worker = self._worker()
++        worker._hedge_adapter.snapshot.return_value = {"trace": []}
++
++        worker.note_request_finished(rid="req-0", natural_stop=False)
++        dumped = worker.dump_info_records()
++        worker.clear_info_records()
++
++        worker._hedge_adapter.note_request_finished.assert_called_once_with(
++            rid="req-0",
++            natural_stop=False,
++        )
++        self.assertEqual(dumped, {"trace": []})
++        worker._hedge_adapter.clear_metrics.assert_called_once_with()
++
++
++class TestEagleWorkerV2HedgeIntegration(unittest.TestCase):
++    @staticmethod
++    def _server_args(algorithm: str):
++        args = SimpleNamespace(
++            speculative_eagle_topk=1,
++            speculative_num_steps=3,
++            speculative_num_draft_tokens=4,
++            device="cpu",
++            page_size=1,
++            speculative_algorithm=algorithm,
++            speculative_adaptive=False,
++        )
++        args.override = MagicMock()
++        return args
++
++    def test_worker_constructs_adapter_only_for_eagle3(self):
++        from sglang.srt.speculative.eagle_worker_v2 import EAGLEWorkerV2
++
++        target_worker = SimpleNamespace(
++            model_runner=SimpleNamespace(
++                model_config=SimpleNamespace(context_len=4096)
++            )
++        )
++        ps = SimpleNamespace(tp_rank=0)
++        sentinel = SimpleNamespace(
++            settings=SimpleNamespace(mode="disabled", trace_capacity=1024),
++            proposal_width=3,
++            verify_width=4,
++        )
++        with (
++            patch(
++                "sglang.srt.speculative.eagle_worker_v2.EagleDraftWorker"
++            ),
++            patch(
++                "sglang.srt.speculative.eagle_worker_v2.get_plan_stream",
++                return_value=(None, None),
++            ),
++            patch(
++                "sglang.srt.speculative.eagle_worker_v2.build_eagle3_hedge_adapter",
++                return_value=sentinel,
++                create=True,
++            ) as build_adapter,
++        ):
++            eagle3 = EAGLEWorkerV2(
++                self._server_args("EAGLE3"),
++                gpu_id=0,
++                ps=ps,
++                nccl_port=12345,
++                target_worker=target_worker,
++            )
++            eagle = EAGLEWorkerV2(
++                self._server_args("EAGLE"),
++                gpu_id=0,
++                ps=ps,
++                nccl_port=12345,
++                target_worker=target_worker,
++            )
++
++        self.assertIs(eagle3._hedge_adapter, sentinel)
++        self.assertIsNone(eagle._hedge_adapter)
++        build_adapter.assert_called_once_with(
++            server_args=eagle3.server_args,
++            tp_rank=0,
++            device="cpu",
++        )
++
++    def test_prefill_binds_request_state_before_target_forward(self):
++        from sglang.srt.speculative.eagle_worker_v2 import EAGLEWorkerV2
++
++        worker = EAGLEWorkerV2.__new__(EAGLEWorkerV2)
++        events = []
++        worker._hedge_adapter = MagicMock()
++        worker._hedge_adapter.bind_batch.side_effect = lambda batch: events.append(
++            "bind"
++        )
++        worker.speculative_algorithm = SimpleNamespace(
++            is_standalone=lambda: False
++        )
++        worker._target_worker = SimpleNamespace(
++            forward_batch_generation=lambda *args, **kwargs: (
++                events.append("target")
++                or SimpleNamespace(
++                    logits_output=SimpleNamespace(
++                        hidden_states="hidden",
++                        mm_input_embeds=None,
++                    ),
++                    next_token_ids="next",
++                )
++            )
++        )
++        worker._draft_worker = SimpleNamespace(
++            draft_tp_context=lambda group: contextlib.nullcontext(),
++            draft_runner=SimpleNamespace(tp_group=object()),
++            _draft_extend_for_prefill=lambda *args, **kwargs: (
++                events.append("draft") or "draft-input"
++            ),
++        )
++        batch = SimpleNamespace(
++            forward_mode=SimpleNamespace(is_extend=lambda: True),
++            is_extend_in_batch=False,
++            seq_lens=torch.tensor([4]),
++        )
++
++        with (
++            patch(
++                "sglang.srt.speculative.eagle_worker_v2.speculative_moe_backend_context",
++                side_effect=contextlib.nullcontext,
++            ),
++            patch(
++                "sglang.srt.speculative.eagle_worker_v2.speculative_moe_a2a_backend_context",
++                side_effect=contextlib.nullcontext,
++            ),
++            patch(
++                "sglang.srt.speculative.eagle_worker_v2.spec_stage_span",
++                side_effect=lambda *args, **kwargs: contextlib.nullcontext(),
++            ),
++        ):
++            output = worker.forward_batch_generation(batch)
++
++        self.assertEqual(events, ["bind", "target", "draft"])
++        self.assertEqual(output.next_draft_input, "draft-input")
++
++    def test_verify_passes_same_adapter_to_shared_verifier(self):
++        from sglang.srt.speculative.eagle_worker_v2 import EAGLEWorkerV2
++
++        worker = EAGLEWorkerV2.__new__(EAGLEWorkerV2)
++        worker._hedge_adapter = MagicMock()
++        worker._target_worker = SimpleNamespace()
++        worker.req_to_token_pool = object()
++        worker.token_to_kv_pool_allocator = object()
++        worker.plan_stream = object()
++        worker.plan_stream_ctx = object()
++        worker.topk = 1
++        worker.speculative_num_steps = 3
++        worker.speculative_num_draft_tokens = 4
++        worker.device = "cpu"
++        sentinel = object()
++
++        with patch(
++            "sglang.srt.speculative.eagle_worker_v2.run_eagle_verify",
++            return_value=sentinel,
++        ) as run_verify:
++            result = worker.verify(SimpleNamespace())
++
++        self.assertIs(result, sentinel)
++        self.assertIs(
++            run_verify.call_args.kwargs["hedge_adapter"],
++            worker._hedge_adapter,
++        )
++        self.assertTrue(run_verify.call_args.kwargs["finalize_tree_path"])
++
++    def test_registry_selected_worker_exposes_hedge_lifecycle(self):
++        from sglang.srt.speculative.eagle_worker_v2 import EAGLEWorkerV2
++        from sglang.srt.speculative.spec_info import SpeculativeAlgorithm
++
++        worker_cls = SpeculativeAlgorithm.from_string("EAGLE3").create_worker(
++            SimpleNamespace(enable_multi_layer_eagle=False)
++        )
++        self.assertIs(worker_cls, EAGLEWorkerV2)
++
++        worker = worker_cls.__new__(worker_cls)
++        worker._hedge_adapter = MagicMock()
++        worker._hedge_adapter.snapshot.return_value = {"trace": []}
++
++        worker.note_request_finished(rid="req-0", natural_stop=False)
++        dumped = worker.dump_info_records()
++        worker.clear_info_records()
++
++        worker._hedge_adapter.note_request_finished.assert_called_once_with(
++            rid="req-0",
++            natural_stop=False,
++        )
++        self.assertEqual(dumped, {"trace": []})
++        worker._hedge_adapter.clear_metrics.assert_called_once_with()
++
++
++class TestEagle3HedgeSchedulerControl(unittest.TestCase):
++    @staticmethod
++    def _algorithm(*, eagle3: bool):
++        return SimpleNamespace(
++            is_none=lambda: False,
++            is_dspark=lambda: False,
++            is_eagle3=lambda: eagle3,
++        )
++
++    @staticmethod
++    def _scheduler(*, eagle3: bool, draft_worker):
++        from sglang.srt.managers.scheduler import Scheduler
++
++        scheduler = Scheduler.__new__(Scheduler)
++        scheduler.metrics_reporter = SimpleNamespace(
++            last_gen_throughput=0.0,
++            spec_total_num_forward_ct=0,
++            spec_total_num_accept_tokens=0,
++        )
++        scheduler.tp_worker = SimpleNamespace(
++            model_runner=SimpleNamespace(
++                weight_load_mem_usage=1.0,
++                graph_mem_usage=0.0,
++            )
++        )
++        scheduler.token_to_kv_pool_allocator = SimpleNamespace(
++            get_kvcache=lambda: SimpleNamespace(mem_usage=2.0)
++        )
++        scheduler.max_total_num_tokens = 128
++        scheduler.max_running_requests = 1
++        scheduler.server_args = SimpleNamespace(elastic_ep_backend=None)
++        scheduler.spec_algorithm = (
++            TestEagle3HedgeSchedulerControl._algorithm(eagle3=eagle3)
++        )
++        scheduler.draft_worker = draft_worker
++        scheduler.ps = SimpleNamespace(pp_size=1)
++        return scheduler
++
++    def test_server_info_returns_eagle3_trace_payload(self):
++        worker = MagicMock()
++        worker.dump_info_records.return_value = {
++            "schema_version": 1,
++            "trace": [{"sample_id": "req-0"}],
++        }
++        scheduler = self._scheduler(eagle3=True, draft_worker=worker)
++        global_args = SimpleNamespace(
++            model_config=object(),
++            custom_sigquit_handler=object(),
++        )
++        with patch(
++            "sglang.srt.managers.scheduler.get_server_args",
++            return_value=global_args,
++        ):
++            output = scheduler.get_internal_state(SimpleNamespace())
++
++        self.assertEqual(
++            output.internal_state["eagle3_hedge_info_record"],
++            worker.dump_info_records.return_value,
++        )
++        worker.dump_info_records.assert_called_once_with()
++
++    def test_clear_control_calls_worker_once_without_server_override(self):
++        worker = MagicMock()
++        scheduler = self._scheduler(eagle3=True, draft_worker=worker)
++        global_args = MagicMock()
++        request = SimpleNamespace(
++            server_args={"eagle3_hedge_clear_info_records": True}
++        )
++        with patch(
++            "sglang.srt.managers.scheduler.get_server_args",
++            return_value=global_args,
++        ):
++            output = scheduler.set_internal_state(request)
++
++        self.assertTrue(output.updated)
++        worker.clear_info_records.assert_called_once_with()
++        global_args.override.assert_not_called()
++
++    def test_clear_control_fails_closed_outside_eagle3_or_without_hook(self):
++        request = SimpleNamespace(
++            server_args={"eagle3_hedge_clear_info_records": True}
++        )
++        cases = (
++            self._scheduler(eagle3=False, draft_worker=MagicMock()),
++            self._scheduler(
++                eagle3=True,
++                draft_worker=SimpleNamespace(),
++            ),
++        )
++        for scheduler in cases:
++            with self.subTest(eagle3=scheduler.spec_algorithm.is_eagle3()):
++                global_args = MagicMock()
++                with patch(
++                    "sglang.srt.managers.scheduler.get_server_args",
++                    return_value=global_args,
++                ):
++                    output = scheduler.set_internal_state(request)
++                self.assertFalse(output.updated)
++                global_args.override.assert_not_called()
++
++
++if __name__ == "__main__":
++    unittest.main()
