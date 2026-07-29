@@ -290,3 +290,20 @@
 - 单变量 recovery commit/push：
   `ddc372b5118595d15bfc217e7c3529c0bf86c852`。P04 仍 `IN_PROGRESS`；
   下一步仅运行新的 native attempt，主验收 PASS 前不运行 B0。
+
+### 2026-07-29T00:24:41Z — 210 分钟 checkpoint
+
+- 状态快照于 `2026-07-29T00:24:29Z` 提前 12 秒取得，避免正在运行的长模型命令
+  跨过进展检查点而没有心跳。recovery docs commit/push 为 `7402fd5`。
+- 唯一 native r4 `20260729T001700Z-p04-native-smoke-r4` 正在 worker
+  `4106666` 前台运行。preflight fixed port、checkpoint identity、engine identity
+  均 PASS；keepalive before 为 `4730/4730/4730`、8×10 全 100%。
+- keepalive 于 `00:19:59Z` pause，`00:20:03Z` 证明 contexts none 后紧邻启动
+  server；PID/PGID/SID `7941/7941/7941` 与完整命令已登记，sampler 持续覆盖
+  8 个固定 GPU UUID。主 Agent在 foreground session 外持续确认 worker 在线。
+- server 已解析 `DeepseekV4ForCausalLM`，确认固定 checkpoint 内置 DSpark draft；
+  日志打印 TP=8、`speculative_algorithm='DSPARK'`、block size 5、target/draft
+  `flashinfer_mxfp4`，CUDA graph/overlap/radix 均 disabled。当前仍在 TP worker/
+  权重加载前段，尚未 ready、未发请求，没有已知 error 或 cleanup。
+- 本 checkpoint 不构成 native PASS、八 rank 参与证明、API 成功或 P04 验收；
+  B0 仍 `NOT_RUN`。
