@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T02:50:06Z`（360 分钟 checkpoint 前恢复结论已固化）
+- 快照时间：`2026-07-29T03:25:14Z`（390 分钟 checkpoint 实际心跳，晚 33 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`05:55:25` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`06:30:33` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -13,30 +13,29 @@
   - P02：主 Agent 验收 `PASS`；新正式 venv 33/33 tests PASS，commit/push `4d96f44065c07030ede67484a262006ec149626a`，READY marker 已发布
   - P03：主验收 `PASS`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc` 与 identity/progress `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3` 均已 push
   - P04：主 Agent 验收 `PASS`；结果 commit/push `3e10b780264557e84a3cab5c1a196dc7c2a00496`
-  - P05：native r1 `FAIL_TRACE_SCOPE`；sampler recovery `6b7145d` 与
-    trace-scope recovery `eb4962f` 均已主审、commit/push；B0 未运行
+  - P05：native r1 `FAIL_TRACE_SCOPE`；native r2 `FAIL_PRE_COHORT_QUIESCENCE`；
+    r2 的 bounded quiescence recovery 正在 CPU TDD；B0 未运行
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：native r1 已定向清理且 contexts none；keepalive
-  `44844/44844/44844`，attempt 与主 Agent `02:35Z` 独立复核均为 8×10 全卡
-  100%；当前无模型 server
-- 最新 attempt：`20260729T020144Z-p05-native-calibration-r1`；
-  `FAIL_TRACE_SCOPE`，不是可冻结参数的 calibration PASS
+- keepalive / server / PID：native r2 已定向清理且 contexts none；keepalive
+  `57902/57902/57902`，attempt after gate 为 8×10 全卡 100%；当前无模型 server
+- 最新 attempt：`20260729T025543Z-p05-native-calibration-r2`；
+  `FAIL_PRE_COHORT_QUIESCENCE`，0/32 请求、0 trace
 - HDFS artifact：
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T020144Z-p05-native-calibration-r1`
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T025543Z-p05-native-calibration-r2`
   immutable 保留
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
   branch `exp/hedge-v4-dspark`；HEAD/pushed
-  `eb4962f49a16ec88721c9fc96be5daffcc1367d1`
+  `fd88b69a2912e699ed05ec152b82f7cf25cd2b2d`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
   P05 tooling `ce5d672`；sampler recovery `6b7145d`；trace-scope recovery
-  `eb4962f`；calibration config / result 尚未创建
-- 首要事项：从新 HEAD 动态创建 scoped native r2；主 Agent独立验收 clean trace
-  与 sampler terminal status 后才允许唯一 P05 B0 attempt
-- 下一检查点：`2026-07-29T03:24:41Z`
-- 下一 30 分钟动作：运行新的 32 条 scoped native attempt；保留 r1 全部失败证据，
-  不沿用其 q25
+  `eb4962f`；failure docs `fd88b69`；calibration config / result 尚未创建
+- 首要事项：完成“等待 warmup quiescent→clear→验零”的有界 fail-closed recovery；
+  主审/commit 后才允许 scoped native r3，B0 继续锁住
+- 下一检查点：`2026-07-29T03:54:41Z`
+- 下一 30 分钟动作：完成 quiescence TDD 与总回归；不放宽 state-leak 门禁，
+  不采用 r1 q25，不把 r2 的 0/32 写成 calibration 输出
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -481,3 +480,26 @@
 - r1 结束后 keepalive 更新为 `44844/44844/44844`；主 Agent `02:35Z` 远端复核
   worker `4106666` 仍为 exact 8×H20、8×10 全卡 100%，每卡 815 MiB。P05 B0
   仍未启动；下一动作是从 HEAD `eb4962f` 动态创建 scoped native r2。
+
+### 2026-07-29T03:24:41Z — 390 分钟 checkpoint
+
+- 实际快照于 `03:25:14Z` 落盘，晚 33 秒。唯一 native r2
+  `20260729T025543Z-p05-native-calibration-r2` 验收为
+  `FAIL_PRE_COHORT_QUIESCENCE`，没有被写成 calibration 成功。
+- server ready 后，严格 client 先执行 trace clear，POST 返回 `[true]`；紧接的
+  `/server_info` 仍报告 `active_request_states=1`、`state_leaks=1`。证据定位为
+  SGLang 内建 startup warmup 仍在运行；clear 只清 arm metrics，不删除 live request
+  state。门禁在第一个 cohort 请求前正确失败，因此输出为 0/32、trace 为 0。
+- 失败不是模型 crash：target/draft TP rank 0–7 均加载，固定
+  `flashinfer_mxfp4` / `Mxfp4FlashinferCutlassMoEMethod` 后端成立，日志无未处理
+  CUDA、NCCL、OOM 或 worker crash。
+- r2 live-prove 了 sampler recovery：terminal status 为 `stopped`，923 个连续
+  ordinal 与 `sample_count=923` 精确相等，CSV 为 7,384 行且无 traceback。
+- 登记的 server `47022` 与 sampler `47029` 已定向清理，随后 contexts none；
+  keepalive 恢复为 `57902/57902/57902`，8×10 全卡 100%。immutable archive
+  manifest 34 项 size/hash 全匹配；artifact validator 因缺 32 outputs/trace 按预期
+  FAIL。
+- 当前由 bounded CPU executor 用 TDD 实现
+  `wait quiescent → clear → exact-zero verify`：startup warmup 只触发有界等待，
+  永久 active/race/identity/HTTP 错误保持 fail-closed，不放宽 state-leak 门禁。
+  native r3 与 P05 B0 均尚未启动。
