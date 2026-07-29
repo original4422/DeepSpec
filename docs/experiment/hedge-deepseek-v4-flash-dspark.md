@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T04:21:10Z`
+- 记录更新时间：`2026-07-29T04:50:06Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：P04 单请求 smoke `PASS`；P05 32 条 `NOT_RUN`
 - 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
@@ -11,8 +11,8 @@
   `FAIL_PREFILL_TERMINAL_LIFECYCLE`，没有可采用的 q25。r3 的 120 次 poll 证明
   默认 `/health` 单 token generation 在 prefill 终态漏掉 speculative request
   finish hook。确定性 RED→最小 GREEN、69/69 主回归与独立 clean replay 均 PASS，
-  recovery commit/push `e028d2c`。下一步先重建并验收新 formal wheel，再运行
-  native r4；P05 B0 继续锁住。
+  recovery `e028d2c` 与新 formal wheel/identity `ada6625` 已 commit/push。唯一
+  native r4 正在 TP=8 冷加载；P05 B0 继续锁住。
 - 正式 native run：`NOT_RUN`
 - 正式 HEDGE run：`NOT_RUN`
 - worker / TP / GPU 参与：`4106666` / 8 / P04 native+B0 `PASS`；P05 r1 live
@@ -24,8 +24,8 @@
   166898666759 bytes，按计划未做全量 hash
 - SGLang：固定 base
   `fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1`；当前 integration patch
-  `a4077b9f…10c52`、clean replay 10-file tree `69e80df9…2422`；旧 wheel
-  `f2054c…` 已 superseded，新 wheel 正在重建
+  `a4077b9f…10c52`、clean replay 10-file tree `69e80df9…2422`；formal wheel
+  `a5c14bd7…71f9` 已发布/uv 安装，旧 `f2054c…` 保留为历史实体
 - g / B / m：`NOT_CALIBRATED` / `NOT_CALIBRATED` / 固定目标 `1`
 - native TPS / HEDGE TPS / delta：`NOT_RUN` / `NOT_RUN` / —
 - native accepted length / HEDGE accepted length / delta：`NOT_RUN` / `NOT_RUN` / —
@@ -39,15 +39,16 @@
   sampler recovery `6b7145d`；trace-scope recovery `eb4962f`；
   r1 failure docs `fd88b69`；r2 progress `64e6be7`；quiescence recovery
   `fe0aea0`；r2/recovery experiment `3c37a41`；r3 heartbeat `9e4aceb`；
-  prefill lifecycle recovery `e028d2c`；calibration config / result 尚未创建
+  prefill lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration
+  config / result 尚未创建
 - DeepSpec worktree / branch / accepted integration commit：
   `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark` /
   `exp/hedge-v4-dspark` /
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
-  `e028d2c31658a06b4f5a5ee072d7e21c79d51c36`
-- 下一步：按固定 replay 重建/发布/安装新 formal wheel并主验 identity；随后运行
-  32 条 scoped native r4。主验收 PASS 后才运行 B0 并自动计算、冻结 q25
+  `ada66253e719cd021cdec369914245b51ff46b61`
+- 下一步：让唯一 native r4 ready，并以 quiescent→clear→exact-zero gate 后运行
+  32 条 scoped calibration。主验收 PASS 后才运行 B0 并自动计算、冻结 q25
 
 ## 当前阶段
 
@@ -58,7 +59,7 @@
 | P02 | `PASS_COMMITTED` | 历史 pinned 与新正式 venv 均 33/33；identity hashes PASS；commit/push `4d96f44065c07030ede67484a262006ec149626a`；READY marker 已发布 | — |
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
-| P05 | `IN_PROGRESS` | r1 `FAIL_TRACE_SCOPE`；r2 `FAIL_PRE_COHORT_QUIESCENCE`；r3 `FAIL_PREFILL_TERMINAL_LIFECYCLE` 且 0/32；engine recovery `e028d2c` 已 push，69/69 + replay PASS | 新 wheel identity、scoped native r4、B0 32、q25/config freeze |
+| P05 | `IN_PROGRESS` | r1/r2/r3 均保留失败；engine recovery `e028d2c` 与 wheel identity `ada6625` 已 push；新 wheel/replay/install/runtime probe PASS；唯一 native r4 加载中 | scoped native r4、B0 32、q25/config freeze |
 | P06–P08 | `NOT_STARTED` | — | P05 门禁 |
 
 ## 固定实验协议
@@ -124,7 +125,9 @@
 | `20260729T025543Z-p05-native-calibration-r2` | scope recovery 后首个 native 重跑；decode 配置不变 | `FAIL_PRE_COHORT_QUIESCENCE`：clear 返回 `[true]` 后仍有一个 startup warmup live state；门禁在第一个 cohort 请求前失败，0/32、0 trace | immutable HDFS attempt；TP8/model load、sampler、cleanup、archive、keepalive 均完整 |
 | P05 quiescence recovery | 仅在客户端有界等待 startup warmup 自然结束，再 clear+验 exact zero | PASS：永久 active 超时且 0 cohort；identity/HTTP 立即失败；verify race 有界重试；121/121；commit/push `fe0aea0` | 成功/失败均保留 poll/clear 轨迹；不清 live state、不改 SGLang/wheel/decode |
 | `20260729T033920Z-p05-native-calibration-r3` | quiescence recovery 后唯一 native 重跑；decode 配置不变 | `FAIL_PREFILL_TERMINAL_LIFECYCLE`：120/120 polls 恒为 active/leak=1；0 clear、0/32 cohort、q25 undefined | immutable HDFS attempt；TP8/model load、1027×8 sampler、cleanup、34-file archive、keepalive 完整 |
-| P05 prefill lifecycle recovery | prefill 终态、KV release 前补齐与 decode 相同的 speculative finish hook | PASS：精确 RED→GREEN；主 Agent 23+33+13=69 tests；独立 replay manifest/tree 与 executor 相同；commit/push `e028d2c` | patch/tree 已更新；旧 wheel真实保留但 superseded，新 wheel重建中 |
+| P05 prefill lifecycle recovery | prefill 终态、KV release 前补齐与 decode 相同的 speculative finish hook | PASS：精确 RED→GREEN；主 Agent 23+33+13=69 tests；独立 replay manifest/tree 与 executor 相同；commit/push `e028d2c` | patch/tree 已更新；旧 wheel真实保留但 superseded；新 wheel见下一行 |
+| P05 lifecycle wheel rebuild | 从 fixed base + `e028d2c` 重放、locked build、HDFS no-clobber publish、uv install | PASS：wheel `a5c14bd7…71f9` / 14,646,093 bytes；10-file/RECORD/import/runtime identity；主 Agent 53/53 + probe PASS；commit/push `ada6625` | 旧 wheel保留；后续 arm 只用新 wheel |
+| `20260729T044309Z-p05-native-calibration-r4` | lifecycle-repaired wheel 后唯一 native 重跑 | `IN_PROGRESS`：preflight/pause/contexts/registration PASS，TP=8 冷加载中；尚无 handshake/cohort/q25 | active HDFS run root；server `71408` / sampler `71415` |
 
 ## P04 integration smoke 当前状态
 
@@ -301,11 +304,14 @@
   33/33、protocol 13/13，并从固定 base 重放 patch；manifest SHA
   `942e2f0b…a3fe`、10-file tree `69e80df9…2422` 与 executor 精确相同。
   recovery commit/push `e028d2c31658a06b4f5a5ee072d7e21c79d51c36`。
-- 下一步只允许先从 patch SHA `a4077b9f…10c52` / tree
-  `69e80df9…2422` 重建、HDFS 发布并用 uv 安装新 formal wheel；旧
-  `f2054c…` wheel 保持历史身份但不再可用于后续 arm。新 identity 主验后动态创建
-  native r4；主 Agent验收 scoped trace 与 sampler terminal status 后，才可启动
-  P05 B0。
+- fixed patch/tree 已构建为 formal wheel `a5c14bd7…71f9`，通过唯一 HDFS staging
+  与 no-clobber rename 发布并用 uv 从 persistent path 安装。10-file、ZIP/RECORD、
+  import、P04/P05 53 tests 与 runtime identity probe 全 PASS；identity commit/push
+  为 `ada66253e719cd021cdec369914245b51ff46b61`。
+- 唯一 native r4 `20260729T044309Z-p05-native-calibration-r4` 已通过
+  preflight/pause/contexts-none 并进入 TP=8 冷加载。只有它完成
+  quiescent→clear→exact-zero、32 条 scoped outputs/trace、sampler/cleanup/archive
+  且主 Agent验收后，才可启动 P05 B0。
 
 ## P03 integration 当前证据
 

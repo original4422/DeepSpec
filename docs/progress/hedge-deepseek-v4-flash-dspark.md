@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T04:21:10Z`（450 分钟 checkpoint 提前 3 分 31 秒）
+- 快照时间：`2026-07-29T04:50:06Z`（480 分钟 checkpoint 提前 4 分 35 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`07:26:29` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`07:55:25` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -16,33 +16,35 @@
   - P05：native r1 `FAIL_TRACE_SCOPE`；native r2
     `FAIL_PRE_COHORT_QUIESCENCE`；native r3
     `FAIL_PREFILL_TERMINAL_LIFECYCLE`；最小 engine recovery
-    `e028d2c31658a06b4f5a5ee072d7e21c79d51c36` 已主审/push；新 formal wheel
-    正在 bounded CPU rebuild；B0 未运行
+    `e028d2c31658a06b4f5a5ee072d7e21c79d51c36` 与新 formal wheel
+    `a5c14bd7…71f9` 已主审/push；唯一 native r4 正在 TP=8 冷加载；B0 未运行
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：native r3 登记 server/sampler 已定向停止且
-  `04:00:55.063214Z` contexts none；当前仅 dedicated keepalive
-  `69805/69805/69805`，主 Agent `04:19Z` 独立复核 8×10 全卡 100%，无模型
-  server 或第二套 context
-- 最新 attempt：`20260729T033920Z-p05-native-calibration-r3`；
-  `FAIL_PREFILL_TERMINAL_LIFECYCLE`，0/32 cohort 请求、q25 未定义
+- keepalive / server / PID：r4 preflight 时 dedicated keepalive
+  `69805/69805/69805`、8×10 全卡 100%；launcher 已按序 pause 并证明 contexts
+  none，当前登记 launcher `71219`、server `71408`、sampler `71415`、
+  wait-ready client `71430`，没有第二服务
+- 最新 attempt：`20260729T044309Z-p05-native-calibration-r4`；active
+  `wait-ready`/模型冷加载，尚未执行 handshake 或发送 cohort 请求
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T033920Z-p05-native-calibration-r3`
-  （r3，34 项 immutable archive）
+  （r3，34 项 immutable archive）；r4 HDFS 占位目录已唯一创建，正式 artifacts
+  尚未 archive
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
   branch `exp/hedge-v4-dspark`；HEAD/pushed
-  `e028d2c31658a06b4f5a5ee072d7e21c79d51c36`
+  `ada66253e719cd021cdec369914245b51ff46b61`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
   P05 tooling `ce5d672`；sampler recovery `6b7145d`；trace-scope recovery
   `eb4962f`；failure docs `fd88b69`；quiescence recovery `fe0aea0`；
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
-  lifecycle recovery `e028d2c`；calibration config / result 尚未创建
-- 首要事项：从新 patch/tree 重建、发布并用 uv 安装新的 formal wheel；旧
-  `f2054c…` wheel 明确 superseded，未完成身份验收前不得启动 native r4
-- 下一检查点：`2026-07-29T04:54:41Z`
-- 下一 30 分钟动作：完成新 wheel 的 replay/build/HDFS/installed identity，
-  主审后动态创建 scoped native r4；P05 B0 继续锁住，不采用 r1 q25
+  lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration config /
+  result 尚未创建
+- 首要事项：让 r4 完成固定 target/draft 冷加载；ready 后必须先通过
+  quiescent→clear→exact-zero，再允许 32 条 cohort 请求
+- 下一检查点：`2026-07-29T05:24:41Z`
+- 下一 30 分钟动作：完成 r4 handshake、32 条 scoped native、validator、定向
+  cleanup 与 keepalive 恢复；主验 PASS 前不运行 B0，不采用 r1 q25
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -567,3 +569,33 @@
 - r3 清理后 dedicated keepalive 为 `69805/69805/69805`；主 Agent `04:19Z`
   重新运行 `mlx worker list` 与远端 status，确认仍是分配的 exact 8×H20，
   8×10 全卡 mean/min/max 100%、每卡 815 MiB，无模型 server。P05 B0 未运行。
+
+### 2026-07-29T04:54:41Z — 480 分钟 checkpoint
+
+- 实际快照于 `04:50:06Z` 提前 4 分 35 秒落盘。bounded CPU executor 从 exact
+  base `fdebc938…`、repair `e028d2c…`、patch `a4077b9f…10c52` 重放并构建新
+  formal wheel；10-file replay tree 仍为 `69e80df9…2422`。
+- 新 wheel 为 14,646,093 bytes / SHA-256
+  `a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9`。
+  ZIP、3,671-row RECORD、replay→primary source→wheel→installed 10-file hashes
+  与 4 个 non-repo-CWD imports 全 PASS。
+- HDFS hash-named entity 通过唯一 staging 与
+  `renameat2(RENAME_NOREPLACE)` no-clobber 发布；source/staging/final size/hash
+  一致，staging 已消失。旧 `f2054c…` wheel 保留且复验未变；formal venv 只用 uv
+  从新 persistent entity 重装。
+- executor 与主 Agent各自得到 P04/P05 53/53 tests PASS；主 Agent runtime probe
+  `status=PASS,false_checks=[]`，新旧 HDFS wheel size/hash、uv lock、compile、
+  JSON/diff gates 均成立。wheel/identity commit/push 为
+  `ada66253e719cd021cdec369914245b51ff46b61`。
+- 唯一 native r4
+  `20260729T044309Z-p05-native-calibration-r4` 的 preflight 确认 HEAD/origin
+  `ada6625` 且 clean、worker `4106666` exact 8×H20、HDFS/NVMe target ENOENT，
+  keepalive `69805/69805/69805` 的 8×10 gate 全卡 100%。
+- launcher 已按 lifecycle 顺序通过 pause 与 contexts-none，登记 launcher
+  `71219`、server `71408`、sampler `71415`；wait-ready client `71430` 绑定
+  server start ticks `197165743`、固定 port `31066`。当前仍在模型冷加载，尚未
+  ready、handshake 或发送 32 条请求，故不能宣称 r4/P05 PASS。
+- 一次只读 status snapshot 写入
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/_monitor-20260729T044309Z-p05-native-calibration-r4/status-0446.txt`；
+  该通用 monitor 在 active-load `nvidia-smi` 段 rc=1，没有 signal/环境修改，
+  正式 launcher/sampler 仍存活。没有 retry、第二服务或 B0。
