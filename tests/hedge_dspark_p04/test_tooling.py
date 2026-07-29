@@ -205,8 +205,8 @@ class RuntimeIdentityTests(unittest.TestCase):
         self.assertEqual(identity["status"], "PASS")
         self.assertEqual(
             identity["wheel"]["sha256"],
-            "f2054c32025182ea8b4e57731ffa9d015"
-            "0a40d5ac296f34e93c9b124181c7262",
+            "a5c14bd799117d0c491323b916a123c5"
+            "c2196940dc09a5567e0a561fa8de71f9",
         )
         self.assertEqual(
             identity["source"]["upstream_base_sha"],
@@ -218,7 +218,7 @@ class RuntimeIdentityTests(unittest.TestCase):
         )
         self.assertEqual(
             identity["dspark_integration"]["deepspec_commit"],
-            "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
+            "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
         )
         self.assertEqual(
             identity["decode_config_fingerprint"],
@@ -226,8 +226,8 @@ class RuntimeIdentityTests(unittest.TestCase):
         )
         self.assertEqual(
             identity["source"]["patched_tree_sha256"],
-            "996fbfd6d83c0f001d44d75a7aaf097"
-            "25d338418d76087efa2ea2f8ea02b94bb",
+            "69e80df97b815587a5b7b57665c99cd"
+            "436b2ceb617dc71f31c7e44807ab82422",
         )
         self.assertEqual(
             identity["wheel"]["formal_actual_sha256"],

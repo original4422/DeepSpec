@@ -65,21 +65,21 @@ B0_CONFIG_BYTES = (
 )
 SGLANG_BASE_SHA = "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1"
 PURE_CORE_COMMIT = "4d96f44065c07030ede67484a262006ec149626a"
-INTEGRATION_COMMIT = "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc"
+INTEGRATION_COMMIT = "e028d2c31658a06b4f5a5ee072d7e21c79d51c36"
 PATCHED_TREE_SHA256 = (
-    "996fbfd6d83c0f001d44d75a7aaf097"
-    "25d338418d76087efa2ea2f8ea02b94bb"
+    "69e80df97b815587a5b7b57665c99cd"
+    "436b2ceb617dc71f31c7e44807ab82422"
 )
 FINAL_WHEEL_SHA256 = (
-    "f2054c32025182ea8b4e57731ffa9d015"
-    "0a40d5ac296f34e93c9b124181c7262"
+    "a5c14bd799117d0c491323b916a123c5"
+    "c2196940dc09a5567e0a561fa8de71f9"
 )
-FINAL_WHEEL_SIZE = 14646094
+FINAL_WHEEL_SIZE = 14646093
 PERSISTENT_WHEEL_PATH = Path(
     "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/"
     "formal-wheel-"
-    "f2054c32025182ea8b4e57731ffa9d015"
-    "0a40d5ac296f34e93c9b124181c7262/"
+    "a5c14bd799117d0c491323b916a123c5"
+    "c2196940dc09a5567e0a561fa8de71f9/"
     "sglang-0.5.16-cp311-cp311-linux_x86_64.whl"
 )
 EXPECTED_DISTRIBUTIONS = {
@@ -407,8 +407,8 @@ def build_engine_identity(
         "dspark_integration": {
             "deepspec_commit": INTEGRATION_COMMIT,
             "patch_sha256": (
-                "8e8cc840f4656391a792ac3312e7ee11"
-                "c0738f80cbf9989392edfc0364d74170"
+                "a4077b9f822c9c830511adf85a3480ed"
+                "1f6f994ff416da20ce2391b769910c52"
             ),
         },
         "wheel": {

@@ -2,12 +2,13 @@
   "schema_version": 1,
   "status": "PASS",
   "deepspec_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
+  "deepspec_integration_commit": "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
   "canonical_root": "deepspec/hedge_spec",
   "target_root": "python/sglang/srt/speculative/hedge_spec",
   "injection_method": "scripts/hedge_dspark_p03_apply.py reads the committed canonical bytes and writes them only after integration.patch passes git apply --check",
   "sglang_base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
-  "clean_replay_source": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4",
-  "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4.replay_manifest.json",
+  "clean_replay_source": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay",
+  "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay_manifest.json",
   "clean_replay_manifest_sha256": "942e2f0bf9c65d91b05a3142a48a7d49370e43933de3b935dc9bb0f8c8c5a3fe",
   "clean_replay_patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
   "files": [
@@ -52,6 +53,7 @@
       "byte_identical": true
     }
   ],
+  "wheel_sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9",
   "wheel_contains_all_files": true,
   "installed_hashes_match_clean_replay": true,
   "non_deepspec_cwd_import": {

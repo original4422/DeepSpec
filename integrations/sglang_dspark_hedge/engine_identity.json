@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
   "status": "PASS",
+  "generated_at_utc": "2026-07-29T04:31:41Z",
   "sglang": {
     "version": "0.5.16",
     "upstream_base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
     "actual_build_source_head": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
-    "actual_build_source_tree": "/tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05",
-    "patched_tree_sha256": "996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb"
+    "actual_build_source_tree": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay",
+    "primary_patched_source": "/home/tiger/src/hedge-v4-dspark-sglang-fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
+    "patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422"
   },
   "hedge_core": {
     "deepspec_commit": "4d96f44065c07030ede67484a262006ec149626a",
@@ -14,26 +16,29 @@
     "injection_manifest": "integrations/sglang_dspark_hedge/core_injection_manifest.json"
   },
   "dspark_integration": {
-    "deepspec_commit": null,
-    "commit_state": "prefill lifecycle repair is uncommitted; main agent owns commit/push",
+    "deepspec_commit": "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
+    "commit_state": "accepted lifecycle-repair commit; ancestor of the validation HEAD and upstream",
     "prior_integration_commit": "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
     "patch_sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52",
     "patch_path": "integrations/sglang_dspark_hedge/integration.patch"
   },
   "current_patch_replay": {
-    "source": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4",
-    "manifest": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4.replay_manifest.json",
+    "source": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay",
+    "manifest": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay_manifest.json",
     "manifest_sha256": "942e2f0bf9c65d91b05a3142a48a7d49370e43933de3b935dc9bb0f8c8c5a3fe",
     "patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
-    "matches_formal_wheel_source_files": false,
-    "wheel_rebuild_required": true
+    "matches_formal_wheel_source_files": true,
+    "wheel_rebuild_required": false
   },
   "wheel": {
     "filename": "sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
-    "sha256": "f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262",
-    "size_bytes": 14646094,
-    "build_attempt": "locked07",
-    "build_path": "/tmp/deepspec-hedge-dspark-p03-build.locked07/wheel/sglang-0.5.16-cp311-cp311-linux_x86_64.whl"
+    "sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9",
+    "size_bytes": 14646093,
+    "build_attempt": "p05-lifecycle-rebuild-SHy4a9",
+    "build_path": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/build/wheel/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+    "persistent_path": "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+    "zip_integrity": "PASS",
+    "record_integrity": "PASS"
   },
   "build_lock": {
     "dependency_group": "p03-build",
@@ -50,17 +55,41 @@
       "wheel": "0.47.0"
     }
   },
+  "hdfs_publication": {
+    "method": "renameat2(RENAME_NOREPLACE)",
+    "source_staging_final_size_sha256_match": true,
+    "old_formal_wheel_preserved": true,
+    "staging_absent_after_publish": true,
+    "evidence": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/hdfs_publish.json",
+    "evidence_sha256": "037f6de96b6a4306beb9ca8b95ba7d47d21e6169d79932ae9c026a2e12b3e710"
+  },
   "installation": {
     "manager": "uv 0.11.32",
     "venv": "/home/tiger/venvs/hedge-v4-dspark",
     "distribution_version": "0.5.16",
     "distribution_location": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages",
-    "record_sha256": "6226c8afa6c04ae20b44ec7eabafc99ce33e7c14f174ba706eedf77e281663d5",
+    "direct_url_sha256": "7c053b271eae7e1bf22509a225707f82c7c799073b8d58d0e16f266298e125ce",
+    "record_sha256": "675b26b198e9ebc6b14d4961b3d9f70be4fc3a54e50319403704c29c5afa283f",
+    "all_ten_source_hashes_match": true,
     "import_paths": {
       "sglang": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/__init__.py",
       "adapter": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/srt/speculative/dspark_components/hedge_dspark.py",
-      "core": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/srt/speculative/hedge_spec/__init__.py"
-    }
+      "core": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/srt/speculative/hedge_spec/__init__.py",
+      "prefill_lifecycle": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages/sglang/srt/managers/scheduler_components/batch_result_processor.py"
+    },
+    "verification": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/installation_verification.json",
+    "verification_sha256": "bedb359d51ffde301f6bc65066e8d8f0fbae74d974ad8a7dbc9d6c45508f2a36"
+  },
+  "final_validation": {
+    "uv_lock_check": "PASS",
+    "p04_p05_unittest_count": 53,
+    "p04_p05_unittest_status": "PASS",
+    "p04_p05_unittest_log": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/p04_p05_regression.log",
+    "p04_p05_unittest_log_sha256": "aa15ef8896062c8b4c7bb721572ef65f534ae62408c1dc2486898e4dcaf6204b",
+    "runtime_identity_probe_status": "PASS",
+    "runtime_identity_probe_false_checks": [],
+    "runtime_identity_probe": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/runtime_identity_probe.final.json",
+    "runtime_identity_probe_sha256": "5f824be051ce75a8fc276a090e2235e8a57dd4676f5ea015733f1bf8ecf288a1"
   },
   "runtime_identity": {
     "proposal_width": 5,
@@ -79,6 +108,6 @@
     },
     "decode_config_fingerprint": null,
     "decode_config_state": "P05 calibration has not frozen B/g/m yet",
-    "formal_arm_rule": "the recorded wheel predates the prefill lifecycle repair and is superseded for future arms; rebuild from current_patch_replay before rerunning P05"
+    "formal_arm_rule": "the accepted formal wheel contains the e028d2c prefill lifecycle repair and exactly matches the clean replay tree"
   }
 }

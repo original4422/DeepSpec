@@ -1,24 +1,26 @@
 {
   "schema_version": 1,
   "status": "PASS",
+  "generated_at_utc": "2026-07-29T04:31:41Z",
   "formal_wheel": {
-    "attempt": "locked07",
-    "source": "/tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05",
-    "path": "/tmp/deepspec-hedge-dspark-p03-build.locked07/wheel/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
-    "persistent_path": "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+    "attempt": "p05-lifecycle-rebuild-SHy4a9",
+    "source": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay",
+    "path": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/build/wheel/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+    "persistent_path": "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
     "filename": "sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
-    "sha256": "f2054c32025182ea8b4e57731ffa9d0150a40d5ac296f34e93c9b124181c7262",
-    "size_bytes": 14646094,
+    "sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9",
+    "size_bytes": 14646093,
     "exactly_one_wheel_in_attempt": true,
-    "zip_integrity": "PASS"
+    "zip_integrity": "PASS",
+    "record_integrity": "PASS"
   },
   "build": {
     "script": "scripts/hedge_dspark_p03_build.sh",
     "script_sha256": "5553c8f603b6f2cd06d00da394c9970f4f2120b16249afddee3c25b3b57eccb3",
-    "command": "bash scripts/hedge_dspark_p03_build.sh /tmp/deepspec-hedge-dspark-p03-replay.sentinelfix05 /home/tiger/venvs/hedge-v4-dspark /tmp/deepspec-hedge-dspark-p03-build.locked07",
-    "raw_log": "/tmp/deepspec-hedge-dspark-p03-build.locked07.build.log",
-    "raw_log_sha256": "133da0521d036d54a1657da0eb2973416c08ad374b1dd080c6c69711f9e485d2",
-    "raw_log_size_bytes": 1831192,
+    "command": "bash scripts/hedge_dspark_p03_build.sh /tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay /home/tiger/venvs/hedge-v4-dspark /tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/build",
+    "raw_log": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/build.log",
+    "raw_log_sha256": "34b7ac09fe3c34c2351ef0919b3c6e664a56f51665614771f4eeb20be56dce6b",
+    "raw_log_size_bytes": 2302812,
     "python": "3.11.2",
     "python_build_frontend": "build 1.5.0",
     "setuptools": "81.0.0",
@@ -55,6 +57,11 @@
       "path": "sglang/srt/entrypoints/openai/serving_chat.py",
       "sha256": "8b5416ab4c30243384d9b5a74dce74c9e1b1d90a2131b90faeb28e3e99251edc",
       "size_bytes": 96015
+    },
+    {
+      "path": "sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "sha256": "541666426931d21ebd7ecb30a1d099469d66efee02879c045edf072270084176",
+      "size_bytes": 41613
     },
     {
       "path": "sglang/srt/speculative/dspark_components/dspark_verify.py",
@@ -97,25 +104,60 @@
       "size_bytes": 9455
     }
   ],
+  "publication": {
+    "method": "renameat2(RENAME_NOREPLACE)",
+    "staging_path": "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/.staging-formal-wheel-a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9-SHy4a9",
+    "staging_absent_after_publish": true,
+    "source_staging_final_size_sha256_match": true,
+    "source_preserved": true,
+    "old_formal_wheel_preserved": true,
+    "evidence": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/hdfs_publish.json",
+    "evidence_sha256": "037f6de96b6a4306beb9ca8b95ba7d47d21e6169d79932ae9c026a2e12b3e710"
+  },
   "installation": {
-    "command": "/home/tiger/.local/bin/uv pip install --python /home/tiger/venvs/hedge-v4-dspark/bin/python --reinstall --no-deps <formal-wheel>",
+    "command": "/home/tiger/.local/bin/uv pip install --python /home/tiger/venvs/hedge-v4-dspark/bin/python --reinstall --no-deps <persistent-formal-wheel>",
+    "manager": "uv 0.11.32",
     "venv": "/home/tiger/venvs/hedge-v4-dspark",
     "distribution_location": "/home/tiger/venvs/hedge-v4-dspark/lib/python3.11/site-packages",
-    "direct_url_sha256": "689331b076e21bbe19f975048bee69e0ac05f294cf13d84d2f35d0132a1ea66f",
-    "record_sha256": "6226c8afa6c04ae20b44ec7eabafc99ce33e7c14f174ba706eedf77e281663d5"
+    "direct_url_sha256": "7c053b271eae7e1bf22509a225707f82c7c799073b8d58d0e16f266298e125ce",
+    "record_sha256": "675b26b198e9ebc6b14d4961b3d9f70be4fc3a54e50319403704c29c5afa283f",
+    "raw_log": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/hdfs_install.log",
+    "raw_log_sha256": "afbad0f81d7dbf8b48f7dda056abadac30e42c4cdc5e226b45558c3ef1cac93e"
   },
   "verification": {
     "cwd": "/tmp",
     "pythonpath_unset": true,
     "all_imports_resolve_under_formal_venv": true,
-    "all_nine_source_to_installed_hashes_match": true,
+    "all_ten_source_to_wheel_to_installed_hashes_match": true,
     "wheel_contains_identity_json": true,
+    "wheel_record_rows": 3671,
+    "wheel_record_failures": 0,
+    "prepublish_evidence": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/wheel_verification.prepublish.json",
+    "prepublish_evidence_sha256": "2eddf1edba531d40696ecfb8f4adcdd53668b24d746d8d5b068944ed4b5f23d0",
+    "installed_evidence": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/installation_verification.json",
+    "installed_evidence_sha256": "bedb359d51ffde301f6bc65066e8d8f0fbae74d974ad8a7dbc9d6c45508f2a36",
+    "p04_p05_regression": {
+      "framework": "unittest",
+      "tests_run": 53,
+      "failures": 0,
+      "errors": 0,
+      "log": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/p04_p05_regression.log",
+      "log_sha256": "aa15ef8896062c8b4c7bb721572ef65f534ae62408c1dc2486898e4dcaf6204b"
+    },
+    "runtime_identity_probe": {
+      "status": "PASS",
+      "false_checks": [],
+      "path": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/runtime_identity_probe.final.json"
+    },
     "artifact_only_patch_replay": {
-      "patch_sha256": "8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170",
-      "source": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08",
-      "manifest_sha256": "57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8",
-      "patched_tree_sha256": "996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb",
-      "nine_source_files_unchanged": true,
+      "deepspec_integration_commit": "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
+      "patch_sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52",
+      "source": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay",
+      "manifest": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay_manifest.json",
+      "manifest_sha256": "942e2f0bf9c65d91b05a3142a48a7d49370e43933de3b935dc9bb0f8c8c5a3fe",
+      "patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
+      "ten_source_files_unchanged": true,
+      "formal_wheel_source_matches_clean_replay": true,
       "formal_wheel_rebuild_required": false
     }
   }

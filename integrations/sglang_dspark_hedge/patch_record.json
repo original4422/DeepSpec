@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "PASS",
-  "generated_at_utc": "2026-07-29T04:16:17Z",
+  "generated_at_utc": "2026-07-29T04:31:41Z",
   "deepspec": {
     "branch": "exp/hedge-v4-dspark",
     "head_during_p03": "7c2ac5a6f52c109c9a7a75c4146b872d3f27083f",
@@ -9,16 +9,16 @@
     "integration_commit": "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
     "integration_commit_owner": "main agent; accepted and pushed 2026-07-28T23:01:56Z",
     "head_during_lifecycle_repair": "9e4acebd45c72d7baf04ef4363c7db369aaaf264",
-    "lifecycle_repair_commit": null,
-    "lifecycle_repair_commit_state": "uncommitted; main agent owns commit/push"
+    "lifecycle_repair_commit": "e028d2c31658a06b4f5a5ee072d7e21c79d51c36",
+    "lifecycle_repair_commit_state": "accepted and pushed; fixed integration identity for this rebuild"
   },
   "sglang": {
     "version": "0.5.16",
     "base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
     "head_after_apply": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
     "primary_patched_source": "/home/tiger/src/hedge-v4-dspark-sglang-fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
-    "clean_replay_source": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4",
-    "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4.replay_manifest.json",
+    "clean_replay_source": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay",
+    "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p05-wheel-rebuild.SHy4a9/replay_manifest.json",
     "clean_replay_manifest_sha256": "942e2f0bf9c65d91b05a3142a48a7d49370e43933de3b935dc9bb0f8c8c5a3fe",
     "final_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422"
   },
@@ -58,15 +58,28 @@
     "dependency_group": "p03-build",
     "pyproject_sha256": "2ef3e7e58af7ea7c6835f975aa02ec87fb071743bd2368d9f471fe394710a9b1",
     "uv_lock_sha256": "0524523b1c0875bdefb1cb9e5b809f60dcf6dc9941e139c74be5ceba0096c166",
+    "build_script_sha256": "5553c8f603b6f2cd06d00da394c9970f4f2120b16249afddee3c25b3b57eccb3",
     "frozen_group_sync": true,
     "exact_metadata_assertions": true
+  },
+  "formal_wheel": {
+    "sha256": "a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9",
+    "size_bytes": 14646093,
+    "persistent_path": "/mnt/hdfs/pengzegang/DeepSpec/artifacts/hedge-dspark/formal-wheel-a5c14bd799117d0c491323b916a123c5c2196940dc09a5567e0a561fa8de71f9/sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
+    "published_no_clobber": true,
+    "installed_with_uv": true
   },
   "artifact_checks": {
     "zero_context_has_no_context_lines": true,
     "isolated_staged_diff_check": "PASS",
     "replay_source_file_count": 10,
-    "formal_wheel_source_matches_clean_replay": false,
-    "formal_wheel_rebuild_required": true
+    "formal_wheel_source_matches_clean_replay": true,
+    "formal_wheel_rebuild_required": false,
+    "wheel_zip_and_record": "PASS",
+    "installed_ten_file_identity": "PASS",
+    "base_core_integration_tree_identity": "PASS",
+    "p04_p05_unittest_53": "PASS",
+    "runtime_identity_probe_false_checks": []
   },
   "clean_replay_status": [
     " M python/sglang/srt/entrypoints/openai/serving_chat.py",
