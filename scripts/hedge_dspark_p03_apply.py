@@ -23,6 +23,7 @@ CORE_FILES = (
 )
 PATCHED_FILES = (
     "python/sglang/srt/entrypoints/openai/serving_chat.py",
+    "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
     "python/sglang/srt/speculative/dspark_components/dspark_verify.py",
     "python/sglang/srt/speculative/dspark_components/dspark_worker_v2.py",
     "python/sglang/srt/speculative/dspark_components/hedge_dspark.py",

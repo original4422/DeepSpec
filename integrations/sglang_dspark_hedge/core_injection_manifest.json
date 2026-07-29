@@ -6,9 +6,10 @@
   "target_root": "python/sglang/srt/speculative/hedge_spec",
   "injection_method": "scripts/hedge_dspark_p03_apply.py reads the committed canonical bytes and writes them only after integration.patch passes git apply --check",
   "sglang_base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
-  "clean_replay_source": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08",
-  "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08.replay_manifest.json",
-  "clean_replay_manifest_sha256": "57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8",
+  "clean_replay_source": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4",
+  "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4.replay_manifest.json",
+  "clean_replay_manifest_sha256": "942e2f0bf9c65d91b05a3142a48a7d49370e43933de3b935dc9bb0f8c8c5a3fe",
+  "clean_replay_patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
   "files": [
     {
       "name": "__init__.py",

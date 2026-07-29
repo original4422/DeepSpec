@@ -1,36 +1,40 @@
 {
   "schema_version": 1,
   "status": "PASS",
-  "generated_at_utc": "2026-07-28T22:58:59Z",
+  "generated_at_utc": "2026-07-29T04:16:17Z",
   "deepspec": {
     "branch": "exp/hedge-v4-dspark",
     "head_during_p03": "7c2ac5a6f52c109c9a7a75c4146b872d3f27083f",
     "pure_core_commit": "4d96f44065c07030ede67484a262006ec149626a",
     "integration_commit": "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
-    "integration_commit_owner": "main agent; accepted and pushed 2026-07-28T23:01:56Z"
+    "integration_commit_owner": "main agent; accepted and pushed 2026-07-28T23:01:56Z",
+    "head_during_lifecycle_repair": "9e4acebd45c72d7baf04ef4363c7db369aaaf264",
+    "lifecycle_repair_commit": null,
+    "lifecycle_repair_commit_state": "uncommitted; main agent owns commit/push"
   },
   "sglang": {
     "version": "0.5.16",
     "base_sha": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
     "head_after_apply": "fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
     "primary_patched_source": "/home/tiger/src/hedge-v4-dspark-sglang-fdebc938f7f4d16fe6b9f55dcd9a767cf0899ea1",
-    "clean_replay_source": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08",
-    "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08.replay_manifest.json",
-    "clean_replay_manifest_sha256": "57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8",
-    "final_tree_sha256": "996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb"
+    "clean_replay_source": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4",
+    "clean_replay_manifest": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4.replay_manifest.json",
+    "clean_replay_manifest_sha256": "942e2f0bf9c65d91b05a3142a48a7d49370e43933de3b935dc9bb0f8c8c5a3fe",
+    "final_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422"
   },
   "patch": {
     "path": "integrations/sglang_dspark_hedge/integration.patch",
-    "sha256": "8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170",
-    "size_bytes": 38518,
+    "sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52",
+    "size_bytes": 39428,
     "format": "git full-index binary patch with unified context set to zero",
     "apply_flags": [
       "--unidiff-zero"
     ],
     "apply_script": "scripts/hedge_dspark_p03_apply.py",
-    "apply_script_sha256": "e884d57a1a1ecf80364ee15a48aab1eed4f170ac45bc4136c45d9809e8f341e4",
+    "apply_script_sha256": "b2f86aeddbd1eb7bcca349872ee4006c7f82a443e31715dd6c5b6ee49536023e",
     "patched_files": [
       "python/sglang/srt/entrypoints/openai/serving_chat.py",
+      "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
       "python/sglang/srt/speculative/dspark_components/dspark_verify.py",
       "python/sglang/srt/speculative/dspark_components/dspark_worker_v2.py",
       "python/sglang/srt/speculative/dspark_components/hedge_dspark.py"
@@ -45,6 +49,7 @@
     "verify_width": 6,
     "cutoff_before_budget_charge": true,
     "stable_request_state_key": "request-pool slot with rid/serial lifecycle validation",
+    "prefill_terminal_lifecycle": "generation requests that finish during prefill notify BaseSpecWorker exactly once before KV release",
     "calibration_overflow": "capacity+1 device sentinel row; snapshots expose only the first capacity rows",
     "hot_path_host_sync": false,
     "per_block_file_io": false
@@ -59,11 +64,13 @@
   "artifact_checks": {
     "zero_context_has_no_context_lines": true,
     "isolated_staged_diff_check": "PASS",
-    "nine_source_files_match_prior_formal_build_tree": true,
-    "formal_wheel_rebuild_required": false
+    "replay_source_file_count": 10,
+    "formal_wheel_source_matches_clean_replay": false,
+    "formal_wheel_rebuild_required": true
   },
   "clean_replay_status": [
     " M python/sglang/srt/entrypoints/openai/serving_chat.py",
+    " M python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
     " M python/sglang/srt/speculative/dspark_components/dspark_verify.py",
     " M python/sglang/srt/speculative/dspark_components/dspark_worker_v2.py",
     "?? python/sglang/srt/speculative/dspark_components/hedge_dspark.py",

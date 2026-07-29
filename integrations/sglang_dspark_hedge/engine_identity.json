@@ -14,18 +14,19 @@
     "injection_manifest": "integrations/sglang_dspark_hedge/core_injection_manifest.json"
   },
   "dspark_integration": {
-    "deepspec_commit": "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
-    "commit_state": "accepted, committed, and pushed by main agent",
-    "patch_sha256": "8e8cc840f4656391a792ac3312e7ee11c0738f80cbf9989392edfc0364d74170",
+    "deepspec_commit": null,
+    "commit_state": "prefill lifecycle repair is uncommitted; main agent owns commit/push",
+    "prior_integration_commit": "3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc",
+    "patch_sha256": "a4077b9f822c9c830511adf85a3480ed1f6f994ff416da20ce2391b769910c52",
     "patch_path": "integrations/sglang_dspark_hedge/integration.patch"
   },
   "current_patch_replay": {
-    "source": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08",
-    "manifest": "/tmp/deepspec-hedge-dspark-p03-replay.zerocontext08.replay_manifest.json",
-    "manifest_sha256": "57328fd1f742b46b6639ca19a20c4ba32c37e3956b6e0bf07c572c504b17e9f8",
-    "patched_tree_sha256": "996fbfd6d83c0f001d44d75a7aaf09725d338418d76087efa2ea2f8ea02b94bb",
-    "matches_formal_wheel_source_files": true,
-    "wheel_rebuild_required": false
+    "source": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4",
+    "manifest": "/tmp/deepspec-hedge-dspark-p05-replay.lifecycle.0yojn4.replay_manifest.json",
+    "manifest_sha256": "942e2f0bf9c65d91b05a3142a48a7d49370e43933de3b935dc9bb0f8c8c5a3fe",
+    "patched_tree_sha256": "69e80df97b815587a5b7b57665c99cd436b2ceb617dc71f31c7e44807ab82422",
+    "matches_formal_wheel_source_files": false,
+    "wheel_rebuild_required": true
   },
   "wheel": {
     "filename": "sglang-0.5.16-cp311-cp311-linux_x86_64.whl",
@@ -78,6 +79,6 @@
     },
     "decode_config_fingerprint": null,
     "decode_config_state": "P05 calibration has not frozen B/g/m yet",
-    "formal_arm_rule": "native, B=0, and B>0 must reuse this wheel SHA unless a decode-affecting repair invalidates every prior arm"
+    "formal_arm_rule": "the recorded wheel predates the prefill lifecycle repair and is superseded for future arms; rebuild from current_patch_replay before rerunning P05"
   }
 }

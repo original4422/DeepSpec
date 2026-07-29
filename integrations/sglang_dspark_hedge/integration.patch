@@ -25,6 +25,20 @@ index 021d222834aa7cc388a8bf253d2d811917331086..6c1a77e1798913edc3af52b034459efa
 +                _meta_info_with_output_token_ids(ret_item)
 +                if request.return_meta_info
 +                else None
+diff --git a/python/sglang/srt/managers/scheduler_components/batch_result_processor.py b/python/sglang/srt/managers/scheduler_components/batch_result_processor.py
+index aca94e6163e09cb5f97934efa20569cadd5072c2..b96c33dd07d3ea5907fc348996da3cb862d0fc2d 100644
+--- a/python/sglang/srt/managers/scheduler_components/batch_result_processor.py
++++ b/python/sglang/srt/managers/scheduler_components/batch_result_processor.py
+@@ -237,0 +238,9 @@ class SchedulerBatchResultProcessor:
++                    if req.finished() and isinstance(
++                        self.draft_worker, BaseSpecWorker
++                    ):
++                        self.draft_worker.note_request_finished(
++                            rid=req.rid,
++                            natural_stop=isinstance(
++                                req.finished_reason, FINISH_MATCHED_TOKEN
++                            ),
++                        )
 diff --git a/python/sglang/srt/speculative/dspark_components/dspark_verify.py b/python/sglang/srt/speculative/dspark_components/dspark_verify.py
 index 43099c9fe5d83842053f895493cbde504f56e5f8..1a47719b36f24a3277dbbbc2e3a6d78b5905a14c 100644
 --- a/python/sglang/srt/speculative/dspark_components/dspark_verify.py

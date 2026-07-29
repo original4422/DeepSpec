@@ -30,6 +30,12 @@ if str(SGLANG_PYTHON) not in sys.path:
 from sglang.srt.entrypoints.openai.serving_chat import (  # noqa: E402
     _meta_info_with_output_token_ids,
 )
+from sglang.srt.managers.schedule_batch import Req  # noqa: E402
+from sglang.srt.managers.scheduler_components.batch_result_processor import (  # noqa: E402
+    SchedulerBatchResultProcessor,
+)
+from sglang.srt.sampling.sampling_params import SamplingParams  # noqa: E402
+from sglang.srt.speculative.base_spec_worker import BaseSpecWorker  # noqa: E402
 from sglang.srt.speculative.dspark_components.dspark_draft import (  # noqa: E402
     DraftBlockResult,
 )
@@ -518,6 +524,94 @@ class RequestLifecycleTests(unittest.TestCase):
                 logits=logits,
                 slots=[1],
             )
+
+
+class _HedgeLifecycleWorker(BaseSpecWorker):
+    def __init__(self, adapter: DSparkHedgeAdapter):
+        self.adapter = adapter
+        self.finish_events: list[tuple[str, bool]] = []
+
+    def note_request_finished(self, *, rid: str, natural_stop: bool) -> None:
+        self.finish_events.append((rid, natural_stop))
+        self.adapter.note_request_finished(rid=rid, natural_stop=natural_stop)
+
+
+class PrefillTerminalLifecycleTests(unittest.TestCase):
+    def test_prefill_finished_spec_request_releases_request_state_once(self) -> None:
+        adapter = _adapter(mode="calibration", config=None)
+        worker = _HedgeLifecycleWorker(adapter)
+        sampling_params = SamplingParams(max_new_tokens=1, temperature=0)
+        sampling_params.normalize(None)
+        req = Req(
+            rid="sglang_health_check_fixture",
+            origin_input_text="",
+            origin_input_ids=[0],
+            sampling_params=sampling_params,
+        )
+        req.req_pool_idx = 1
+        batch = SimpleNamespace(
+            reqs=[req],
+            req_pool_indices_cpu=torch.tensor([1], dtype=torch.int64),
+            req_to_token_pool=SimpleNamespace(_alloc_size=8),
+            decoding_reqs=None,
+            return_logprob=False,
+            prefill_stats=None,
+            dp_cooperation_info=None,
+        )
+        adapter.bind_batch(batch)
+
+        # KV release is outside this lifecycle seam. Model it as already absent
+        # while retaining the real HEDGE binding created at prefill.
+        req.req_pool_idx = None
+        req.kv = None
+        processor = SchedulerBatchResultProcessor(
+            is_generation=True,
+            disaggregation_mode=None,
+            enable_overlap=False,
+            enable_overlap_mlx=False,
+            server_args=SimpleNamespace(),
+            model_config=SimpleNamespace(think_end_id=None),
+            token_to_kv_pool_allocator=None,
+            tree_cache=SimpleNamespace(supports_mamba=lambda: True),
+            hisparse_coordinator=None,
+            req_to_token_pool=None,
+            decode_offload_manager=None,
+            metrics_collector=None,
+            metrics_reporter=SimpleNamespace(
+                report_prefill_stats=lambda *args, **kwargs: None
+            ),
+            draft_worker=worker,
+            model_worker=None,
+            logprob_result_processor=None,
+            output_streamer=SimpleNamespace(
+                stream_output=lambda *args, **kwargs: None
+            ),
+            abort_request=lambda *args, **kwargs: None,
+        )
+        result = SimpleNamespace(
+            copy_done=None,
+            routed_experts_output=None,
+            indexer_topk_output=None,
+            logits_output=SimpleNamespace(
+                hidden_states=None,
+                customized_info=None,
+            ),
+            next_token_ids=torch.tensor([7], dtype=torch.int64),
+            extend_input_len_per_req=None,
+            extend_logprob_start_len_per_req=None,
+            can_run_cuda_graph=False,
+        )
+
+        processor.process_batch_result_prefill(batch, result)
+
+        self.assertEqual(
+            worker.finish_events,
+            [("sglang_health_check_fixture", False)],
+        )
+        snapshot = adapter.snapshot()
+        self.assertEqual(snapshot["active_request_states"], 0)
+        self.assertEqual(snapshot["requests_finished"], 1)
+        self.assertEqual(snapshot["requests_non_natural"], 1)
 
 
 class CalibrationTraceTests(unittest.TestCase):
