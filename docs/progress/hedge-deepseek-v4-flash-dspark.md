@@ -3,9 +3,9 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T04:50:06Z`（480 分钟 checkpoint 提前 4 分 35 秒）
+- 快照时间：`2026-07-29T05:10:24Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`07:55:25` / `2026-07-29T08:54:41Z`
+- elapsed / deadline：`08:15:43` / `2026-07-29T08:54:41Z`
 - 当前 phase：P00–P04 均已 PASS；P05 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
@@ -13,25 +13,20 @@
   - P02：主 Agent 验收 `PASS`；新正式 venv 33/33 tests PASS，commit/push `4d96f44065c07030ede67484a262006ec149626a`，READY marker 已发布
   - P03：主验收 `PASS`；integration `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc` 与 identity/progress `eb7b4bff850e017d708bccf27e1e1e2132bd1cd3` 均已 push
   - P04：主 Agent 验收 `PASS`；结果 commit/push `3e10b780264557e84a3cab5c1a196dc7c2a00496`
-  - P05：native r1 `FAIL_TRACE_SCOPE`；native r2
-    `FAIL_PRE_COHORT_QUIESCENCE`；native r3
-    `FAIL_PREFILL_TERMINAL_LIFECYCLE`；最小 engine recovery
+  - P05：native r1/r2/r3 的三类失败证据保持；最小 engine recovery
     `e028d2c31658a06b4f5a5ee072d7e21c79d51c36` 与新 formal wheel
-    `a5c14bd7…71f9` 已主审/push；唯一 native r4 正在 TP=8 冷加载；B0 未运行
+    `a5c14bd7…71f9` 已主审/push；唯一 native r4 已 32/32、scoped trace、
+    TP8/GPU/cleanup/archive 主审 `PASS`，候选 q25=`2.0625`；B0 未运行
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：r4 preflight 时 dedicated keepalive
-  `69805/69805/69805`、8×10 全卡 100%；launcher 已按序 pause 并证明 contexts
-  none，当前登记 launcher `71219`、server `71408`、sampler `71415`、
-  wait-ready client `71430`，没有第二服务
-- 最新 attempt：`20260729T044309Z-p05-native-calibration-r4`；active
-  `wait-ready`/模型冷加载，尚未执行 handshake 或发送 cohort 请求
+- keepalive / server / PID：r4 登记 launcher/server/sampler 已正常退出，server
+  `71408` 与 sampler `71415` 仅按登记 identity 定向停止，contexts none；
+  dedicated keepalive 已恢复为 `80819/80819/80819`，8×10 全卡 100%
+- 最新 attempt：`20260729T044309Z-p05-native-calibration-r4`；launcher rc=0，
+  32/32、0 retry、5183 completion tokens；live/artifact/shutdown/archive PASS
 - 最新 immutable HDFS artifact：
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T033920Z-p05-native-calibration-r3`
-  （r3，34 项 immutable archive）；r4 HDFS 占位目录已唯一创建，正式 artifacts
-  尚未 archive
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；HEAD/pushed
-  `ada66253e719cd021cdec369914245b51ff46b61`
+  branch `exp/hedge-v4-dspark`；当前已 push checkpoint `72a4a46`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -40,11 +35,11 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration config /
   result 尚未创建
-- 首要事项：让 r4 完成固定 target/draft 冷加载；ready 后必须先通过
-  quiescent→clear→exact-zero，再允许 32 条 cohort 请求
+- 首要事项：封存 r4 PASS Git 节点后运行唯一 P05 B0 32 条；随后逐样本比较完整
+  token IDs，并由 reducer 冻结 `g=B=2.0625,m=1`
 - 下一检查点：`2026-07-29T05:24:41Z`
-- 下一 30 分钟动作：完成 r4 handshake、32 条 scoped native、validator、定向
-  cleanup 与 keepalive 恢复；主验 PASS 前不运行 B0，不采用 r1 q25
+- 下一 30 分钟动作：完成 r4 文档 commit/push，派发唯一 B0 attempt；B0 归档前
+  不运行 reducer，不提前冻结 q25
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -599,3 +594,28 @@
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/_monitor-20260729T044309Z-p05-native-calibration-r4/status-0446.txt`；
   该通用 monitor 在 active-load `nvidia-smi` 段 rc=1，没有 signal/环境修改，
   正式 launcher/sampler 仍存活。没有 retry、第二服务或 B0。
+
+### 2026-07-29T05:10:24Z — P05 scoped native r4 主验收
+
+- 唯一 native r4
+  `20260729T044309Z-p05-native-calibration-r4` launcher rc=0；没有 retry、第二
+  server 或 B0。immutable HDFS archive 的 live/artifact/shutdown/archive
+  status 全为 `PASS`。
+- lifecycle repair 已消除 r3 的 prefill-terminal leak。握手第一次 poll 即为
+  `active_request_states=state_leaks=0`；startup 两个请求均已 finished。唯一
+  clear 返回 `[true]`，第二次 poll 证明 counters exact zero，随后才发送 cohort。
+- calibration 32/32 首次成功、0 retry、5183 completion tokens；outputs SHA-256
+  `b5550312da76c86dc68f3b7f0685f4eb1009f7f778be8c24e1d400b382e78b23`。
+  32 个 cohort position、response ID、非空完整 token-ID 列表与 token counts
+  全部成立。
+- scoped trace 为 484 行，SHA-256
+  `8ffa9e45214c6a40520448c5d7dda098182e66134e809a92e20530fd9a5130f6`。
+  484 个 ratio 全部正且有限；32 个 trace RID 与 32 个 output RID 集合精确相同，
+  无 extra/missing，capacity 65536、dropped=0。主 Agent按
+  `h=(n-1)*0.25` 线性插值独立复算 q25=`2.0625`。
+- TP、target 与 draft rank 均为 0–7，两次 48/48 load marker，无 crash marker。
+  请求窗口每卡 137 samples，模型显存 79,571–80,051 MiB，最大利用率
+  98%–99%。server `71408` 与 sampler `71415` 定向停止，contexts none；
+  keepalive 恢复为 `80819/80819/80819`，8×10 全卡 100%。
+- r4 已具备 P05 B0 入口条件。q25 目前只是 native 候选值；必须等唯一 B0 32 条
+  完整 token-ID 等价 PASS 后，才运行 reducer 并冻结 `g=B=q25,m=1`。
