@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 进展
 
-> 当前状态：`PHASE_02_COMPLETE`
+> 当前状态：`PHASE_03_IN_PROGRESS`
 >
 > 自主窗口：`2026-07-28T20:56:27Z` 至 `2026-07-29T08:56:27Z`；
 > 9 小时实现门槛为 `2026-07-29T05:56:27Z`。
@@ -24,6 +24,7 @@
 | 2026-07-29T01:33:11Z | 4h36m44s | 4h23m16s | 7h23m16s | Phase 02 / `eagle3_phase02` | attempt 02 独占 8 卡；server `PID/PGID/SID=303437`；精确八 context；keepalive 已暂停 | live 已证明 target `dsv4`、draft override `flashinfer`；TP0–7 NCCL/distributed 与 MHC prewarm PASS，未复现 head_dim assertion；当前在固定 `flashinfer_mxfp4` layer-0 expert preparation，八卡约 22.5–22.8 GiB，尚未 ready/API | `.../20260729T012234Z-phase-02-native-smoke-02`；继续观察同一 attempt，不叠加修复 |
 | 2026-07-29T01:58:00Z | 5h01m33s | 3h58m27s | 6h58m27s | Phase 02 / `eagle3_phase02` executor complete | native server 已定向 SIGTERM 且无 KILL fallback；八卡 0 context 后 keepalive owner `315671` 恢复，8×10 样本逐卡 100% | native smoke PASS：TP0–7 target+`LlamaForCausalLMEagle3`、target `dsv4`/draft `flashinfer`、八 rank aux trace、3/3 HTTP 200、6 completion tokens；accepted `0/9` 仅为短回答 smoke，非质量门槛。canonical patch/test 已在 clean fixed-base worktree 通过 `git apply --check` 与 11/11 tests | live `.../20260729T012234Z-phase-02-native-smoke-02`；canonical `patches/hedge_eagle3_phase02/`；等待主 Agent 验收，禁止自行进入 Phase 03 |
 | 2026-07-29T02:01:00Z | 5h04m33s | 3h55m27s | 6h55m27s | Phase 02 主 Agent 验收完成 | worker `4099544` 仍在分配列表；keepalive owner `315671` 保持 8 卡健康 | 主 Agent 从固定 base 独立重放 canonical patch，`git apply --check`、SGLang 11/11、DeepSpec 联合 23/23 与 diff/hash 复核均 PASS；约 1 秒请求切片只采到 7/8 非零利用率的限制已如实记录，8/8 rank forward trace、context/model memory 和全服务期每卡 max 100% 构成补充参与证据 | 显式暂存并提交/push Phase 02 小文件；随后派发独立 Phase 03 executor，禁止主线程代写 adapter |
+| 2026-07-29T02:28:00Z | 5h31m33s | 3h28m27s | 6h28m27s | Phase 03 / `eagle3_phase03` | keepalive owner `315671` 保持运行；最近门禁为 8×10 样本逐卡 100%；本阶段未暂停、未启动 GPU workload | pure core import commit `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 已 push；marker/import 的 10 个文件逐字节一致，pure-core 33/33 PASS。已定位 greedy top-1 verifier seam，完成 disabled/B0/B>0、首 barrier、预算生命周期、device trace 与真实 `eagle_sample` 路由；修正 `verify_tree_greedy_func` 第二返回值必须保持 drafts-only 的 blocker。当前 10 tests GREEN，新增 `bind_batch` RED 已作最小修复、待立即重跑 | 继续完成 worker/scheduler runtime wiring、runner trace 提取与 fail-closed、三臂 config 冻结、clean-base patch 重放、联合回归和 Phase 03 handoff；不进入 Phase 04 |
 
 ## 当前依赖
 
