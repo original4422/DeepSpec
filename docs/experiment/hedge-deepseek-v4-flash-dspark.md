@@ -3,7 +3,7 @@
 ## 快速结果
 
 - 状态：`IN_PROGRESS`
-- 记录更新时间：`2026-07-29T07:24:47Z`
+- 记录更新时间：`2026-07-29T07:32:56Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
 - B0：P04 单请求 smoke `PASS`；P05 32 条完整 token IDs `PASS`（32/32）
 - 结论/首要事项：P00–P04 已 PASS。P05 native r1/r2/r3 分别保留为
@@ -13,12 +13,13 @@
   RID，484 个正且有限的 barrier 值得到 q25=`2.0625`。唯一 P05 B0 32/32
   完整 token-ID 列表与 native 相同；reducer 已冻结
   `g=B=2.0625,m=1`，P05 `PASS`。
-- 正式 native run：`500_COMPLETE_VALIDATION_PENDING`；
-  `20260729T062241Z-p06-native-formal-r1`
+- 正式 native run：`PASS`；
+  `20260729T062241Z-p06-native-formal-r1`，500/500、0 retry、74594 tokens、
+  2348.31919839s、31.76484698125425 output TPS
 - 正式 HEDGE run：`NOT_RUN`
-- worker / TP / GPU 参与：`4106666` / 8 / P04 native+B0 `PASS`；P05 native
-  r4 TP/target/draft ranks 0–7、八卡请求期显存与利用率、无 crash、shutdown、
-  contexts-none 与 keepalive 8×10 gate 全部 `PASS`
+- worker / TP / GPU 参与：`4106666` / 8 / P06 TP/target/draft ranks 0–7；
+  formal window 每卡 1982 samples、min model memory 79619–80099 MiB、max util
+  99–100%；无 crash，shutdown/contexts-none/keepalive 8×10 全部 `PASS`
 - model / checkpoint：固定目标
   `deepseek-ai/DeepSeek-V4-Flash-DSpark@62af8fffb2f7030cac4de2f0169f5b8d1101b646`；
   P00 checkpoint r1 PASS，canonical identity 记录 75 files / 48 shards /
@@ -28,13 +29,17 @@
   `a4077b9f…10c52`、clean replay 10-file tree `69e80df9…2422`；formal wheel
   `a5c14bd7…71f9` 已发布/uv 安装，旧 `f2054c…` 保留为历史实体
 - g / B / m：`2.0625` / `2.0625` / `1`
-- native TPS / HEDGE TPS / delta：`NOT_RUN` / `NOT_RUN` / —
-- native accepted length / HEDGE accepted length / delta：`NOT_RUN` / `NOT_RUN` / —
-- native GSM match / HEDGE GSM match：`NOT_RUN` / `NOT_RUN`
+- native TPS / HEDGE TPS / delta：`31.76484698125425` / `NOT_RUN` / —
+- native accepted length / HEDGE accepted length / delta：
+  `4.64904954814584` / `NOT_RUN` / —
+- native GSM match / HEDGE GSM match：`478`（11 mismatch / 11 parse failure） /
+  `NOT_RUN`
 - artifact root：native
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`；
   B0
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T051340Z-p05-b0-calibration-r1`；
+  P06
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1`；
   freeze `artifacts/hedge-dspark/p05-calibration/`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；
@@ -51,9 +56,8 @@
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`
 - latest implementation HEAD/pushed：
   `ada66253e719cd021cdec369914245b51ff46b61`
-- 下一步：唯一 P06 native formal 已于 `07:24:13Z` 达到 500/500；等待
-  validator、cleanup、contexts-none、keepalive 8×10 与 archive 终态，不得在
-  主审前宣称 PASS
+- 下一步：P06 executor 与主 Agent独立重算均 `PASS`；派发唯一 P07 HEDGE
+  `B>0` executor，只允许加载冻结 config，不改变 source/wheel/model/request
 
 ## 当前阶段
 
@@ -65,8 +69,9 @@
 | P03 | `PASS_COMMITTED` | zero-context replay manifest `57328fd1…` / tree `996fbf…`、22/33/13、non-CWD 9/9 与主 Agent独立复验均 PASS；commits `3d2c6cc`、`eb7b4bf` 已 push | — |
 | P04 | `PASS` | native r4 `RECOVERED_PASS`；B0 r1 rc=0，API/counter/TP8/GPU/shutdown/archive 全 PASS；完整 token IDs 与 native 相同 | — |
 | P05 | `PASS` | native r4 scoped trace PASS；B0 32/32 完整 token IDs 相同；484 positive values，q25=`2.0625`；config fingerprint `6e6f0ef3…921f` | — |
-| P06 | `IN_PROGRESS` | formal tooling `6a74186`；唯一 attempt 10 warmup 后于 `07:24:13Z` 达到 500/500；client/sampler 自然退出，launcher 正在收尾 | validator、cleanup/contexts-none、keepalive/archive 与主审 |
-| P07–P08 | `NOT_STARTED` | — | P06 门禁 |
+| P06 | `PASS` | 500/500、74594 tokens、2348.31919839s、31.76484698125425 TPS；acceptance/answer/TP8/GPU/HEDGE-off/cleanup/archive 主审全 PASS | — |
+| P07 | `IN_PROGRESS` | P06 有效、P05 config frozen、decode identity 未变 | 唯一 HEDGE B>0 500 |
+| P08 | `NOT_STARTED` | — | P07 门禁 |
 
 ## 固定实验协议
 
@@ -137,7 +142,7 @@
 | `20260729T051340Z-p05-b0-calibration-r1` | 唯一 P05 B0 32 条；只切换固定 HEDGE B0 config | `PASS`：32/32、0 retry、5183 tokens；1097 proposals、strict=HEDGE accepted 4081、relaxed/regret/leak/trace=0；TP8/GPU/shutdown/archive/keepalive PASS | immutable HDFS attempt；outputs `d59b0e17…3a434` |
 | P05 reducer/config freeze | 精确读取 native r4 与 B0 r1；单次 CPU reducer | `PASS`：完整 token IDs equal 32/32；484 positive finite；q25=`g=B=2.0625`、m=1；无 counterexample | `artifacts/hedge-dspark/p05-calibration/` |
 | P06 formal tooling | 固定 warmup/500/timing/retry/summary/identity/lifecycle 契约 | `PASS_COMMITTED`：executor 138/138；主 Agent targeted/regression/syntax/contract PASS；真实 r4 spec replay PASS | commit/push `6a74186` |
-| `20260729T062241Z-p06-native-formal-r1` | 唯一 native formal；10 warmup + 单次 timed 500 | `IN_PROGRESS`：exact 8×H20/identity/keepalive preflight PASS；唯一服务 ready；`06:54:21Z` 只读 checkpoint 为 123/500 | active scratch/HDFS；launcher `94709`、client `104073`、sampler `94992` |
+| `20260729T062241Z-p06-native-formal-r1` | 唯一 native formal；10 warmup + 单次 timed 500 | `PASS`：500/500 success、0 retry、74594 tokens、2348.31919839s、31.76484698125425 TPS；accepted/proposal 3.644312870052976；TP8/GPU/HEDGE-off/cleanup/archive PASS | immutable HDFS；formal SHA `ecd99525…2607`，archive manifest SHA `f0014a88…eca7` |
 
 ## P04 integration smoke 当前状态
 

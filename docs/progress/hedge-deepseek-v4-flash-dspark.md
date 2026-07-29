@@ -3,10 +3,10 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T07:24:47Z`（630 分钟 checkpoint 延后 6 秒）
+- 快照时间：`2026-07-29T07:32:56Z`
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`10:30:06` / `2026-07-29T08:54:41Z`
-- 当前 phase：P00–P05 均已 PASS；P06 `IN_PROGRESS`
+- elapsed / deadline：`10:38:15` / `2026-07-29T08:54:41Z`
+- 当前 phase：P00–P06 均已 PASS；P07 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
   - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
@@ -19,17 +19,17 @@
     TP8/GPU/cleanup/archive 主审 `PASS`；唯一 B0 32/32 完整 token IDs
     等价 PASS；reducer 冻结 `g=B=2.0625,m=1`；commit/push `c244651`
   - P06：formal tooling 138/138 与主 Agent复验 PASS，commit/push `6a74186`；
-    唯一 live attempt preflight/ready PASS，已达到 500/500，生命周期收尾中
+    唯一 native formal 500/500、0 retry、74594 tokens、31.76484698125425 TPS；
+    主 Agent独立重算与 TP8/GPU/HEDGE-off/cleanup/archive 全 PASS
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
-- keepalive / server / PID：P06 preflight 时 keepalive `93521` 的 8×10 全卡
-  100%；唯一 launcher `94709` 仍在 validator/cleanup/archive；client
-  `104073` 与 sampler `94992` 已自然退出；收尾终态尚待 handoff
+- keepalive / server / PID：P06 server/sampler 已定向退出、contexts none；
+  dedicated keepalive `107326/107326/107326` 已恢复，8×10 全卡 100%
 - 最新 attempt：`20260729T062241Z-p06-native-formal-r1`；preflight/ready PASS，
-  10 warmup 已排除，`07:24:13Z` formal outputs 达到 500/500
+  10 warmup 排除，500/500 与完整生命周期主审 PASS
 - 最新 immutable HDFS artifact：
-  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`
+  `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T062241Z-p06-native-formal-r1`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；上一 checkpoint HEAD/origin clean `89eef9e`
+  branch `exp/hedge-v4-dspark`；上一 checkpoint HEAD/origin clean `5dd7acf`
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -38,11 +38,10 @@
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
   `c244651`；P06 tooling `6a74186`
-- 首要事项：等待 P06 launcher 完成 validator、定向 cleanup、contexts-none、
-  keepalive 8×10 和 immutable archive；随后主审并决定 P07 入口
+- 首要事项：提交 P06 验收节点并派发唯一 P07 HEDGE B>0 executor
 - 下一检查点：`2026-07-29T07:54:41Z`
-- 下一 30 分钟动作：完成 P06 收尾和独立重算；若主审 PASS，提交 P06 节点并派发
-  唯一 P07 HEDGE `B>0` executor
+- 下一 30 分钟动作：完成最小 P07 HEDGE-on contract/tooling 验收并启动唯一
+  B>0 attempt；不得改变 frozen config 或 decode identity
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -717,3 +716,18 @@
 - 500 行完成并不单独构成 P06 PASS：formal summary/TPS/acceptance 重算、
   formal-only 八卡窗口、HEDGE off、contexts-none、keepalive 8×10 和 immutable
   archive 均等待 launcher 终态及主 Agent独立验收。
+
+### 2026-07-29T07:32:56Z — P06 主 Agent验收
+
+- 唯一 P06 launcher rc=0，live/artifact/shutdown/archive 均 PASS。主 Agent从
+  immutable HDFS 重新读取 10 warmup + 500 formal：500/500 success、0 retry、
+  74594 completion tokens、2348.31919839s、31.76484698125425 output TPS；
+  formal SHA `ecd9952536a860836babc3451e066b4ea164b0e520e263bfc5c200f46e902607`。
+- acceptance 独立重算：16045 proposals、80225 proposed draft tokens、58473
+  accepted，accepted/proposal `3.644312870052976`，含 bonus acceptance length
+  `4.64904954814584`，逐位置 `[14904,13227,11688,10119,8535]`。
+- HEDGE disabled/config null、proposal/active/leak counters 均 0；TP/target/draft
+  rank 0–7、formal-window 八卡参与及无 crash PASS。server/sampler 定向退出、
+  contexts none；keepalive `107326` 的 8×10 全卡 100%。
+- archive manifest 39/39 的文件集合、size 与 SHA 独立重算全匹配。P06 `PASS`，
+  P07 入口成立；P06 executor 已停止，未启动第二 attempt。
