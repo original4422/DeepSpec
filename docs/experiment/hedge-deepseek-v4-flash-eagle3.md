@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_04_B0_PASS_AWAITING_CALIBRATION`。**
+> **状态：`PHASE_04_CALIBRATION_FROZEN_AWAITING_BPLUS_SMOKE`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -42,7 +42,8 @@
 > `kill_fallback=false`，随后 0 CUDA context；keepalive owner `335940`
 > 已恢复并通过 8×10 每卡 100%。
 > 独立 `B=0` arm 同样完成 32/32、0 retry/failure；与 native 的 32 份完整
-> token IDs 零差异，判定 `B0_PASS`。`g/B` 与正式 500 条仍 pending。
+> token IDs 零差异，判定 `B0_PASS`。1486 个正 barrier 的 NumPy linear q25
+> 已冻结为 `g=B=6.75,m=1`；正式 500 条仍 pending。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -82,6 +83,9 @@
 >
 > **权威 Phase 04 B0 calibration artifact：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T050000Z-phase-04-b0-calibration-01`
+>
+> **权威 Phase 04 frozen calibration artifact：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T052000Z-phase-04-calibration-01`
 
 ## 快速结果
 
@@ -98,8 +102,8 @@
 | --- | --- |
 | Lane | worker `4099544`, 8×H20, TP=8 |
 | B0 status | `B0_PASS`；32/32 完整 token IDs 与 native 相同 |
-| `g=q25` | pending |
-| `B` | pending |
+| `g=q25` | `6.75` |
+| `B` | `6.75` |
 | `m` | 1 |
 | Proposal tokens | 3 |
 | Dataset seed | 980406 |
@@ -412,8 +416,18 @@ q25 计算。B0 artifact manifest 的 38 个 size/hash 全部匹配；请求窗�
 CUDA/NCCL/worker crash。登记 SIGTERM、`kill_fallback=false`、0 context 后，
 keepalive owner `342599` 通过 8×10 每卡 100%。
 
+离线 calibration 对两份 frozen JSONL 正式重算 `B0_PASS`，从 1486 个正
+`regret/value` 以 NumPy `method=linear` 得到 q25=`6.75`，故唯一正预算配置为
+`g=B=6.75,m=1,value_scheme=normalized_suffix`。frozen calibration SHA-256
+为 `836ca7c46274cfa3546f5f36d8b1e49e51edd68db2d125b2dbfe57c1075e2e60`，
+B+ config SHA-256 为
+`87a41b12f62059126b9e7d8f13b8b80cedc31e7de1f23655c93a60b4ff3e131a`。
+主 Agent独立重算 q25 与 canonical calibration hash 均一致。live resolver 继续
+单独强制最终 SGLang SHA `2600c7b…` 与 patch `73de4048…`；校准未触碰 GPU，
+keepalive 持续运行。
+
 ## 下一步
 
-用冻结脚本对 native/B0 artifact 执行正式、可重算的 token-ID comparison，并从
-1486 个正 `regret/value` 按 NumPy linear q25 冻结唯一 `g=B,m=1` 配置；主 Agent
-验收后只运行 3 条 B+ calibration smoke。Phase 04 不进入正式 500。
+用同一 freeze 02、最终 source 和 server command 启动独立 B+ 服务，只在固定
+calibration 前 3 条 smoke `g=B=6.75,m=1`。验收后冻结 Phase 05/06 正式配置；
+Phase 04 不进入正式 500。
