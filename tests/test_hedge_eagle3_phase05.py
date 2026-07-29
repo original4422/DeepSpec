@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
+import subprocess
 import tempfile
 import unittest
 
@@ -70,6 +72,28 @@ def record(position: int, *, warmup: bool) -> dict:
 
 
 class Phase05FormalToolTest(unittest.TestCase):
+    def test_runner_starts_from_outside_repository_cwd(self) -> None:
+        environment = dict(os.environ)
+        environment.pop("PYTHONPATH", None)
+        with tempfile.TemporaryDirectory() as temporary:
+            completed = subprocess.run(
+                [
+                    "/home/tiger/venvs/deepspec-hedge-v4-eagle3/bin/python",
+                    str(
+                        ROOT
+                        / "scripts"
+                        / "hedge_eagle3_phase05_run.py"
+                    ),
+                    "--help",
+                ],
+                cwd=temporary,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
     def test_native_wrapper_preserves_phase04_server_command(self) -> None:
         phase05 = resolve_module.resolve_native(
             "20260729T060000Z-phase-05-native-formal-01",

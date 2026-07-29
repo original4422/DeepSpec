@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_05_NATIVE_FORMAL_READY`。**
+> **状态：`PHASE_05_NATIVE_FORMAL_RETRY_READY`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -58,6 +58,15 @@
 > 自校验无差异；Phase 04 native server command/environment/source identity
 > 逐字一致。正式 native 仍 pending，完整 500 条只先形成 candidate，待根线程验收
 > 8 卡/rank/crash/hash/cleanup/keepalive 后才发布唯一 accepted marker。
+> 首个 formal attempt `20260729T055400Z-phase-05-native-formal-01` 已从新服务达到
+> HTTP ready、TP0–7 和八卡模型 context，但 runner 在 warmup 前因缺少 repo-root
+> import bootstrap 报 `ModuleNotFoundError: deepspec`；因此 0 warmup、0 formal，
+> 正式计时未开始，判定为 incomplete orchestration attempt。登记 SIGTERM、
+> `kill_fallback=false`，0 CUDA context 后 keepalive owner `354555` 恢复为
+> 8×10 每卡 100%。单变量修复只加入与 Phase 04 相同的 import bootstrap；
+> repo 外 cwd 回归已 RED→GREEN。新 freeze 04 manifest SHA-256 为
+> `e4a9bd2e25c959a449577889b504e1d9a7c3cc71e7fd6710ef815812f7640240`，
+> 根线程 self-verify 无差异；accepted marker 仍不存在。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -106,6 +115,12 @@
 >
 > **权威 Phase 05 tooling freeze 03：**
 > `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T055500Z-phase-05-tooling-freeze-03`
+>
+> **Phase 05 incomplete native attempt 01：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T055400Z-phase-05-native-formal-01`
+>
+> **权威 Phase 05 tooling freeze 04：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T060800Z-phase-05-tooling-freeze-04`
 
 ## 快速结果
 
