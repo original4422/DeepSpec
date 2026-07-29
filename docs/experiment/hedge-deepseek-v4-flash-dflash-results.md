@@ -4,17 +4,20 @@
 > [权威实验日志](./hedge-deepseek-v4-flash-dflash.md)；本页只展示参数来源、
 > 协议结论和正式指标。任何尚未完成的项目都明确标为 `NOT_RUN` 或 `RUNNING`。
 
-最后更新：`2026-07-29T12:34:16Z`
+最后更新：`2026-07-29T15:57:21Z`
 
 ## 一句话结论
 
-实验仍在进行中。32 条 native calibration 已完成并冻结
+路线内三类 arm 均已完成且 sealed。32 条 native calibration 已冻结
 `q25=12.5`，因此正式 HEDGE 参数为
 `B=12.5, g=12.5, m=1, value_scheme=normalized_suffix`。
 32 条 protocol `B=0` 已与 native 达成 32/32 完整 output token-ID 一致，
 结论为 `B0 PASS`。native 500 条正式 arm 已完成：500/500 success、0 retry、
 74,802 completion tokens、9897.839411616 秒、E2E output TPS
-`7.55740691369605`；HEDGE `B>0` 500 条尚未运行，因此路线内差值仍待 C4。
+`7.55740691369605`。HEDGE `B>0` 500 条也已完成：500/500 success、0 retry、
+89,279 completion tokens、10900.874935019 秒、E2E output TPS
+`8.190076533507574`。B+ 相对 native 的路线内 TPS 差为 `+8.3715%`，同时输出
+token 数 `+19.3538%`、match 从 484 降至 443；这些变化必须合并解读。
 
 ## 当前结果总览
 
@@ -23,7 +26,7 @@
 | native calibration | 32 | `PASS` | 32/32 成功；`q25=12.5` |
 | protocol `B=0` | 32 | `PASS` | 32/32 完整 output token IDs 相同 |
 | native formal | 500 | `PASS` | 500/500 success；74,802 tokens；9897.839 s；7.5574 output tok/s；484/16/0 |
-| HEDGE `B>0` formal | 500 | `NOT_RUN` | 尚无正式指标 |
+| HEDGE `B>0` formal | 500 | `CANONICAL PASS` | 500/500 success；89,279 tokens；10900.875 s；8.1901 output tok/s；443/57/0 |
 
 ## 固定实验身份
 
@@ -116,7 +119,7 @@ accepted drafts 只统计 0–7 个 draft candidates，不含 bonus/current toke
 | Arm | HEDGE | B / g / m | Samples | Success / Fail | Mean accepted drafts / proposal | Acceptance length / position stats | Completion tokens | Timed wall sec | E2E output TPS | Match / Mismatch / Parse fail | Retries | Result class |
 | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | --- |
 | native | off | — | 500 | 500 / 0 | 0.0 | histogram `[74302,0,0,0,0,0,0,0]`；position 1–7 rates 全 0；含 current 的 mean length `1.0067292939624775` | 74802 | 9897.839411616 | 7.55740691369605 | 484 / 16 / 0 | 0 | `CANONICAL PASS` |
-| HEDGE B+ | on | 12.5 / 12.5 / 1 | 500 | — | — | — | — | — | — | — | — | `NOT_RUN` |
+| HEDGE B+ | on | 12.5 / 12.5 / 1 | 500 | 500 / 0 | 0.08156503520354716 | histogram `[75514,6473,98,9,0,0,0,0]`；position 1–7 rates `[0.0801520,0.00130338,0.000109630,0,0,0,0]`；含 current 的 mean length `1.0875216215557775` | 89279 | 10900.874935019 | 8.190076533507574 | 443 / 57 / 0 | 0 | `CANONICAL PASS` |
 
 native arm 共记录 74,302 个 proposal、520,114 个 proposed draft tokens；
 accepted draft tokens 为 0，逐位置 accepted draft tokens 均为 0。TP0–7 均完成
@@ -134,19 +137,40 @@ native formal artifact：
 - cleanup/context-clear `PASS`；fresh keepalive PID/PGID/SID `239449`，
   8×10×1 秒 gate 最低逐卡均值 `40.0%`
 
+B+ arm 共记录 82,094 个 proposal、574,658 个 proposed draft tokens 与 6,696
+个 accepted draft tokens，其中 strict accepted 为 5,936，relaxed draft gain
+为 760。formal-only risk counters 记录 730 个 relaxed mismatches、
+charged regret `5677.6875`，小于 500 请求的总预算上限 `6250.0`；
+500 initialized / 500 finished、slot reuse reset 0，counter audit `PASS`。
+完整 lifecycle 终态 active request states 与 state leaks 均为 0。TP0–7 均初始化；
+八卡 formal 期间各有 15,947 个采样点、峰值利用率均为 99%，最低模型显存为
+92,905–93,145 MiB。owned shutdown 前 fatal scan 为 0。
+
+B+ formal artifact：
+
+- [C4 acceptance](./artifacts/hedge-deepseek-v4-flash-dflash/continuation-c4/continuation_c4_acceptance.json)
+- HDFS run：
+  `/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d6-bplus-20260729T123500Z-a01`
+- HDFS manifest：46/46 PASS；SHA-256
+  `bf5b77ef694e74c45fe9c064b28f5a25779946f8ad1d541ee105315a87e61492`
+- cleanup/context-clear `PASS`；fresh keepalive PID/PGID/SID `265796`，
+  8×10×1 秒 gate 逐卡均值均为 `100.0%`
+
 ## 路线内差值
 
 | 指标 | Native | HEDGE B+ | B+ − Native | 相对变化 |
 | --- | ---: | ---: | ---: | ---: |
-| Mean accepted drafts / proposal | 0.0 | — | — | — |
-| Completion tokens | 74802 | — | — | — |
-| Timed wall sec | 9897.839411616 | — | — | — |
-| E2E output TPS | 7.55740691369605 | — | — | — |
-| Answer matches | 484 | — | — | — |
-| Retries | 0 | — | — | — |
+| Mean accepted drafts / proposal | 0.0 | 0.08156503520354716 | +0.08156503520354716 | native 分母为 0，不给相对百分比 |
+| Mean accept length（含 current） | 1.0067292939624775 | 1.0875216215557775 | +0.0807923275933 | +8.0252% |
+| Completion tokens | 74802 | 89279 | +14477 | +19.3538% |
+| Timed wall sec | 9897.839411616 | 10900.874935019 | +1003.035523403 | +10.1339% |
+| E2E output TPS | 7.55740691369605 | 8.190076533507574 | +0.632669619811524 | +8.3715% |
+| Answer matches | 484 | 443 | -41 | match rate -8.2 percentage points |
+| Retries | 0 | 0 | 0 | — |
 
-在两个 500 条 arm 都封存并通过可复算验收前，本表不填推测值，也不做跨路线绝对
-TPS 排名。
+两个正式 arm 都只按协议运行一次，因此没有重复运行方差或置信区间。B+ 生成了更多
+completion tokens，完整输出与答案分布也发生变化；TPS 差值不能脱离 token 数、
+wall time、acceptance 与 match 差值单独解读，也不用于跨方法绝对排名。
 
 ## 结果解释边界
 

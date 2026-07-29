@@ -4,9 +4,9 @@
 [DFlash × HEDGE 实验结果](./hedge-deepseek-v4-flash-dflash-results.md)；本文保留
 完整开发过程、attempt、故障归因与恢复证据。
 
-Status / outcome label: `CONTINUATION_IN_PROGRESS`（continuation C1 native
+Status / outcome label: `CONTINUATION_COMPLETE`（continuation C1 native
 calibration `PASS`；continuation C2 protocol `B0 PASS`；continuation C3 native
-formal `CANONICAL PASS`；HEDGE B+ formal `NOT_RUN`）
+formal `CANONICAL PASS`；continuation C4 HEDGE B+ formal `CANONICAL PASS`）
 
 Prior-window outcome（保留）：`BEST_EFFORT_BLOCKED_IMPLEMENTATION` /
 `BEST_EFFORT_EARLY_STOP_INCOMPLETE`；D7 evidence/cleanup audit `PASS`
@@ -18,10 +18,10 @@ Prior timebox（历史）：`2026-07-28T20:55:58Z` →
 `2026-07-29T08:55:58Z`；B0 未完成时的实现停止点为
 `2026-07-29T05:55:58Z`
 
-Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8；C3 cleanup
-后 fresh owned keepalive PID/PGID/SID `239449`，identity time
-`2026-07-29T12:31:38.990533Z`；resume gate 为 8×10×1 秒、逐卡均值最低
-`40.0%`；owned model contexts 已清空
+Worker / physical GPUs / TP: worker `4099543` / 8×NVIDIA H20 / TP=8；C4 cleanup
+后 fresh owned keepalive PID/PGID/SID `265796`，identity time
+`2026-07-29T15:54:17.834102Z`；resume gate 为 8×10×1 秒、逐卡均值均为
+`100.0%`；owned model contexts 已清空
 
 Target repo@revision / HDFS completion marker:
 `deepseek-ai/DeepSeek-V4-Flash@60d8d70770c6776ff598c94bb586a859a38244f1` /
@@ -50,13 +50,16 @@ native arm `CANONICAL PASS`（500/500 success、0 retry、74802 completion
 tokens、9897.839411616 秒、E2E output TPS `7.55740691369605`、484 match /
 16 mismatch / 0 parse failure）
 
-B+ result: `NOT_RUN`
+B+ result: `CANONICAL PASS`（500/500 success、0 retry、89279 completion
+tokens、10900.874935019 秒、E2E output TPS `8.190076533507574`、443 match /
+57 mismatch / 0 parse failure；formal-only 82094 proposals、6696 accepted
+draft tokens、charged regret `5677.6875 <= 6250.0`、500 initialized/finished）
 
-Canonical or exploratory: calibration/config 与 native formal 均为 canonical；
-HEDGE B+ formal 尚无结果
+Canonical or exploratory: calibration/config、native formal 与 HEDGE B+ formal
+均为 canonical；protocol B0 为 `PASS`
 
-Current continuation blocker: 无；下一未完成阶段是 HEDGE B+ 固定 10 warmup +
-500，须由独立 C4 executor 执行。
+Current continuation blocker: 无；三类 arm 已全部完成并 sealed，等待主 Agent
+提交结果收尾。
 
 Prior-window blocker（历史）：D5 preflight PASS 未及时 surfaced，且旧 T+9 剩余窗口
 不足；因此在 keepalive pause/model launch 前 early-stop。
@@ -67,6 +70,10 @@ Native formal artifact:
 `/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d6-native-20260729T093000Z-a01`；
 46/46 manifest PASS，manifest SHA-256
 `a1c1a1e44ec66e21cb0ab5455aa42f011768c096bea25c81cf59c34b8b26eef4`。
+DFlash B+ formal artifact:
+`/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d6-bplus-20260729T123500Z-a01`；
+46/46 manifest PASS，manifest SHA-256
+`bf5b77ef694e74c45fe9c064b28f5a25779946f8ad1d541ee105315a87e61492`。
 D4-C short-smoke HDFS run
 `/mnt/hdfs/pengzegang/DeepSpec/hedge/dflash/runs/dflash-d4-b0-20260729T045317Z-a01`；
 D7 final audit
@@ -82,7 +89,7 @@ B0 artifact:
 47/47 manifest PASS，manifest SHA-256
 `321ab6047fe22795e1c4c1a697e1742ba556618fe7900de1ef4a7a6f820426d5`
 
-Git commit: latest C3 heartbeat `dabe086`；continuation C1 accepted/pushed commit
+Git commit: latest C4 heartbeat `78634cb`；continuation C1 accepted/pushed commit
 `cd811309180ec6e3301fb81d6bcf086deb84b2f5`；C3 executor 未 commit/push。历史
 D7 final audit `711747ad2e80d69de38fa93c10a42e78569413c0`；
 D7 main acceptance `324684bc55d6255b4d87dbea845d9e50f8f21a57`；06:12 progress
@@ -91,8 +98,9 @@ source/evidence `a80031a`；D4-C live evidence `a18655a`；DeepSpec canonical co
 `86231e536573ccc43cda732b4eca920d5ce0a28a`；SGLang HEDGE-final
 `9a01e2df71d6de085b0b2d50ccd687ec5abc7ff1`
 
-下一步：主 Agent 验收 C3 后立即调度独立 C4/HEDGE-B+ executor；C3 live
-attempt 为 `1/3` 且首次成功，没有启动 a02/a03。本 executor 不进入 C4。
+下一步：主 Agent 复核 C4 结果小文件，只显式暂存本路线结果收尾并
+commit/push。C4 live attempt 为 `1/3` 且首次成功，没有启动 a02/a03；
+不需要更多模型 attempt。
 
 C0 artifact：
 `docs/experiment/artifacts/hedge-deepseek-v4-flash-dflash/continuation-c0/continuation_c0.json`；
@@ -109,15 +117,15 @@ handoff：`docs/plan/handoffs/dflash-continuation-c0-handoff.md`。
 | positive ratio / q25 | `PASS` / `12.5` | 4991 条 first-rejection positive ratio，dropped=0，NumPy 2.3.5 linear q25 |
 | protocol B0 32 | `PASS` | 32/32 完整 output token IDs 与 sealed native 相同；identity/order 32/32 |
 | native formal 500 | `CANONICAL PASS` | 500/500 success、0 retry；74802 tokens / 9897.839 s / 7.5574 output tok/s |
-| HEDGE B+ formal 500 | `NOT_RUN` | 等待独立 C4 executor |
-| formal result class | `PARTIAL` | native canonical result 已有；路线内差值等待 B+ |
+| HEDGE B+ formal 500 | `CANONICAL PASS` | 500/500 success、0 retry；89279 tokens / 10900.875 s / 8.1901 output tok/s |
+| formal result class | `COMPLETE` | native 与 B+ canonical results 均已 sealed；B0 PASS |
 
 ### 正式结果表
 
 | Arm | HEDGE | B | g | m | Source SHA | Samples | Success/Fail | Mean accepted drafts (0–7) | Completion tokens | Timed sec | E2E TPS | Match/Mismatch/Parse fail | Retries | Result class |
 | --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: | ---: | ---: | --- | ---: | --- |
 | native | off | — | — | — | `9a01e2d` | 500/500 | 500/0 | 0.0 | 74802 | 9897.839411616 | 7.55740691369605 | 484/16/0 | 0 | `CANONICAL PASS` |
-| B+ | on | 12.5 | 12.5 | 1 | `9a01e2d` | 0/500 | `NOT_RUN` | — | — | — | — | — | — | `NONE` |
+| B+ | on | 12.5 | 12.5 | 1 | `9a01e2d` | 500/500 | 500/0 | 0.08156503520354716 | 89279 | 10900.874935019 | 8.190076533507574 | 443/57/0 | 0 | `CANONICAL PASS` |
 
 ### `B0` 表
 
@@ -135,6 +143,7 @@ handoff：`docs/plan/handoffs/dflash-continuation-c0-handoff.md`。
 | 08:00Z | continuation C1 | `dflash-d5-native-20260729T073139Z-a01` | explicit immutable continuation deadline | native calibration PASS | 32/32、4991 ratios、q25=12.5、44/44 manifest | 主 Agent 验收后调度独立 C2/B0 |
 | 08:44Z | continuation C2 | `dflash-d5-b0-20260729T083442Z-a01` | protocol config derived as `B=0,g=q25=12.5` | protocol B0 PASS | 32/32 full token IDs identical、zero relaxation/leak、47/47 manifest | 主 Agent 验收后调度独立 C3/native formal |
 | 09:35Z | continuation C3 | `dflash-d6-native-20260729T093000Z-a01` | native formal tooling；HEDGE/calibration trace 均关闭 | native formal CANONICAL PASS | warmup 10/10；formal 500/500、0 retry、46/46 manifest、cleanup/context/keepalive PASS | 主 Agent 验收后调度独立 C4/HEDGE B+ |
+| 12:40Z | continuation C4 | `dflash-d6-bplus-20260729T123500Z-a01` | 只开启冻结 HEDGE config `B=g=12.5,m=1` | HEDGE B+ formal CANONICAL PASS | warmup 10/10；formal 500/500、0 retry；formal-only risk audit、46/46 manifest、cleanup/context/keepalive PASS | 主 Agent 提交结果收尾；不再启动模型 |
 
 ## D0 会话与资源基线
 
@@ -506,6 +515,63 @@ PID/PGID/SID `239449`，8×10×1 秒 resume gate 逐卡均值为
 `.complete.json.status=PASS`；46/46 manifest 校验通过，manifest SHA-256
 `a1c1a1e44ec66e21cb0ab5455aa42f011768c096bea25c81cf59c34b8b26eef4`。
 C3 在首次 live attempt 成功后停止，没有启动 a02/a03，也没有进入 C4/HEDGE B+。
+
+### Continuation C4 HEDGE B+ formal
+
+C4 只把同一最终 source 的 runtime switch 改为 HEDGE enabled，并使用 C1 的 32 条
+native calibration 一次性冻结的
+`B=12.5,g=12.5,m=1,value_scheme=normalized_suffix,block_size=7`；config
+SHA-256 为
+`ef9003cd37d475b44ed256d91036808f38bedd2e7ea40a90f26232a939fe7746`。
+参数来自 4991 条首次 strict-rejection positive `regret/value` 的 NumPy 2.3.5
+linear q25，未依据任何 500 条 formal 结果回调。C2 已证明 32/32 完整 output
+token IDs 相同，因此该 B+ 结果为 canonical，而非 B0-failed exploratory。
+
+唯一 live attempt
+`dflash-d6-bplus-20260729T123500Z-a01` 的 preflight 于
+`12:37:45Z` PASS。owned keepalive pause 后 context 为 `none`；唯一 server
+PID/PGID/SID `241075` 于 `12:40:35.295450Z` 启动，
+`12:47:26.394542Z` ready。固定 calibration 前 10 条 warmup 从
+`12:47:27.849154Z` 到 `12:51:35.518551Z` 完成，10/10 success、0 retry、
+1959 completion tokens、8 match / 2 mismatch / 0 parse failure；warmup 不计入
+正式计时。
+
+500 条 formal 从 `12:51:35.526246Z` 到 `15:53:16.401180Z` 单请求顺序完成：
+
+- 500/500 terminal success、request failure 0、retry 0；
+- 89279 completion tokens，timed wall `10900.874935019s`；
+- E2E output TPS `8.190076533507574`；
+- match 443、mismatch 57、parse failure 0；
+- 82094 proposals、574658 proposed draft tokens、6696 accepted draft tokens；
+- strict accepted 5936、relaxed draft gain 760、mean accepted drafts/proposal
+  `0.08156503520354716`；
+- acceptance-length histogram `[75514,6473,98,9,0,0,0,0]`，逐位置 accepted
+  drafts `[6580,107,9,0,0,0,0]`；
+- 含 current token 的 mean acceptance length 为
+  `1.0875216215557775`。
+
+formal-only risk audit 为 500 initialized / 500 finished、slot reuse reset 0、
+730 relaxed mismatches、charged regret `5677.6875`，低于 500×12.5 的预算上限
+`6250.0`，budget exhaustion events 34，整体 `pass=true`。包含 health/warmup
+的完整 lifecycle 为 initialized 512、finished 511、slot reuse reset 1，满足
+terminal count 512；终态 active request states 与 state leaks 均为 0。
+
+TP0–7 全部初始化；八卡 formal 期间各有 15947 个采样点、峰值利用率均为 99%，
+最低模型显存为 `92905–93145 MiB`。owned shutdown 前 CUDA、NCCL、Python
+traceback 与 worker crash 计数均为 0。定向 cleanup 于 `15:54:17Z` 完成，
+模型 context 为 `none`；fresh keepalive PID/PGID/SID `265796` 的 8×10×1 秒
+resume gate 逐卡均值均为 100%。HDFS `.complete.json.status=PASS`，
+46/46 manifest PASS，manifest SHA-256
+`bf5b77ef694e74c45fe9c064b28f5a25779946f8ad1d541ee105315a87e61492`。
+C4 在首次 live attempt 成功后停止，没有启动 a02/a03。
+
+相对 C3 native，B+ completion tokens `+14477`（`+19.3538%`）、wall time
+`+1003.035523403s`（`+10.1339%`）、E2E TPS
+`+0.632669619811524`（`+8.3715%`），mean accept length（含 current）
+`+0.0807923275933`（`+8.0252%`）；answer matches `-41`，match rate
+`-8.2` percentage points。两个 arm 按协议各仅一次正式运行，没有重复运行置信区间；
+B+ 输出 token 数和答案分布均变化，因此 TPS 差必须与 token/wall/acceptance/match
+共同解读，不作跨方法绝对排名。
 
 ## D7 最终审计与收尾
 
