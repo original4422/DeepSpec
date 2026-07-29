@@ -3,10 +3,10 @@
 ## 最新快照
 
 - 状态：`IN_PROGRESS`
-- 快照时间：`2026-07-29T05:45:29Z`
+- 快照时间：`2026-07-29T05:53:06Z`（540 分钟 checkpoint 提前 1 分 35 秒）
 - 自主窗口：`2026-07-28T20:54:41Z` → `2026-07-29T08:54:41Z`
-- elapsed / deadline：`08:50:48` / `2026-07-29T08:54:41Z`
-- 当前 phase：P00–P05 均已 PASS；P06 `READY`
+- elapsed / deadline：`08:58:25` / `2026-07-29T08:54:41Z`
+- 当前 phase：P00–P05 均已 PASS；P06 `IN_PROGRESS`
 - executor / 结论：
   - P00：主 Agent 验收 `PASS`；support commit/push `ebe196608893bd9972e771644ed25d019444d0f3`
   - P01：主 Agent 验收 `PASS`，commit/push `77053dd`
@@ -17,7 +17,9 @@
     `e028d2c31658a06b4f5a5ee072d7e21c79d51c36` 与新 formal wheel
     `a5c14bd7…71f9` 已主审/push；唯一 native r4 已 32/32、scoped trace、
     TP8/GPU/cleanup/archive 主审 `PASS`；唯一 B0 32/32 完整 token IDs
-    等价 PASS；reducer 冻结 `g=B=2.0625,m=1`
+    等价 PASS；reducer 冻结 `g=B=2.0625,m=1`；commit/push `c244651`
+  - P06：独立 executor 正在用 TDD 固定 formal runner；当前有 tests/prepare 草案，
+    未登录 worker、未暂停 keepalive、未启动模型
 - worker / lane：`4106666` / 全部 8×NVIDIA H20 / 预定 TP=8
 - keepalive / server / PID：B0 登记 server `82443`、sampler `82450` 已定向
   退出，contexts none；dedicated keepalive 恢复为 `93521/93521/93521`，
@@ -27,7 +29,8 @@
 - 最新 immutable HDFS artifact：
   `/mnt/hdfs/pengzegang/DeepSpec/runs/hedge-dspark/20260729T044309Z-p05-native-calibration-r4`
 - Git：worktree `/mlx_devbox/users/pengzegang/playground/github/DeepSpec-hedge-dspark`；
-  branch `exp/hedge-v4-dspark`；当前已 push native PASS `e58027e`
+  branch `exp/hedge-v4-dspark`；HEAD/origin `c244651`，executor 的 P06 files
+  尚未提交
 - commits：P00 support `ebe196608893bd9972e771644ed25d019444d0f3`；P01 protocol
   `77053dd`；pure core `4d96f44065c07030ede67484a262006ec149626a`；integration
   `3d2c6ccc93abfd70bc2df3f57e67f5c2f73ccedc`；P04 result `3e10b780`；
@@ -35,12 +38,12 @@
   `eb4962f`；failure docs `fd88b69`；quiescence recovery `fe0aea0`；
   r2/recovery experiment `3c37a41`；r3 load heartbeat `9e4aceb`；prefill
   lifecycle recovery `e028d2c`；wheel/identity `ada6625`；calibration freeze
-  本 Git 节点
-- 首要事项：提交 P05 freeze 节点并派发独立 P06 executor；先完成 formal runner
-  TDD/身份门禁，再运行 native 10 warmup + 唯一 500 正式计时
-- 下一检查点：`2026-07-29T05:54:41Z`
-- 下一 30 分钟动作：P05 commit/push；P06 formal tooling 主审后启动唯一 native
-  500 attempt
+  `c244651`
+- 首要事项：完成 P06 formal tooling 与主审；只有工具门禁 PASS 后才启动唯一
+  native 10 warmup + 500 attempt
+- 下一检查点：`2026-07-29T06:24:41Z`
+- 下一 30 分钟动作：P06 tooling RED→GREEN、主 Agent复验、关键 Git 节点；
+  随后做唯一 live preflight/attempt
 
 > Recorder 边界：60 分钟 checkpoint 只转录当时已交接的证据；随后 P00 主验收由
 > 主 Agent 直接复核 canonical artifacts。文档更新没有改变 keepalive/GPU 运行态。
@@ -660,3 +663,16 @@
   无 counterexample。
 - executor reducer tests 6/6 PASS；主 Agent独立 P05 24/24、syntax/diff gates
   PASS。P05 主验收 `PASS`，下一 eligible phase 为 P06 native formal。
+
+### 2026-07-29T05:54:41Z — 540 分钟 checkpoint
+
+- 实际快照于 `05:53:06Z` 提前 1 分 35 秒落盘。P05 四个 freeze artifact 与权威
+  记录已 commit/push：
+  `c244651`。从该节点起 SGLang source/wheel、checkpoint、proposal width 与
+  `B=g=2.0625,m=1` 正式冻结；500 条结果不得反向调参。
+- P06 独立 executor 已按 `tdd` 进入 formal-tooling 子阶段，当前在 worktree
+  创建 P06 tests/prepare 草案，尚未交付完整 GREEN implementation。
+  它未登录 worker、未触碰 GPU/keepalive/model，也未启动 live attempt。
+- lane 最新已验收 operational 状态仍是 B0 cleanup 后 dedicated keepalive
+  `93521/93521/93521`，8×10 全卡 100%，contexts none。P06 live preflight
+  尚未开始。
