@@ -1,6 +1,6 @@
 # HEDGE on DeepSeek-V4-Flash Eagle3 实验记录
 
-> **状态：`PHASE_05_NATIVE_FORMAL_ACCEPTED_PASS`。**
+> **状态：`PHASE_06_BPLUS_FORMAL_READY`。**
 > DSpark 发布的 pure core 已以 Eagle3 commit
 > `4cefd0a36ea254e4c14a83f35dc8db15b37a3384` 导入；10 个 canonical 文件与
 > publisher commit `4d96f44065c07030ede67484a262006ec149626a` 逐字节一致。
@@ -76,7 +76,15 @@
 > 一致，登记 SIGTERM、无 KILL fallback、0 model context 后 keepalive owner
 > `364528` 恢复并通过 8×10 每卡 100%。根线程于
 > `2026-07-29T07:42:58Z` 发布唯一 accepted marker，Phase 05 判定
-> `ACCEPTED/PASS`。
+> `ACCEPTED/PASS`。Phase 06 已冻结独立 B+ formal 工具：唯一配置为
+> `enabled,g=B=6.75,m=1,value_scheme=normalized_suffix`，server command、
+> source、model、dataset、proposal width、10+500 与计时协议均与 native 相同。
+> 15-file freeze 01 manifest SHA-256 为
+> `edc17c791fd0349163708b3dc649abde082af5ac76e1a06dd2c49962a09792d5`；
+> 根线程 scoped 26 tests、bash/pycompile、freeze self-verify、native/B+ command
+> identity 与 marker-absent gate 均 PASS。历史 Phase 05 mock test 在 native
+> accepted marker 发布后会按其 pre-accept 默认门禁主动失败；该 frozen test
+> 不为 post-accept 状态改写，Phase 06 的实际依赖与独立测试不受影响。
 >
 > **自主窗口（UTC）：** T0 `2026-07-28T20:56:27Z`；
 > 实现门槛 `2026-07-29T05:56:27Z`；硬停止 `2026-07-29T08:56:27Z`。
@@ -139,6 +147,9 @@
 >
 > **Phase 05 accepted marker：**
 > `/mnt/hdfs/pengzegang/DeepSpec/coordination/hedge-v4/eagle3-native-formal.complete.json`
+>
+> **权威 Phase 06 tooling freeze 01：**
+> `/mnt/hdfs/pengzegang/DeepSpec/hedge-v4/eagle3/runs/20260729T080000Z-phase-06-tooling-freeze-01`
 
 ## 快速结果
 
